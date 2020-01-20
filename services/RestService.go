@@ -1,445 +1,430 @@
 package services
 
-// /* @module services */
-// /* @hidden */
-// const _ = require("lodash");
+import (
+	"net/http"
 
-// import { IOpenable } from "pip-services3-commons-node";
-// import { IUnreferenceable } from "pip-services3-commons-node";
-// import { InvalidStateException } from "pip-services3-commons-node";
-// import { IConfigurable } from "pip-services3-commons-node";
-// import { IReferenceable } from "pip-services3-commons-node";
-// import { IReferences } from "pip-services3-commons-node";
-// import { ConfigParams } from "pip-services3-commons-node";
-// import { DependencyResolver } from "pip-services3-commons-node";
-// import { CompositeLogger } from "pip-services3-components-node";
-// import { CompositeCounters } from "pip-services3-components-node";
-// import { Timing } from "pip-services3-components-node";
-// import { Schema } from "pip-services3-commons-node";
+	cconf "github.com/pip-services3-go/pip-services3-commons-go/v3/config"
+	cerr "github.com/pip-services3-go/pip-services3-commons-go/v3/errors"
+	crefer "github.com/pip-services3-go/pip-services3-commons-go/v3/refer"
+	ccount "github.com/pip-services3-go/pip-services3-components-go/v3/count"
+	clog "github.com/pip-services3-go/pip-services3-components-go/v3/log"
+)
 
-// import { HttpEndpoint } from "./HttpEndpoint";
-// import { IRegisterable } from "./IRegisterable";
-// import { HttpResponseSender } from "./HttpResponseSender";
+/*
+Abstract service that receives remove calls via HTTP/REST protocol.
 
-// /*
-// Abstract service that receives remove calls via HTTP/REST protocol.
-//
-// ### Configuration parameters ###
-//
-// - base_route:              base route for remote URI
-// - dependencies:
-//   - endpoint:              override for HTTP Endpoint dependency
-//   - controller:            override for Controller dependency
-// - connection(s):
-//   - discovery_key:         (optional) a key to retrieve the connection from [[https://rawgit.com/pip-services-node/pip-services3-components-node/master/doc/api/interfaces/connect.idiscovery.html IDiscovery]]
-//   - protocol:              connection protocol: http or https
-//   - host:                  host name or IP address
-//   - port:                  port number
-//   - uri:                   resource URI or connection string with all parameters in it
-// - credential - the HTTPS credentials:
-//   - ssl_key_file:         the SSL private key in PEM
-//   - ssl_crt_file:         the SSL certificate in PEM
-//   - ssl_ca_file:          the certificate authorities (root cerfiticates) in PEM
-//
-// ### References ###
-//
-// - <code>\*:logger:\*:\*:1.0</code>               (optional) [[https://rawgit.com/pip-services-node/pip-services3-components-node/master/doc/api/interfaces/log.ilogger.html ILogger]] components to pass log messages
-// - <code>\*:counters:\*:\*:1.0</code>             (optional) [[https://rawgit.com/pip-services-node/pip-services3-components-node/master/doc/api/interfaces/count.icounters.html ICounters]] components to pass collected measurements
-// - <code>\*:discovery:\*:\*:1.0</code>            (optional) [[https://rawgit.com/pip-services-node/pip-services3-components-node/master/doc/api/interfaces/connect.idiscovery.html IDiscovery]] services to resolve connection
-// - <code>\*:endpoint:http:\*:1.0</code>          (optional) [[HttpEndpoint]] reference
-//
-// @see [[RestClient]]
-//
-// ### Example ###
-//
-//     class MyRestService extends RestService {
-//        private _controller: IMyController;
-//        ...
-//        public constructor() {
-//           base();
-//           this._dependencyResolver.put(
-//               "controller",
-//               new Descriptor("mygroup","controller","*","*","1.0")
-//           );
-//        }
-//
-//        public setReferences(references: IReferences): void {
-//           base.setReferences(references);
-//           this._controller = this._dependencyResolver.getRequired<IMyController>("controller");
-//        }
-//
-//        public register(): void {
-//            registerRoute("get", "get_mydata", null, (req, res) => {
-//                let correlationId = req.param("correlation_id");
-//                let id = req.param("id");
-//                this._controller.getMyData(correlationId, id, this.sendResult(req, res));
-//            });
-//            ...
-//        }
-//     }
-//
-//     let service = new MyRestService();
-//     service.configure(ConfigParams.fromTuples(
-//         "connection.protocol", "http",
-//         "connection.host", "localhost",
-//         "connection.port", 8080
-//     ));
-//     service.setReferences(References.fromTuples(
-//        new Descriptor("mygroup","controller","default","default","1.0"), controller
-//     ));
-//
-//     service.open("123", (err) => {
-//        console.log("The REST service is running on port 8080");
-//     });
-//  */
-// export abstract class RestService implements IOpenable, IConfigurable, IReferenceable,
-//     IUnreferenceable, IRegisterable {
+Configuration parameters:
 
-//     private static readonly _defaultConfig: ConfigParams = ConfigParams.fromTuples(
-//         "base_route", "",
-//         "dependencies.endpoint", "*:endpoint:http:*:1.0"
-//     );
+- base_route:              base route for remote URI
+- dependencies:
+  - endpoint:              override for HTTP Endpoint dependency
+  - controller:            override for Controller dependency
+- connection(s):
+  - discovery_key:         (optional) a key to retrieve the connection from connect.idiscovery.html IDiscovery
+  - protocol:              connection protocol: http or https
+  - host:                  host name or IP address
+  - port:                  port number
+  - uri:                   resource URI or connection string with all parameters in it
+- credential - the HTTPS credentials:
+  - ssl_key_file:         the SSL private key in PEM
+  - ssl_crt_file:         the SSL certificate in PEM
+  - ssl_ca_file:          the certificate authorities (root cerfiticates) in PEM
 
-//     private _config: ConfigParams;
-//     private _references: IReferences;
-//     private _localEndpoint: boolean;
-//     private _opened: boolean;
+References:
 
-//     /*
-//     The base route.
-//      */
-//     protected _baseRoute: string;
-//     /*
-//     The HTTP endpoint that exposes this service.
-//      */
-//     protected _endpoint: HttpEndpoint;
-//     /*
-//     The dependency resolver.
-//      */
-//     protected _dependencyResolver: DependencyResolver = new DependencyResolver(RestService._defaultConfig);
-//     /*
-//     The logger.
-//      */
-//     protected _logger: CompositeLogger = new CompositeLogger();
-//     /*
-//     The performance counters.
-//      */
-// 	protected _counters: CompositeCounters = new CompositeCounters();
+- *:logger:*:*:1.0               (optional) ILogger components to pass log messages
+- *:counters:*:*:1.0             (optional) ICounters components to pass collected measurements
+- *:discovery:*:*:1.0            (optional) IDiscovery services to resolve connection
+- *:endpoint:http:*:1.0          (optional) HttpEndpoint reference
 
-//     /*
-//     Configures component by passing configuration parameters.
-//
-//     @param config    configuration parameters to be set.
-//      */
-// 	public configure(config: ConfigParams): void {
-//         config = config.setDefaults(RestService._defaultConfig);
+See RestClient
 
-//         this._config = config;
-//         this._dependencyResolver.configure(config);
+ Example:
 
-//         this._baseRoute = config.getAsStringWithDefault("base_route", this._baseRoute);
-// 	}
+    class MyRestService extends RestService {
+       private _controller: IMyController;
+       ...
+       func (c * RestService) constructor() {
+          base();
+          c.DependencyResolver.put(
+              "controller",
+              new Descriptor("mygroup","controller","*","*","1.0")
+          );
+       }
 
-//     /*
-// 	Sets references to dependent components.
-//
-// 	@param references 	references to locate the component dependencies.
-//      */
-// 	public setReferences(references: IReferences): void {
-//         this._references = references;
+       func (c * RestService) setReferences(references: IReferences): void {
+          base.setReferences(references);
+          c._controller = c.DependencyResolver.getRequired<IMyController>("controller");
+       }
 
-// 		this._logger.setReferences(references);
-//         this._counters.setReferences(references);
-//         this._dependencyResolver.setReferences(references);
+       func (c * RestService) register(): void {
+           registerRoute("get", "get_mydata", nil, (req, res) => {
+               let correlationId = req.param("correlation_id");
+               let id = req.param("id");
+               c._controller.getMyData(correlationId, id, c.sendResult(req, res));
+           });
+           ...
+       }
+    }
 
-//         // Get endpoint
-//         this._endpoint = this._dependencyResolver.getOneOptional("endpoint");
-//         // Or create a local one
-//         if (this._endpoint == null) {
-//             this._endpoint = this.createEndpoint();
-//             this._localEndpoint = true;
-//         } else {
-//             this._localEndpoint = false;
-//         }
-//         // Add registration callback to the endpoint
-//         this._endpoint.register(this);
-//     }
+    let service = new MyRestService();
+    service.configure(ConfigParams.fromTuples(
+        "connection.protocol", "http",
+        "connection.host", "localhost",
+        "connection.port", 8080
+    ));
+    service.setReferences(References.fromTuples(
+       new Descriptor("mygroup","controller","default","default","1.0"), controller
+    ));
 
-//     /*
-// 	Unsets (clears) previously set references to dependent components.
-//      */
-//     public unsetReferences(): void {
-//         // Remove registration callback from endpoint
-//         if (this._endpoint != null) {
-//             this._endpoint.unregister(this);
-//             this._endpoint = null;
-//         }
-//     }
+    service.open("123", (err) => {
+       console.log("The REST service is running on port 8080");
+    });
+*/
+// implements IOpenable, IConfigurable, IReferenceable, IUnreferenceable, IRegisterable
+type RestService struct {
+	defaultConfig cconf.ConfigParams
+	config        cconf.ConfigParams
+	references    crefer.IReferences
+	localEndpoint bool
+	opened        bool
+	//The base route.
+	BaseRoute string
+	//The HTTP endpoint that exposes this service.
+	Endpoint HttpEndpoint
+	//The dependency resolver.
+	DependencyResolver DependencyResolver
+	//The logger.
+	Logger CompositeLogger
+	//The performance counters.
+	Counters CompositeCounters
+}
 
-//     private createEndpoint(): HttpEndpoint {
-//         let endpoint = new HttpEndpoint();
+// NewRestService is create new RestService
+func NewRestService() *RestService {
+	rs := RestService{}
+	rs.defaultConfig = NewConfigParamsFromTuples(
+		"base_route", "",
+		"dependencies.endpoint", "*:endpoint:http:*:1.0",
+	)
+	rs.DependencyResolver = crefer.NewDependencyResolver(rs.defaultConfig)
+	rs.Logger = clog.NewCompositeLogger()
+	rs.Counters = ccount.NewCompositeCounters()
+	return &rs
+}
 
-//         if (this._config)
-//             endpoint.configure(this._config);
+//Configures component by passing configuration parameters.
+//- config    configuration parameters to be set.
+func (c *RestService) Configure(config cconf.ConfigParams) {
+	config = config.SetDefaults(RestService.defaultConfig)
 
-//         if (this._references)
-//             endpoint.setReferences(this._references);
+	c.config = config
+	c.DependencyResolver.configure(config)
 
-//         return endpoint;
-//     }
+	c.BaseRoute = config.getAsStringWithDefault("base_route", c.BaseRoute)
+}
 
-//     /*
-//     Adds instrumentation to log calls and measure call time.
-//     It returns a Timing object that is used to end the time measurement.
-//
-//     @param correlationId     (optional) transaction id to trace execution through call chain.
-//     @param name              a method name.
-//     @returns Timing object to end the time measurement.
-//      */
-// 	protected instrument(correlationId: string, name: string): Timing {
-//         this._logger.trace(correlationId, "Executing %s method", name);
-//         this._counters.incrementOne(name + ".exec_count");
-// 		return this._counters.beginTiming(name + ".exec_time");
-// 	}
+/*
+	Sets references to dependent components.
 
-//     /*
-//     Adds instrumentation to error handling.
-//
-//     @param correlationId     (optional) transaction id to trace execution through call chain.
-//     @param name              a method name.
-//     @param err               an occured error
-//     @param result            (optional) an execution result
-//     @param callback          (optional) an execution callback
-//      */
-//     protected instrumentError(correlationId: string, name: string, err: any,
-//         result: any = null, callback: (err: any, result: any) => void = null): void {
-//         if (err != null) {
-//             this._logger.error(correlationId, err, "Failed to execute %s method", name);
-//             this._counters.incrementOne(name + ".exec_errors");
-//         }
+	- references 	references to locate the component dependencies.
+*/
+func (c *RestService) SetReferences(references cref.IReferences) {
+	c.references = references
 
-//         if (callback) callback(err, result);
-//     }
+	c.Logger.setReferences(references)
+	c.Counters.setReferences(references)
+	c.DependencyResolver.setReferences(references)
 
-//     /*
-// 	Checks if the component is opened.
-//
-// 	@returns true if the component has been opened and false otherwise.
-//      */
-// 	public isOpen(): boolean {
-// 		return this._opened;
-// 	}
+	// Get endpoint
+	c.Endpoint = c.DependencyResolver.getOneOptional("endpoint")
+	// Or create a local one
+	if c.Endpoint == nil {
+		c.Endpoint = c.createEndpoint()
+		c.localEndpoint = true
+	} else {
+		c.localEndpoint = false
+	}
+	// Add registration callback to the endpoint
+	c.Endpoint.register(c)
+}
 
-//     /*
-// 	Opens the component.
-//
-// 	@param correlationId 	(optional) transaction id to trace execution through call chain.
-//     @param callback 			callback function that receives error or null no errors occured.
-//      */
-// 	public open(correlationId: string, callback?: (err: any) => void): void {
-//     	if (this._opened) {
-//             callback(null);
-//             return;
-//         }
+/*
+	Unsets (clears) previously set references to dependent components.
+*/
+func (c *RestService) UnsetReferences() {
+	// Remove registration callback from endpoint
+	if c.Endpoint != nil {
+		c.Endpoint.unregister(c)
+		c.Endpoint = nil
+	}
+}
 
-//         if (this._endpoint == null) {
-//             this._endpoint = this.createEndpoint();
-//             this._endpoint.register(this);
-//             this._localEndpoint = true;
-//         }
+func (c *RestService) createEndpoint() HttpEndpoint {
+	endpoint := NewHttpEndpoint()
 
-//         if (this._localEndpoint) {
-//             this._endpoint.open(correlationId, (err) => {
-//                 this._opened = err == null;
-//                 callback(err);
-//             });
-//         } else {
-//             this._opened = true;
-//             callback(null);
-//         }
-//     }
+	if c.config {
+		endpoint.Configure(c.config)
+	}
+	if c.references {
+		endpoint.SetReferences(c.references)
+	}
 
-//     /*
-// 	Closes component and frees used resources.
-//
-// 	@param correlationId 	(optional) transaction id to trace execution through call chain.
-//     @param callback 			callback function that receives error or null no errors occured.
-//      */
-//     public close(correlationId: string, callback?: (err: any) => void): void {
-//     	if (!this._opened) {
-//             callback(null);
-//             return;
-//         }
+	return endpoint
+}
 
-//         if (this._endpoint == null) {
-//             callback(new InvalidStateException(correlationId, "NO_ENDPOINT", "HTTP endpoint is missing"));
-//             return;
-//         }
+/*
+   Adds instrumentation to log calls and measure call time.
+   It returns a Timing object that is used to end the time measurement.
 
-//         if (this._localEndpoint) {
-//             this._endpoint.close(correlationId, (err) => {
-//                 this._opened = false;
-//                 callback(err);
-//             });
-//         } else {
-//             this._opened = false;
-//             callback(null);
-//         }
-//     }
+   - correlationId     (optional) transaction id to trace execution through call chain.
+   - name              a method name.
+   @returns Timing object to end the time measurement.
+*/
+func (c *RestService) Instrument(correlationId string, name string) ccount.Timing {
+	c.Logger.Trace(correlationId, "Executing %s method", name)
+	c.Counters.IncrementOne(name + ".exec_count")
+	return c.Counters.BeginTiming(name + ".exec_time")
+}
 
-//     /*
-//     Creates a callback function that sends result as JSON object.
-//     That callack function call be called directly or passed
-//     as a parameter to business logic components.
-//
-//     If object is not null it returns 200 status code.
-//     For null results it returns 204 status code.
-//     If error occur it sends ErrorDescription with approproate status code.
-//
-//     @param req       a HTTP request object.
-//     @param res       a HTTP response object.
-//     @param callback function that receives execution result or error.
-//      */
-//     protected sendResult(req, res): (err: any, result: any) => void {
-//         return HttpResponseSender.sendResult(req, res);
-//     }
+/*
+   Adds instrumentation to error handling.
 
-//     /*
-//     Creates a callback function that sends newly created object as JSON.
-//     That callack function call be called directly or passed
-//     as a parameter to business logic components.
-//
-//     If object is not null it returns 201 status code.
-//     For null results it returns 204 status code.
-//     If error occur it sends ErrorDescription with approproate status code.
-//
-//     @param req       a HTTP request object.
-//     @param res       a HTTP response object.
-//     @param callback function that receives execution result or error.
-//      */
-//     protected sendCreatedResult(req, res): (err: any, result: any) => void {
-//         return HttpResponseSender.sendCreatedResult(req, res);
-//     }
+   - correlationId     (optional) transaction id to trace execution through call chain.
+   - name              a method name.
+   - err               an occured error
+   - result            (optional) an execution result
+   - callback          (optional) an execution callback
+*/
+func (c *RestService) InstrumentError(correlationId string, name string, err any,
+	result interface{}) (result interface{}, err error) {
+	if err != nil {
+		c.Logger.error(correlationId, err, "Failed to execute %s method", name)
+		c.Counters.incrementOne(name + ".exec_errors")
+	}
 
-//     /*
-//     Creates a callback function that sends deleted object as JSON.
-//     That callack function call be called directly or passed
-//     as a parameter to business logic components.
-//
-//     If object is not null it returns 200 status code.
-//     For null results it returns 204 status code.
-//     If error occur it sends ErrorDescription with approproate status code.
-//
-//     @param req       a HTTP request object.
-//     @param res       a HTTP response object.
-//     @param callback function that receives execution result or error.
-//      */
-//     protected sendDeletedResult(req, res): (err: any, result: any) => void {
-//         return HttpResponseSender.sendDeletedResult(req, res);
-//     }
+	return result, err
+}
 
-//     /*
-//     Sends error serialized as ErrorDescription object
-//     and appropriate HTTP status code.
-//     If status code is not defined, it uses 500 status code.
-//
-//     @param req       a HTTP request object.
-//     @param res       a HTTP response object.
-//     @param error     an error object to be sent.
-//      */
-//     protected sendError(req, res, error): void {
-//         HttpResponseSender.sendError(req, res, error);
-//     }
+/*
+	Checks if the component is opened.
 
-//     private appendBaseRoute(route: string): string {
-//         route = route || "";
+	@returns true if the component has been opened and false otherwise.
+*/
+func (c *RestService) IsOpen() bool {
+	return c.opened
+}
 
-//         if (this._baseRoute != null && this._baseRoute.length > 0) {
-//             let baseRoute = this._baseRoute;
-//             if (baseRoute[0] != "/") baseRoute = "/" + baseRoute;
-//             route = baseRoute + route;
-//         }
+/*
+	Opens the component.
 
-//         return route;
-//     }
+	- correlationId 	(optional) transaction id to trace execution through call chain.
+    - callback 			callback function that receives error or nil no errors occured.
+*/
+func (c *RestService) Open(correlationId string) error {
+	if c.opened {
+		return nil
+	}
 
-//     /*
-//     Registers a route in HTTP endpoint.
-//
-//     @param method        HTTP method: "get", "head", "post", "put", "delete"
-//     @param route         a command route. Base route will be added to this route
-//     @param schema        a validation schema to validate received parameters.
-//     @param action        an action function that is called when operation is invoked.
-//      */
-//     protected registerRoute(method: string, route: string, schema: Schema,
-//         action: (req: any, res: any) => void): void {
-//         if (this._endpoint == null) return;
+	if c.Endpoint == nil {
+		c.Endpoint = c.createEndpoint()
+		c.Endpoint.register(c)
+		c.localEndpoint = true
+	}
 
-//         route = this.appendBaseRoute(route);
+	if c.localEndpoint {
+		oErr := c.Endpoint.Open(correlationId)
+		if oErr != nil {
+			c.opened = false
+			return oErr
+		}
+	} else {
+		c.opened = true
+		return nil
+	}
+}
 
-//         this._endpoint.registerRoute(
-//             method, route, schema,
-//             (req, res) => {
-//                 action.call(this, req, res);
-//             }
-//         );
-//     }
+/*
+	Closes component and frees used resources.
 
-//     /*
-//     Registers a route with authorization in HTTP endpoint.
-//
-//     @param method        HTTP method: "get", "head", "post", "put", "delete"
-//     @param route         a command route. Base route will be added to this route
-//     @param schema        a validation schema to validate received parameters.
-//     @param authorize     an authorization interceptor
-//     @param action        an action function that is called when operation is invoked.
-//      */
-//     protected registerRouteWithAuth(method: string, route: string, schema: Schema,
-//         authorize: (req: any, res: any, next: () => void) => void,
-//         action: (req: any, res: any) => void): void {
-//         if (this._endpoint == null) return;
+	- correlationId 	(optional) transaction id to trace execution through call chain.
+    - callback 			callback function that receives error or nil no errors occured.
+*/
+func (c *RestService) Close(correlationId string) error {
+	if !c.opened {
+		return nil
+	}
 
-//         route = this.appendBaseRoute(route);
+	if c.Endpoint == nil {
+		return cerr.NewInvalidStateException(correlationId, "NO_ENDPOINT", "HTTP endpoint is missing")
+	}
 
-//         this._endpoint.registerRouteWithAuth(
-//             method, route, schema,
-//             (req, res, next) => {
-//                 if (authorize)
-//                     authorize.call(this, req, res, next);
-//                 else next();
-//             },
-//             (req, res) => {
-//                 action.call(this, req, res);
-//             }
-//         );
-//     }
+	if c.localEndpoint {
+		cErr := c.Endpoint.Close(correlationId)
+		if cErr != nil {
+			c.opened = false
+			return cErr
+		}
+	} else {
+		c.opened = false
+		return nil
+	}
+}
 
-//     /*
-//     Registers a middleware for a given route in HTTP endpoint.
-//
-//     @param route         a command route. Base route will be added to this route
-//     @param action        an action function that is called when middleware is invoked.
-//      */
-//     protected registerInterceptor(route: string,
-//         action: (req: any, res: any, next: () => void) => void): void {
-//         if (this._endpoint == null) return;
+/*
+   Creates a callback function that sends result as JSON object.
+   That callack function call be called directly or passed
+   as a parameter to business logic components.
 
-//         route = this.appendBaseRoute(route);
+   If object is not nil it returns 200 status code.
+   For nil results it returns 204 status code.
+   If error occur it sends ErrorDescription with approproate status code.
 
-//         this._endpoint.registerInterceptor(
-//             route,
-//             (req, res, next) => {
-//                 action.call(this, req, res, next);
-//             }
-//         );
-//     }
+   - req       a HTTP request object.
+   - res       a HTTP response object.
+   - callback function that receives execution result or error.
+*/
+func (c *RestService) SendResult(req *http.Request, res http.ResponseWriter) (result interface{}, err error) {
+	return HttpResponseSender.SendResult(req, res)
+}
 
-//     /*
-//     Registers all service routes in HTTP endpoint.
-//
-//     This method is called by the service and must be overriden
-//     in child classes.
-//      */
-//     public abstract register(): void;
+/*
+   Creates a callback function that sends newly created object as JSON.
+   That callack function call be called directly or passed
+   as a parameter to business logic components.
 
-// }
+   If object is not nil it returns 201 status code.
+   For nil results it returns 204 status code.
+   If error occur it sends ErrorDescription with approproate status code.
+
+   - req       a HTTP request object.
+   - res       a HTTP response object.
+   - callback function that receives execution result or error.
+*/
+func (c *RestService) SendCreatedResult(req *http.Request, res http.ResponseWriter) (result interface{}, err errro) {
+	return HttpResponseSender.sendCreatedResult(req, res)
+}
+
+/*
+   Creates a callback function that sends deleted object as JSON.
+   That callack function call be called directly or passed
+   as a parameter to business logic components.
+
+   If object is not nil it returns 200 status code.
+   For nil results it returns 204 status code.
+   If error occur it sends ErrorDescription with approproate status code.
+
+   - req       a HTTP request object.
+   - res       a HTTP response object.
+   - callback function that receives execution result or error.
+*/
+func (c *RestService) SendDeletedResult(req *http.Request, res http.ResponseWriter) (result interface{}, err error) {
+	return HttpResponseSender.sendDeletedResult(req, res)
+}
+
+/*
+   Sends error serialized as ErrorDescription object
+   and appropriate HTTP status code.
+   If status code is not defined, it uses 500 status code.
+
+   - req       a HTTP request object.
+   - res       a HTTP response object.
+   - error     an error object to be sent.
+*/
+func (c *RestService) SendError(req *http.Request, res http.ResponseWriter, err error) {
+	HttpResponseSender.SendError(req, res, err)
+}
+
+func (c *RestService) appendBaseRoute(route string) string {
+	route = route || ""
+
+	if c.BaseRoute != nil && c.BaseRoute.length > 0 {
+		baseRoute := c.BaseRoute
+		if baseRoute[0] != "/"[0] {
+			baseRoute = "/" + baseRoute
+		}
+		route = baseRoute + route
+	}
+	return route
+}
+
+/*
+   Registers a route in HTTP endpoint.
+
+   - method        HTTP method: "get", "head", "post", "put", "delete"
+   - route         a command route. Base route will be added to this route
+   - schema        a validation schema to validate received parameters.
+   - action        an action function that is called when operation is invoked.
+*/
+func (c *RestService) RegisterRoute(method string, route string, schema Schema,
+	action func(req *http.Request, res http.ResponseWriter)) {
+	if c.Endpoint == nil {
+		return
+	}
+
+	route = c.appendBaseRoute(route)
+
+	c.Endpoint.registerRoute(
+		method, route, schema, func(req *http.Request, res http.ResponseWriter) {
+			action.call(c, req, res)
+		})
+}
+
+/*
+   Registers a route with authorization in HTTP endpoint.
+
+   - method        HTTP method: "get", "head", "post", "put", "delete"
+   - route         a command route. Base route will be added to this route
+   - schema        a validation schema to validate received parameters.
+   - authorize     an authorization interceptor
+   - action        an action function that is called when operation is invoked.
+*/
+func (c *RestService) RegisterRouteWithAuth(method string, route string, schema Schema,
+	authorize func(req *http.Request, res http.ResponseWriter, next func()),
+	action func(req *http.Request, res http.ResponseWriter)) {
+	if c.Endpoint == nil {
+		return
+	}
+
+	route = c.appendBaseRoute(route)
+
+	c.Endpoint.registerRouteWithAuth(
+		method, route, schema,
+		func(req *http.Request, res http.ResponseWriter, next func()) {
+			if authorize {
+				authorize.call(c, req, res, next)
+			} else {
+				next()
+			}
+		}, func(req *http.Request, res http.ResponseWriter) {
+			action.call(c, req, res)
+		})
+}
+
+/*
+   Registers a middleware for a given route in HTTP endpoint.
+
+   - route         a command route. Base route will be added to this route
+   - action        an action function that is called when middleware is invoked.
+*/
+func (c *RestService) RegisterInterceptor(route string,
+	action func(req *http.Request, res http.ResponseWriter, next func())) {
+	if c.Endpoint == nil {
+		return
+	}
+
+	route = c.appendBaseRoute(route)
+
+	c.Endpoint.registerInterceptor(
+		route, func(req *http.Request, res http.ResponseWriter, next func()) {
+			action.call(c, req, res, next)
+		})
+}
+
+/*
+   Registers all service routes in HTTP endpoint.
+
+   This method is called by the service and must be overriden
+   in child classes.
+*/
+func (c *RestService) Register() {}
