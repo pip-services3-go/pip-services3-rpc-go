@@ -1,6 +1,10 @@
 package clients
 
 import (
+	"bytes"
+	"encoding/json"
+	"io/ioutil"
+	"net/http"
 	"strings"
 	"time"
 
@@ -73,7 +77,7 @@ See [[CommandableHttpService]]
 type RestClient struct {
 	defaultConfig cconf.ConfigParams
 	//The HTTP client.
-	Client *JsonHttpClient
+	Client *http.Client
 	//The connection resolver.
 	ConnectionResolver rpccon.HttpConnectionResolver
 	//The logger.
@@ -121,7 +125,7 @@ func NewRestClient() *RestClient {
 /*
    Configures component by passing configuration parameters.
     *
-   @param config    configuration parameters to be set.
+   - config    configuration parameters to be set.
 */
 func (c *RestClient) Configure(config *cconf.ConfigParams) {
 	config = config.SetDefaults(&c.defaultConfig)
@@ -137,7 +141,7 @@ func (c *RestClient) Configure(config *cconf.ConfigParams) {
 /*
 	Sets references to dependent components.
 	 *
-	@param references 	references to locate the component dependencies.
+	- references 	references to locate the component dependencies.
 */
 func (c *RestClient) SetReferences(references crefer.IReferences) {
 	c.Logger.SetReferences(references)
@@ -149,8 +153,8 @@ func (c *RestClient) SetReferences(references crefer.IReferences) {
    Adds instrumentation to log calls and measure call time.
    It returns a Timing object that is used to end the time measurement.
     *
-   @param correlationId     (optional) transaction id to trace execution through call chain.
-   @param name              a method name.
+   - correlationId     (optional) transaction id to trace execution through call chain.
+   - name              a method name.
    @returns Timing object to end the time measurement.
 */
 func (c *RestClient) Instrument(correlationId string, name string) *ccount.Timing {
@@ -162,13 +166,13 @@ func (c *RestClient) Instrument(correlationId string, name string) *ccount.Timin
 /*
    Adds instrumentation to error handling.
     *
-   @param correlationId     (optional) transaction id to trace execution through call chain.
-   @param name              a method name.
-   @param err               an occured error
-   @param result            (optional) an execution result
-   @param callback          (optional) an execution callback
+   - correlationId     (optional) transaction id to trace execution through call chain.
+   - name              a method name.
+   - err               an occured error
+   - result            (optional) an execution result
+   - callback          (optional) an execution callback
 */
-func (c *RestClient) instrumentError(correlationId string, name string, inErr error, inRes interface{}) (result interface{}, err error) {
+func (c *RestClient) InstrumentError(correlationId string, name string, inErr error, inRes interface{}) (result interface{}, err error) {
 	if inErr != nil {
 		c.Logger.Error(correlationId, inErr, "Failed to call %s method", name)
 		c.Counters.IncrementOne(name + ".call_errors")
@@ -189,8 +193,8 @@ func (c *RestClient) IsOpen() bool {
 /*
 	Opens the component.
 	 *
-	@param correlationId 	(optional) transaction id to trace execution through call chain.
-    @param callback 			callback function that receives error or nil no errors occured.
+	- correlationId 	(optional) transaction id to trace execution through call chain.
+    - callback 			callback function that receives error or nil no errors occured.
 */
 func (c *RestClient) Open(correlationId string) error {
 	if c.IsOpen() {
@@ -202,20 +206,12 @@ func (c *RestClient) Open(correlationId string) error {
 		return conErr
 	}
 
-	//try {
 	c.Uri = connection.Uri()
-	c.Client = NewJsonHttpClient()
+	c.Client = &http.Client{Timeout: (time.Duration)(c.Client.Timeout) * time.Millisecond}
 	if c.Client == nil {
-		//c.Client = nil
-		//ex := cerr.NewConnectionError(correlationId, "CANNOT_CONNECT", "Connection to REST service failed").Wrap(err).WithDetails("url", c.Uri)
 		ex := cerr.NewConnectionError(correlationId, "CANNOT_CONNECT", "Connection to REST service failed").WithDetails("url", c.Uri)
 		return ex
 	}
-	c.Client.SetUrl(c.Uri)
-	c.Client.RetryWaitMin = (time.Duration)(c.Timeout) * time.Millisecond
-	c.Client.RetryMax = c.Retries
-	c.Client.Client.HTTPClient.Timeout = (time.Duration)(c.ConnectTimeout) * time.Millisecond
-	c.Client.SetHeaders(&c.Headers)
 	// let restify = require("restify-clients");
 	// c.Client = restify.createJsonClient({
 	//     url: c.Uri,
@@ -239,8 +235,8 @@ func (c *RestClient) Open(correlationId string) error {
 /*
 	Closes component and frees used resources.
 	 *
-	@param correlationId 	(optional) transaction id to trace execution through call chain.
-    @param callback 			callback function that receives error or nil no errors occured.
+	- correlationId 	(optional) transaction id to trace execution through call chain.
+    - callback 			callback function that receives error or nil no errors occured.
 */
 func (c *RestClient) Close(correlationId string) error {
 	if c.Client != nil {
@@ -259,8 +255,8 @@ func (c *RestClient) Close(correlationId string) error {
 /*
    Adds a correlation id (correlation_id) to invocation parameter map.
     *
-   @param params            invocation parameters.
-   @param correlationId     (optional) a correlation id to be added.
+   - params            invocation parameters.
+   - correlationId     (optional) a correlation id to be added.
    @returns invocation parameters with added correlation id.
 */
 func (c *RestClient) AddCorrelationId(params *cdata.StringValueMap, correlationId string) *cdata.StringValueMap {
@@ -281,8 +277,8 @@ func (c *RestClient) AddCorrelationId(params *cdata.StringValueMap, correlationI
    Adds filter parameters (with the same name as they defined)
    to invocation parameter map.
     *
-   @param params        invocation parameters.
-   @param filter        (optional) filter parameters
+   - params        invocation parameters.
+   - filter        (optional) filter parameters
    @returns invocation parameters with added filter parameters.
 */
 func (c *RestClient) AddFilterParams(params *cdata.StringValueMap, filter *cdata.FilterParams) *cdata.StringValueMap {
@@ -304,9 +300,8 @@ func (c *RestClient) AddFilterParams(params *cdata.StringValueMap, filter *cdata
 
 /*
    Adds paging parameters (skip, take, total) to invocation parameter map.
-    *
-   @param params        invocation parameters.
-   @param paging        (optional) paging parameters
+   - params        invocation parameters.
+   - paging        (optional) paging parameters
    @returns invocation parameters with added paging parameters.
 */
 func (c *RestClient) AddPagingParams(params *cdata.StringValueMap, paging *cdata.PagingParams) *cdata.StringValueMap {
@@ -348,26 +343,97 @@ func (c *RestClient) createRequestRoute(route string) string {
 /*
    Calls a remote method via HTTP/REST protocol.
     *
-   @param method            HTTP method: "get", "head", "post", "put", "delete"
-   @param route             a command route. Base route will be added to c route
-   @param correlationId     (optional) transaction id to trace execution through call chain.
-   @param params            (optional) query parameters.
-   @param data              (optional) body object.
-   @param callback          (optional) callback function that receives result object or error.
+   - method            HTTP method: "get", "head", "post", "put", "delete"
+   - route             a command route. Base route will be added to this route
+   - correlationId     (optional) transaction id to trace execution through call chain.
+   - params            (optional) query parameters.
+   - data              (optional) body object.
+   - callback          (optional) callback function that receives result object or error.
 */
 func (c *RestClient) Call(method string, route string, correlationId string, params *cdata.StringValueMap, data interface{}) (result interface{}, err error) {
 
-	method = strings.ToLower(method)
+	method = strings.ToUpper(method)
 
 	// if _.isFunction(data) {
 	// 	callback = data
 	// 	//data = {};
 	// }
 
-	// route = c.createRequestRoute(route)
-	// params = c.AddCorrelationId(params, correlationId)
-	// if !_.isEmpty(params) {
-	// 	route += "?" + querystring.stringify(params)
+	route = c.createRequestRoute(route)
+	params = c.AddCorrelationId(params, correlationId)
+	if params.Len() > 0 {
+		route += "?"
+		for k, v := range params.Value() {
+			route += (k + "=" + v + "&")
+		}
+		if strings.HasSuffix(route, "&") {
+			route = strings.TrimRight(route, "&")
+		}
+	}
+
+	url := c.Uri + route
+
+	if !c.IsOpen() {
+		return nil, nil
+	}
+	var jsonStr []byte
+	if data != nil {
+		jsonStr, _ = json.Marshal(data)
+	} else {
+		jsonStr = make([]byte, 0, 0)
+	}
+	req, reqErr := http.NewRequest(method, url, bytes.NewBuffer(jsonStr))
+
+	if reqErr != nil {
+		err = cerr.NewUnknownError(correlationId, "UNSUPPORTED_METHOD", "Method is not supported by REST client").WithDetails("verb", method).WithCause(reqErr)
+		return nil, err
+	}
+	// Set headers
+	req.Header.Set("Accept", "application/json")
+	//req.Header.Set("User-Agent", c.UserAgent)
+	for k, v := range c.Headers.Value() {
+		req.Header.Set(k, v)
+	}
+
+	retries := c.Retries
+	var resp *http.Response
+	var respErr error
+
+	for retries > 0 {
+		// Try send request
+		resp, respErr = c.Client.Do(req)
+		if respErr != nil {
+			retries--
+			if retries == 0 {
+				err = cerr.NewUnknownError(correlationId, "COMMUNICATION_ERROR", "Unknown communication problem on REST client").WithCause(reqErr)
+				return nil, err
+			}
+			continue
+		}
+		break
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == 204 {
+		return nil, nil
+	}
+
+	r, rErr := ioutil.ReadAll(resp.Body)
+	if rErr != nil {
+		eDesct := cerr.ErrorDescription{
+			Type:          "Application",
+			Category:      "Application",
+			Status:        resp.StatusCode,
+			Code:          "",
+			Message:       rErr.Error(),
+			CorrelationId: correlationId,
+		}
+		err = cerr.ApplicationErrorFactory.Create(&eDesct).WithCause(rErr)
+	}
+	return r, rErr
+
+	// if callback != nil {
+	// 	callback(respErr, req, *resp, resp.Body)
 	// }
 
 	// self := c
@@ -403,5 +469,4 @@ func (c *RestClient) Call(method string, route string, correlationId string, par
 	// 	err = cerr.NewUnknownError(correlationId, "UNSUPPORTED_METHOD", "Method is not supported by REST client").WithDetails("verb", method)
 	// 	return nil, err
 	// }
-	return
 }
