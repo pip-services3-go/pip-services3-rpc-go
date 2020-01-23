@@ -1,4 +1,4 @@
-package servoces
+package service
 
 // /* @module services */
 // import { ContextInfo } from "pip-services3-components-node";

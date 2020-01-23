@@ -1,445 +1,444 @@
 package services
 
-// /* @module services */
-// /* @hidden */
-// const _ = require("lodash");
-// const fs = require("fs");
+import (
+	"context"
+	"encoding/json"
+	"net/http"
+	"strings"
+	"time"
 
-// import { IOpenable } from "pip-services3-commons-node";
-// import { IConfigurable } from "pip-services3-commons-node";
-// import { IReferenceable } from "pip-services3-commons-node";
-// import { IReferences } from "pip-services3-commons-node";
-// import { ConfigParams } from "pip-services3-commons-node";
-// import { CompositeLogger } from "pip-services3-components-node";
-// import { CompositeCounters } from "pip-services3-components-node";
-// import { ConnectionException } from "pip-services3-commons-node";
-// import { Schema } from "pip-services3-commons-node";
+	"github.com/gorilla/mux"
+	cconf "github.com/pip-services3-go/pip-services3-commons-go/config"
+	crefer "github.com/pip-services3-go/pip-services3-commons-go/refer"
+	cvalid "github.com/pip-services3-go/pip-services3-commons-go/validate"
+	ccount "github.com/pip-services3-go/pip-services3-components-go/count"
+	clog "github.com/pip-services3-go/pip-services3-components-go/log"
+	"github.com/pip-services3-go/pip-services3-rpc-go/connect"
+)
 
-// import { HttpResponseSender } from "./HttpResponseSender";
-// import { HttpConnectionResolver } from "../connect/HttpConnectionResolver";
-// import { IRegisterable } from "./IRegisterable";
+/*
+Used for creating HTTP endpoints. An endpoint is a URL, at which a given service can be accessed by a client.
 
-// /*
-// Used for creating HTTP endpoints. An endpoint is a URL, at which a given service can be accessed by a client.
-//
-// ### Configuration parameters ###
-//
-// Parameters to pass to the [[configure]] method for component configuration:
-//
-// - connection(s) - the connection resolver"s connections:
-//     - "connection.discovery_key" - the key to use for connection resolving in a discovery service;
-//     - "connection.protocol" - the connection"s protocol;
-//     - "connection.host" - the target host;
-//     - "connection.port" - the target port;
-//     - "connection.uri" - the target URI.
-// - credential - the HTTPS credentials:
-//     - "credential.ssl_key_file" - the SSL private key in PEM
-//     - "credential.ssl_crt_file" - the SSL certificate in PEM
-//     - "credential.ssl_ca_file" - the certificate authorities (root cerfiticates) in PEM
-//
-// ### References ###
-//
-// A logger, counters, and a connection resolver can be referenced by passing the
-// following references to the object"s [[setReferences]] method:
-//
-// - logger: <code>"\*:logger:\*:\*:1.0"</code>;
-// - counters: <code>"\*:counters:\*:\*:1.0"</code>;
-// - discovery: <code>"\*:discovery:\*:\*:1.0"</code> (for the connection resolver).
-//
-// ### Examples ###
-//
-//     public MyMethod(_config: ConfigParams, _references: IReferences) {
-//         let endpoint = new HttpEndpoint();
-//         if (this._config)
-//             endpoint.configure(this._config);
-//         if (this._references)
-//             endpoint.setReferences(this._references);
-//         ...
-//
-//         this._endpoint.open(correlationId, (err) => {
-//                 this._opened = err == null;
-//                 callback(err);
-//             });
-//         ...
-//     }
-//  */
-// export class HttpEndpoint implements IOpenable, IConfigurable, IReferenceable {
+ Configuration parameters
 
-//     private static readonly _defaultConfig: ConfigParams = ConfigParams.fromTuples(
-//         "connection.protocol", "http",
-//         "connection.host", "0.0.0.0",
-//         "connection.port", 3000,
+Parameters to pass to the configure method for component configuration:
 
-//         "credential.ssl_key_file", null,
-//         "credential.ssl_crt_file", null,
-//         "credential.ssl_ca_file", null,
+- connection(s) - the connection resolver"s connections:
+    - "connection.discovery_key" - the key to use for connection resolving in a discovery service;
+    - "connection.protocol" - the connection"s protocol;
+    - "connection.host" - the target host;
+    - "connection.port" - the target port;
+    - "connection.uri" - the target URI.
+- credential - the HTTPS credentials:
+    - "credential.ssl_key_file" - the SSL func (c *HttpEndpoint )key in PEM
+    - "credential.ssl_crt_file" - the SSL certificate in PEM
+    - "credential.ssl_ca_file" - the certificate authorities (root cerfiticates) in PEM
 
-//         "options.maintenance_enabled", false,
-//         "options.request_max_size", 1024*1024,
-//         "options.file_max_size", 200*1024*1024,
-//         "options.connect_timeout", 60000,
-//         "options.debug", true
-//     );
+References:
 
-// 	private _server: any;
-// 	private _connectionResolver: HttpConnectionResolver = new HttpConnectionResolver();
-// 	private _logger: CompositeLogger = new CompositeLogger();
-// 	private _counters: CompositeCounters = new CompositeCounters();
-//     private _maintenanceEnabled: boolean = false;
-//     private _fileMaxSize: number = 20010241024;
-//     private _protocolUpgradeEnabled: boolean = false;
-//     private _uri: string;
-//     private _registrations: IRegisterable[] = [];
+A logger, counters, and a connection resolver can be referenced by passing the
+following references to the object"s setReferences method:
 
-//     /*
-//     Configures this HttpEndpoint using the given configuration parameters.
-//
-//     __Configuration parameters:__
-//     - __connection(s)__ - the connection resolver"s connections;
-//         - "connection.discovery_key" - the key to use for connection resolving in a discovery service;
-//         - "connection.protocol" - the connection"s protocol;
-//         - "connection.host" - the target host;
-//         - "connection.port" - the target port;
-//         - "connection.uri" - the target URI.
-//         - "credential.ssl_key_file" - SSL private key in PEM
-//         - "credential.ssl_crt_file" - SSL certificate in PEM
-//         - "credential.ssl_ca_file" - Certificate authority (root certificate) in PEM
-//
-//     @param config    configuration parameters, containing a "connection(s)" section.
-//
-//     @see [[https://rawgit.com/pip-services-node/pip-services3-commons-node/master/doc/api/classes/config.configparams.html ConfigParams]] (in the PipServices "Commons" package)
-//      */
-// 	public configure(config: ConfigParams): void {
-// 		config = config.setDefaults(HttpEndpoint._defaultConfig);
-// 		this._connectionResolver.configure(config);
+- logger: "\*:logger:\*:\*:1.0";
+- counters: "\*:counters:\*:\*:1.0";
+- discovery: "\*:discovery:\*:\*:1.0" (for the connection resolver).
 
-//         this._maintenanceEnabled = config.getAsBooleanWithDefault("options.maintenance_enabled", this._maintenanceEnabled);
-//         this._fileMaxSize = config.getAsLongWithDefault("options.file_max_size", this._fileMaxSize);
-//         this._protocolUpgradeEnabled = config.getAsBooleanWithDefault("options.protocol_upgrade_enabled", this._protocolUpgradeEnabled);
-//     }
+Examples:
 
-//     /*
-//     Sets references to this endpoint"s logger, counters, and connection resolver.
-//
-//     __References:__
-//     - logger: <code>"\*:logger:\*:\*:1.0"</code>
-//     - counters: <code>"\*:counters:\*:\*:1.0"</code>
-//     - discovery: <code>"\*:discovery:\*:\*:1.0"</code> (for the connection resolver)
-//
-//     @param references    an IReferences object, containing references to a logger, counters,
-//                          and a connection resolver.
-//
-//     @see [[https://rawgit.com/pip-services-node/pip-services3-commons-node/master/doc/api/interfaces/refer.ireferences.html IReferences]] (in the PipServices "Commons" package)
-//      */
-// 	public setReferences(references: IReferences): void {
-// 		this._logger.setReferences(references);
-// 		this._counters.setReferences(references);
-// 		this._connectionResolver.setReferences(references);
-// 	}
+    func (c *HttpEndpoint ) MyMethod(_config: ConfigParams, _references: IReferences) {
+        let endpoint = new HttpEndpoint();
+        if (c._config)
+            endpoint.configure(c._config);
+        if (c._references)
+            endpoint.setReferences(c._references);
+        ...
 
-//     /*
-//     @returns whether or not this endpoint is open with an actively listening REST server.
-//      */
-// 	public isOpen(): boolean {
-// 		return this._server != null;
-// 	}
+        c._endpoint.open(correlationId, (err) => {
+                c._opened = err == nil;
+                callback(err);
+            });
+        ...
+    }
+*/
 
-//     //TODO: check for correct understanding.
-//     /*
-//     Opens a connection using the parameters resolved by the referenced connection
-//     resolver and creates a REST server (service) using the set options and parameters.
-//
-//     @param correlationId     (optional) transaction id to trace execution through call chain.
-//     @param callback          (optional) the function to call once the opening process is complete.
-//                              Will be called with an error if one is raised.
-//      */
-// 	public open(correlationId: string, callback?: (err: any) => void): void {
-//     	if (this.isOpen()) {
-//             callback(null);
-//             return;
-//         }
+//implements IOpenable, IConfigurable, IReferenceable
 
-// 		this._connectionResolver.resolve(correlationId, (err, connection, credential) => {
-//             if (err != null) {
-//                 callback(err);
-//                 return;
-//             }
+type HttpEndpoint struct {
+	defaultConfig          *cconf.ConfigParams
+	server                 *http.Server
+	router                 *mux.Router
+	connectionResolver     *connect.HttpConnectionResolver
+	logger                 *clog.CompositeLogger
+	counters               *ccount.CompositeCounters
+	maintenanceEnabled     bool
+	fileMaxSize            int64
+	protocolUpgradeEnabled bool
+	uri                    string
+	registrations          []IRegisterable
+}
 
-//             this._uri = connection.getUri();
+// NewHttpEndpoint creates new HttpEndpoint
+func NewHttpEndpoint() *HttpEndpoint {
+	he := HttpEndpoint{}
+	he.defaultConfig = cconf.NewConfigParamsFromTuples(
+		"connection.protocol", "http",
+		"connection.host", "0.0.0.0",
+		"connection.port", "3000",
 
-//             try {
-//                 let options: any = {};
+		"credential.ssl_key_file", nil,
+		"credential.ssl_crt_file", nil,
+		"credential.ssl_ca_file", nil,
 
-//                 if (connection.getProtocol("http") == "https") {
-//                     let sslKeyFile = credential.getAsNullableString("ssl_key_file");
-//                     let privateKey = fs.readFileSync(sslKeyFile).toString();
+		"options.maintenance_enabled", false,
+		"options.request_max_size", 1024*1024,
+		"options.file_max_size", 200*1024*1024,
+		"options.connect_timeout", "60000",
+		"options.debug", "true",
+	)
+	he.connectionResolver = connect.NewHttpConnectionResolver()
+	he.logger = clog.NewCompositeLogger()
+	he.counters = ccount.NewCompositeCounters()
+	he.maintenanceEnabled = false
+	he.fileMaxSize = 200 * 1024 * 1024
+	he.protocolUpgradeEnabled = false
+	he.registrations = make([]IRegisterable, 0, 0)
+	return &he
+}
 
-//                     let sslCrtFile = credential.getAsNullableString("ssl_crt_file");
-//                     let certificate = fs.readFileSync(sslCrtFile).toString();
+/*
+   Configures this HttpEndpoint using the given configuration parameters.
 
-//                     let ca = [];
-//                     let sslCaFile = credential.getAsNullableString("ssl_ca_file");
-//                     if (sslCaFile != null) {
-//                         let caText = fs.readFileSync(sslCaFile).toString();
-//                         while (caText != null && caText.trim().length > 0) {
-//                             let crtIndex = caText.lastIndexOf("-----BEGIN CERTIFICATE-----");
-//                             if (crtIndex > -1) {
-//                                 ca.push(caText.substring(crtIndex));
-//                                 caText = caText.substring(0, crtIndex);
-//                             }
-//                         }
-//                     }
+   __Configuration parameters:__
+   - __connection(s)__ - the connection resolver"s connections;
+       - "connection.discovery_key" - the key to use for connection resolving in a discovery service;
+       - "connection.protocol" - the connection"s protocol;
+       - "connection.host" - the target host;
+       - "connection.port" - the target port;
+       - "connection.uri" - the target URI.
+       - "credential.ssl_key_file" - SSL func (c *HttpEndpoint )key in PEM
+       - "credential.ssl_crt_file" - SSL certificate in PEM
+       - "credential.ssl_ca_file" - Certificate authority (root certificate) in PEM
 
-//                     options.key = privateKey;
-//                     options.certificate = certificate;
-//                     //options.ca = ca;
-//                 }
-//                 options.handleUpgrades = this._protocolUpgradeEnabled;
+   - config    configuration parameters, containing a "connection(s)" section.
 
-//                 // Create instance of restify application
-//                 let restify = require("restify");
-//                 this._server = restify.createServer(options);
+   @see https://rawgit.com/pip-services-node/pip-services3-commons-node/master/doc/api/classes/config.configparams.html ConfigParams (in the PipServices "Commons" package)
+*/
+func (c *HttpEndpoint) Configure(config *cconf.ConfigParams) {
+	config = config.SetDefaults(c.defaultConfig)
+	c.connectionResolver.Configure(config)
 
-//                 // Configure restify application
-//                 this._server.use(restify.plugins.acceptParser(this._server.acceptable));
-//                 //this._server.use(restify.authorizationParser());
-//                 //this._server.use(restify.CORS());
-//                 this._server.use(restify.plugins.dateParser());
-//                 this._server.use(restify.plugins.queryParser());
-//                 this._server.use(restify.plugins.jsonp());
-//                 this._server.use(restify.plugins.gzipResponse());
-//                 this._server.use(restify.plugins.jsonBodyParser());
-//                 // this._server.use(restify.plugins.bodyParser({
-//                 //     maxFileSize: this._fileMaxSize
-//                 // }));
-//                 this._server.use(restify.plugins.conditionalRequest());
-//                 //this._server.use(restify.plugins.requestExpiry());
-//                 //if (options.get("throttle") != null)
-//                 //     this._server.use(restify.plugins.throttle(options.get("throttle")));
+	c.maintenanceEnabled = config.GetAsBooleanWithDefault("options.maintenance_enabled", c.maintenanceEnabled)
+	c.fileMaxSize = config.GetAsLongWithDefault("options.file_max_size", c.fileMaxSize)
+	c.protocolUpgradeEnabled = config.GetAsBooleanWithDefault("options.protocol_upgrade_enabled", c.protocolUpgradeEnabled)
+}
 
-//                 // Configure CORS requests
-//                 let corsMiddleware = require("restify-cors-middleware");
-//                 let cors = corsMiddleware({
-//                     preflightMaxAge: 5, //Optional
-//                     origins: ["*"],
-//                     allowHeaders: ["Authenticate", "x-session-id"],
-//                     exposeHeaders: ["Authenticate", "x-session-id"]
-//                   });
-//                 this._server.pre(cors.preflight);
-//                 this._server.use(cors.actual);
+/*
+   Sets references to this endpoint"s logger, counters, and connection resolver.
 
-//                 this._server.use((req, res, next) => { this.addCompatibility(req, res, next); });
-//                 this._server.use((req, res, next) => { this.noCache(req, res, next); });
-//                 this._server.use((req, res, next) => { this.doMaintenance(req, res, next); });
+   __References:__
+   - logger: "\*:logger:\*:\*:1.0"
+   - counters: "\*:counters:\*:\*:1.0"
+   - discovery: "\*:discovery:\*:\*:1.0" (for the connection resolver)
 
-//                 this.performRegistrations();
+   - references    an IReferences object, containing references to a logger, counters,
+                        and a connection resolver.
 
-//                 this._server.listen(
-//                     connection.getPort(),
-//                     connection.getHost(),
-//                     (err) => {
-//                         if (err == null) {
-//                             // Register the service URI
-//                             this._connectionResolver.register(correlationId, (err) => {
-//                                 this._logger.debug(correlationId, "Opened REST service at %s", this._uri);
+   @see https://rawgit.com/pip-services-node/pip-services3-commons-node/master/doc/api/interfaces/refer.ireferences.html IReferences (in the PipServices "Commons" package)
+*/
+func (c *HttpEndpoint) SetReferences(references crefer.IReferences) {
+	c.logger.SetReferences(references)
+	c.counters.SetReferences(references)
+	c.connectionResolver.SetReferences(references)
+}
 
-//                                 if (callback) callback(err);
-//                             });
-//                         } else {
-//                             // Todo: Hack!!!
-//                             console.error(err);
+/*
+   @returns whether or not this endpoint is open with an actively listening REST server.
+*/
+func (c *HttpEndpoint) IsOpen() bool {
+	return c.server != nil
+}
 
-//                             err = new ConnectionException(correlationId, "CANNOT_CONNECT", "Opening REST service failed")
-//                                 .wrap(err).withDetails("url", this._uri);
+//TODO: check for correct understanding.
+/*
+   Opens a connection using the parameters resolved by the referenced connection
+   resolver and creates a REST server (service) using the set options and parameters.
 
-//                             if (callback) callback(err);
-//                         }
-//                     }
-//                 );
-//             } catch (ex) {
-//                 this._server = null;
-//                 let err = new ConnectionException(correlationId, "CANNOT_CONNECT", "Opening REST service failed")
-//                     .wrap(ex).withDetails("url", this._uri);
-//                 if (callback) callback(err);
-//             }
-//         });
+   - correlationId     (optional) transaction id to trace execution through call chain.
+   - callback          (optional) the function to call once the opening process is complete.
+                            Will be called with an error if one is raised.
+*/
+func (c *HttpEndpoint) Open(correlationId string) error {
+	if c.IsOpen() {
+		return nil
+	}
 
-//     }
+	connection, credential, err := c.connectionResolver.Resolve(correlationId)
 
-//     private addCompatibility(req: any, res: any, next: () => void): void {
-//         req.param = (name) => {
-//             if (req.query) {
-//                 let param = req.query[name];
-//                 if (param) return param;
-//             }
-//             if (req.body) {
-//                 let param = req.body[name];
-//                 if (param) return param;
-//             }
-//             if (req.params) {
-//                 let param = req.params[name];
-//                 if (param) return param;
-//             }
-//             return null;
-//         }
+	if err != nil {
+		return err
+	}
 
-//         req.route.params = req.params;
+	c.uri = connection.Uri()
+	c.server = &http.Server{Addr: c.uri}
+	c.router = mux.NewRouter()
+	//     c.server.use(restify.CORS());
+	//     c.server.use(restify.plugins.dateParser());
+	//     c.server.use(restify.plugins.queryParser());
+	//     c.server.use(restify.plugins.jsonp());
+	//     c.server.use(restify.plugins.gzipResponse());
+	//     c.server.use(restify.plugins.jsonBodyParser());
 
-//         next();
-//     }
+	c.router.Use(c.addCors)
+	c.router.Use(c.addCompatibility)
+	c.router.Use(c.noCache)
+	c.router.Use(c.doMaintenance)
 
-//     // Prevents IE from caching REST requests
-//     private noCache(req: any, res: any, next: () => void): void {
-//         res.header("Cache-Control", "no-cache, no-store, must-revalidate");
-//         res.header("Pragma", "no-cache");
-//         res.header("Expires", 0);
-//         next();
-//     }
+	c.server.Handler = c.router
 
-//     // Returns maintenance error code
-//     private doMaintenance(req: any, res: any, next: () => void): void {
-//         // Make this more sophisticated
-//         if (this._maintenanceEnabled) {
-//             res.header("Retry-After", 3600);
-//             res.json(503);
-//         } else next();
-//     }
+	if connection.Protocol() == "https" { //"http"
+		sslKeyFile := credential.GetAsString("ssl_key_file")
+		sslCrtFile := credential.GetAsString("ssl_crt_file")
 
-//     /*
-//     Closes this endpoint and the REST server (service) that was opened earlier.
-//
-//     @param correlationId     (optional) transaction id to trace execution through call chain.
-//     @param callback          (optional) the function to call once the closing process is complete.
-//                              Will be called with an error if one is raised.
-//      */
-//     public close(correlationId: string, callback?: (err: any) => void): void {
-//         if (this._server != null) {
-//             // Eat exceptions
-//             try {
-//                 this._server.close();
-//                 this._logger.debug(correlationId, "Closed REST service at %s", this._uri);
-//             } catch (ex) {
-//                 this._logger.warn(correlationId, "Failed while closing REST service: %s", ex);
-//             }
+		go func() {
+			c.server.ListenAndServeTLS(sslKeyFile, sslCrtFile)
+		}()
 
-//             this._server = null;
-//             this._uri = null;
-//         }
+	} else {
+		go func() {
+			c.server.ListenAndServe()
+		}()
+	}
 
-//         callback(null);
-//     }
+	regErr := c.connectionResolver.Register(correlationId)
+	if regErr != nil {
+		c.logger.Error(correlationId, regErr, "ERROR_REG_SRV", "Can't register REST service at %s", c.uri)
+	}
+	c.logger.Debug(correlationId, "Opened REST service at %s", c.uri)
+	return regErr
+}
 
-//     /*
-//     Registers a registerable object for dynamic endpoint discovery.
-//
-//     @param registration      the registration to add.
-//
-//     @see [[IRegisterable]]
-//      */
-//     public register(registration: IRegisterable): void {
-//         this._registrations.push(registration);
-//     }
+func (c *HttpEndpoint) addCors(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+		w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+		next.ServeHTTP(w, r)
+	})
+}
 
-//     /*
-//     Unregisters a registerable object, so that it is no longer used in dynamic
-//     endpoint discovery.
-//
-//     @param registration      the registration to remove.
-//
-//     @see [[IRegisterable]]
-//      */
-//     public unregister(registration: IRegisterable): void {
-//         this._registrations = _.remove(this._registrations, r => r == registration);
-//     }
+func (c *HttpEndpoint) addCompatibility(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-//     private performRegistrations(): void {
-//         for (let registration of this._registrations) {
-//             registration.register();
-//         }
-//     }
+		// req.param = (name) => {
+		//     if (req.query) {
+		//         let param = req.query[name];
+		//         if (param) return param;
+		//     }
+		//     if (req.body) {
+		//         let param = req.body[name];
+		//         if (param) return param;
+		//     }
+		//     if (req.params) {
+		//         let param = req.params[name];
+		//         if (param) return param;
+		//     }
+		//     return nil;
 
-//     private fixRoute(route: string): string {
-//         if (route && route.length > 0 && !route.startsWith("/"))
-//             route = "/" + route;
-//         return route;
-//     }
+		// }
+		// req.route.params = req.params;
 
-//     /*
-//     Registers an action in this objects REST server (service) by the given method and route.
-//
-//     @param method        the HTTP method of the route.
-//     @param route         the route to register in this object"s REST server (service).
-//     @param schema        the schema to use for parameter validation.
-//     @param action        the action to perform at the given route.
-//      */
-//     public registerRoute(method: string, route: string, schema: Schema,
-//         action: (req: any, res: any) => void): void {
-//         method = method.toLowerCase();
-//         if (method == "delete") method = "del";
+		next.ServeHTTP(w, r)
+	})
+}
 
-//         route = this.fixRoute(route);
+// Prevents IE from caching REST requests
+func (c *HttpEndpoint) noCache(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Cache-Control", "no-cache, no-store, must-revalidate")
+		w.Header().Add("Pragma", "no-cache")
+		w.Header().Add("Expires", "0")
+		next.ServeHTTP(w, r)
+	})
+}
 
-//         // Hack!!! Wrapping action to preserve prototyping context
-//         let actionCurl = (req, res) => {
-//             // Perform validation
-//             if (schema != null) {
-//                 let params = _.extend({}, req.params, { body: req.body });
-//                 let correlationId = params.correlaton_id;
-//                 let err = schema.validateAndReturnException(correlationId, params, false);
-//                 if (err != null) {
-//                     HttpResponseSender.sendError(req, res, err);
-//                     return;
-//                 }
-//             }
+// Returns maintenance error code
+func (c *HttpEndpoint) doMaintenance(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// // Make this more sophisticated
+		if c.maintenanceEnabled {
+			w.Header().Add("Retry-After", "3600")
+			//res.json(503)
+			jsonStr, _ := json.Marshal(503)
+			w.Write(jsonStr)
+			next.ServeHTTP(w, r)
+		} else {
+			next.ServeHTTP(w, r)
+		}
+	})
+}
 
-//             // Todo: perform verification?
-//             action(req, res);
-//         };
+/*
+Closes this endpoint and the REST server (service) that was opened earlier.
 
-//         // Wrapping to preserve "this"
-//         let self = this;
-//         this._server[method](route, actionCurl);
-//     }
+- correlationId     (optional) transaction id to trace execution through call chain.
+- callback          (optional) the function to call once the closing process is complete.
+                         Will be called with an error if one is raised.
+*/
+func (c *HttpEndpoint) Close(correlationId string) error {
+	if c.server != nil {
+		// Attempt a graceful shutdown
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		clErr := c.server.Shutdown(ctx)
+		if clErr != nil {
+			c.logger.Warn(correlationId, "Failed while closing REST service: %s", clErr.Error())
+			return clErr
+		}
+		c.logger.Debug(correlationId, "Closed REST service at %s", c.uri)
+		c.server = nil
+		c.uri = ""
+	}
 
-//     /*
-//     Registers an action with authorization in this objects REST server (service)
-//     by the given method and route.
-//
-//     @param method        the HTTP method of the route.
-//     @param route         the route to register in this object"s REST server (service).
-//     @param schema        the schema to use for parameter validation.
-//     @param authorize     the authorization interceptor
-//     @param action        the action to perform at the given route.
-//      */
-//     public registerRouteWithAuth(method: string, route: string, schema: Schema,
-//         authorize: (req: any, res: any, next: () => void) => void,
-//         action: (req: any, res: any) => void): void {
+	return nil
+}
 
-//         if (authorize) {
-//             let nextAction = action;
-//             action = (req, res) => {
-//                 authorize(req, res, () => { nextAction(req, res); });
-//             }
-//         }
+/*
+Registers a registerable object for dynamic endpoint discovery.
 
-//         this.registerRoute(method, route, schema, action);
-//     }
+- registration      the registration to add.
 
-//     /*
-//     Registers a middleware action for the given route.
-//
-//     @param route         the route to register in this object"s REST server (service).
-//     @param action        the middleware action to perform at the given route.
-//      */
-//     public registerInterceptor(route: string,
-//         action: (req: any, res: any, next: () => void) => void): void {
+@see IRegisterable
+*/
+func (c *HttpEndpoint) Register(registration IRegisterable) {
+	c.registrations.Push(registration)
+}
 
-//         route = this.fixRoute(route);
+/*
+Unregisters a registerable object, so that it is no longer used in dynamic
+endpoint discovery.
 
-//         this._server.use((req, res, next) => {
-//             if (route != null && route != "" && !req.url.startsWith(route))
-//                 next();
-//             else action(req, res, next);
-//         });
-//     }
-// }
+- registration      the registration to remove.
+
+@see IRegisterable
+*/
+func (c *HttpEndpoint) Unregister(registration IRegisterable) {
+	for i := 0; i < len(c.registrations); {
+		if c.registrations[i] == registration {
+			if i == len(c.registrations)-1 {
+				c.registrations = c.registrations[:i]
+			} else {
+				c.registrations = append(c.registrations[:i], c.registrations[i+1:]...)
+			}
+		} else {
+			i++
+		}
+	}
+	//c.registrations = _.remove(c.registrations, r => r == registration);
+}
+
+func (c *HttpEndpoint) performRegistrations() {
+	for _, registration := range c.registrations {
+		registration.Register()
+	}
+}
+
+func (c *HttpEndpoint) fixRoute(route string) string {
+	if len(route) > 0 && !strings.HasPrefix(route, "/") {
+		route = "/" + route
+	}
+	return route
+}
+
+/*
+Registers an action in this objects REST server (service) by the given method and route.
+
+- method        the HTTP method of the route.
+- route         the route to register in this object"s REST server (service).
+- schema        the schema to use for parameter validation.
+- action        the action to perform at the given route.
+*/
+func (c *HttpEndpoint) RegisterRoute(method string, route string, schema *cvalid.Schema,
+	action http.HandlerFunc) {
+
+	method = strings.ToLower(method)
+	if method == "delete" {
+		method = "del"
+	}
+
+	route = c.fixRoute(route)
+
+	// Hack!!! Wrapping action to preserve prototyping context
+	actionCurl := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Perform validation
+		if schema != nil {
+			//params = _.extend({}, req.params, { body: req.body })
+			var params map[string]interface{} = make(map[string]interface{}, 0,0)
+			params["params"] = r.URL.Query()
+			cpBody := r.GetBody()
+			buf := ioutil.ReadFull(cpBody)
+			body, _ := json.Unmarshal(buf) 
+			params["body"] = body
+
+			correlationId := ""
+			if correlationIds, ok := r.URL.Query()["correlaton_id"]; ok {
+				correlationId = correlationIds[0]
+			}
+
+			err := schema.ValidateAndReturnError(correlationId, params, false)
+			if err != nil {
+				HttpResponseSender.SendError(w, r, err)
+				return
+			}
+		}
+		action(w, r)
+	})
+
+	// Wrapping to preserve "this"
+	// let self = c;
+	// c.server[method](route, actionCurl);
+	c.router.Handle(route, actionCurl).Methods(strings.ToUpper(method))
+}
+
+/*
+Registers an action with authorization in this objects REST server (service)
+by the given method and route.
+
+- method        the HTTP method of the route.
+- route         the route to register in this object"s REST server (service).
+- schema        the schema to use for parameter validation.
+- authorize     the authorization interceptor
+- action        the action to perform at the given route.
+ */
+func (c *HttpEndpoint ) RegisterRouteWithAuth(method string, route string, schema *cvalid.Schema,
+    authorize func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc),
+    action http.HandlerFunc) {
+
+    if authorize != nil {
+        nextAction := action;
+        action = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request){
+            authorize(w, r, func(){ nextAction(w, r); });
+        })
+    }
+
+    c.registerRoute(method, route, schema, action);
+}
+
+/*
+Registers a middleware action for the given route.
+
+- route         the route to register in this object"s REST server (service).
+- action        the middleware action to perform at the given route.
+ */
+func (c *HttpEndpoint ) RegisterInterceptor(route string, action func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc)) {
+
+    route = c.fixRoute(route)
+	interceptorFunc := func(next http.HandlerFunc) http.HandlerFunc {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) 
+		if route != "" && !strings.HasPrefix(r.Url.startsWith,route) {
+			next.ServeHTTP(w, r)
+		} else {
+			action(w, r, next);
+		}
+	})
+	c.router.use(interceptorFunc)
+}

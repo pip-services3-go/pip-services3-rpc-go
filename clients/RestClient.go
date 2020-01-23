@@ -8,13 +8,13 @@ import (
 	"strings"
 	"time"
 
-	cconf "github.com/pip-services3-go/pip-services3-commons-go/v3/config"
-	cdata "github.com/pip-services3-go/pip-services3-commons-go/v3/data"
-	cerr "github.com/pip-services3-go/pip-services3-commons-go/v3/errors"
-	crefer "github.com/pip-services3-go/pip-services3-commons-go/v3/refer"
-	ccount "github.com/pip-services3-go/pip-services3-components-go/v3/count"
-	clog "github.com/pip-services3-go/pip-services3-components-go/v3/log"
-	rpccon "github.com/pip-services3-go/pip-services3-rpc-go/v3/connect"
+	cconf "github.com/pip-services3-go/pip-services3-commons-go/config"
+	cdata "github.com/pip-services3-go/pip-services3-commons-go/data"
+	cerr "github.com/pip-services3-go/pip-services3-commons-go/errors"
+	crefer "github.com/pip-services3-go/pip-services3-commons-go/refer"
+	ccount "github.com/pip-services3-go/pip-services3-components-go/count"
+	clog "github.com/pip-services3-go/pip-services3-components-go/log"
+	rpccon "github.com/pip-services3-go/pip-services3-rpc-go/connect"
 )
 
 // import { HttpConnectionResolver } from "../connect/HttpConnectionResolver";

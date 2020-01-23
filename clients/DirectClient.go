@@ -1,11 +1,11 @@
 package clients
 
 import (
-	cconf "github.com/pip-services3-go/pip-services3-commons-go/v3/config"
-	cerr "github.com/pip-services3-go/pip-services3-commons-go/v3/errors"
-	crefer "github.com/pip-services3-go/pip-services3-commons-go/v3/refer"
-	ccount "github.com/pip-services3-go/pip-services3-components-go/v3/count"
-	clog "github.com/pip-services3-go/pip-services3-components-go/v3/log"
+	cconf "github.com/pip-services3-go/pip-services3-commons-go/config"
+	cerr "github.com/pip-services3-go/pip-services3-commons-go/errors"
+	crefer "github.com/pip-services3-go/pip-services3-commons-go/refer"
+	ccount "github.com/pip-services3-go/pip-services3-components-go/count"
+	clog "github.com/pip-services3-go/pip-services3-components-go/log"
 )
 
 /*

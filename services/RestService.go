@@ -3,11 +3,11 @@ package services
 import (
 	"net/http"
 
-	cconf "github.com/pip-services3-go/pip-services3-commons-go/v3/config"
-	cerr "github.com/pip-services3-go/pip-services3-commons-go/v3/errors"
-	crefer "github.com/pip-services3-go/pip-services3-commons-go/v3/refer"
-	ccount "github.com/pip-services3-go/pip-services3-components-go/v3/count"
-	clog "github.com/pip-services3-go/pip-services3-components-go/v3/log"
+	cconf "github.com/pip-services3-go/pip-services3-commons-go/config"
+	cerr "github.com/pip-services3-go/pip-services3-commons-go/errors"
+	crefer "github.com/pip-services3-go/pip-services3-commons-go/refer"
+	ccount "github.com/pip-services3-go/pip-services3-components-go/count"
+	clog "github.com/pip-services3-go/pip-services3-components-go/log"
 )
 
 /*
@@ -91,19 +91,19 @@ type RestService struct {
 	//The base route.
 	BaseRoute string
 	//The HTTP endpoint that exposes this service.
-	Endpoint HttpEndpoint
+	Endpoint *HttpEndpoint
 	//The dependency resolver.
-	DependencyResolver DependencyResolver
+	DependencyResolver crefer.DependencyResolver
 	//The logger.
-	Logger CompositeLogger
+	Logger *clog.CompositeLogger
 	//The performance counters.
-	Counters CompositeCounters
+	Counters ccount.CompositeCounters
 }
 
 // NewRestService is create new RestService
 func NewRestService() *RestService {
 	rs := RestService{}
-	rs.defaultConfig = NewConfigParamsFromTuples(
+	rs.defaultConfig = cconf.NewConfigParamsFromTuples(
 		"base_route", "",
 		"dependencies.endpoint", "*:endpoint:http:*:1.0",
 	)
@@ -116,12 +116,12 @@ func NewRestService() *RestService {
 //Configures component by passing configuration parameters.
 //- config    configuration parameters to be set.
 func (c *RestService) Configure(config cconf.ConfigParams) {
-	config = config.SetDefaults(RestService.defaultConfig)
+	config = config.SetDefaults(c.defaultConfig)
 
 	c.config = config
-	c.DependencyResolver.configure(config)
+	c.DependencyResolver.Configure(config)
 
-	c.BaseRoute = config.getAsStringWithDefault("base_route", c.BaseRoute)
+	c.BaseRoute = config.GetAsStringWithDefault("base_route", c.BaseRoute)
 }
 
 /*
@@ -129,15 +129,15 @@ func (c *RestService) Configure(config cconf.ConfigParams) {
 
 	- references 	references to locate the component dependencies.
 */
-func (c *RestService) SetReferences(references cref.IReferences) {
+func (c *RestService) SetReferences(references crefer.IReferences) {
 	c.references = references
 
-	c.Logger.setReferences(references)
-	c.Counters.setReferences(references)
-	c.DependencyResolver.setReferences(references)
+	c.Logger.SetReferences(references)
+	c.Counters.SetReferences(references)
+	c.DependencyResolver.SetReferences(references)
 
 	// Get endpoint
-	c.Endpoint = c.DependencyResolver.getOneOptional("endpoint")
+	c.Endpoint = c.DependencyResolver.GetOneOptional("endpoint")
 	// Or create a local one
 	if c.Endpoint == nil {
 		c.Endpoint = c.createEndpoint()
@@ -146,7 +146,7 @@ func (c *RestService) SetReferences(references cref.IReferences) {
 		c.localEndpoint = false
 	}
 	// Add registration callback to the endpoint
-	c.Endpoint.register(c)
+	c.Endpoint.Register(c)
 }
 
 /*
@@ -155,18 +155,18 @@ func (c *RestService) SetReferences(references cref.IReferences) {
 func (c *RestService) UnsetReferences() {
 	// Remove registration callback from endpoint
 	if c.Endpoint != nil {
-		c.Endpoint.unregister(c)
+		c.Endpoint.Unregister(c)
 		c.Endpoint = nil
 	}
 }
 
-func (c *RestService) createEndpoint() HttpEndpoint {
+func (c *RestService) createEndpoint() *HttpEndpoint {
 	endpoint := NewHttpEndpoint()
 
-	if c.config {
+	if c.config != nil {
 		endpoint.Configure(c.config)
 	}
-	if c.references {
+	if c.references != nil {
 		endpoint.SetReferences(c.references)
 	}
 
@@ -196,14 +196,14 @@ func (c *RestService) Instrument(correlationId string, name string) ccount.Timin
    - result            (optional) an execution result
    - callback          (optional) an execution callback
 */
-func (c *RestService) InstrumentError(correlationId string, name string, err any,
-	result interface{}) (result interface{}, err error) {
-	if err != nil {
-		c.Logger.error(correlationId, err, "Failed to execute %s method", name)
-		c.Counters.incrementOne(name + ".exec_errors")
+func (c *RestService) InstrumentError(correlationId string, name string, errIn error,
+	resIn interface{}) (result interface{}, err error) {
+	if errIn != nil {
+		c.Logger.Error(correlationId, errIn, "Failed to execute %s method", name)
+		c.Counters.IncrementOne(name + ".exec_errors")
 	}
 
-	return result, err
+	return resIn, errIn
 }
 
 /*
@@ -228,7 +228,7 @@ func (c *RestService) Open(correlationId string) error {
 
 	if c.Endpoint == nil {
 		c.Endpoint = c.createEndpoint()
-		c.Endpoint.register(c)
+		c.Endpoint.Register(c)
 		c.localEndpoint = true
 	}
 
@@ -238,10 +238,9 @@ func (c *RestService) Open(correlationId string) error {
 			c.opened = false
 			return oErr
 		}
-	} else {
-		c.opened = true
-		return nil
 	}
+	c.opened = true
+	return nil
 }
 
 /*
@@ -265,10 +264,9 @@ func (c *RestService) Close(correlationId string) error {
 			c.opened = false
 			return cErr
 		}
-	} else {
-		c.opened = false
-		return nil
 	}
+	c.opened = false
+	return nil
 }
 
 /*

@@ -1,7 +1,7 @@
 package clients
 
 import (
-	cdata "github.com/pip-services3-go/pip-services3-commons-go/v3/data"
+	cdata "github.com/pip-services3-go/pip-services3-commons-go/data"
 )
 
 /* CommandableHttpClient is abstract client that calls commandable HTTP service.

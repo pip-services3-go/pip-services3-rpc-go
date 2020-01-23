@@ -2,8 +2,8 @@ package auth
 
 import (
 	"encoding/base64"
-	cerr "github.com/pip-services3-go/pip-services3-commons-go/v3/errors"
-	services "github.com/pip-services3-go/pip-services3-rpc-go/v3/services"
+	cerr "github.com/pip-services3-go/pip-services3-commons-go/errors"
+	services "github.com/pip-services3-go/pip-services3-rpc-go/services"
 	"net/http"
 	"strings"
 )

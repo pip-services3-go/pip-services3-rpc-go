@@ -4,11 +4,11 @@ import (
 	"net/url"
 	"strconv"
 
-	cconf "github.com/pip-services3-go/pip-services3-commons-go/v3/config"
-	cerr "github.com/pip-services3-go/pip-services3-commons-go/v3/errors"
-	crefer "github.com/pip-services3-go/pip-services3-commons-go/v3/refer"
-	cauth "github.com/pip-services3-go/pip-services3-components-go/v3/auth"
-	ccon "github.com/pip-services3-go/pip-services3-components-go/v3/connect"
+	cconf "github.com/pip-services3-go/pip-services3-commons-go/config"
+	cerr "github.com/pip-services3-go/pip-services3-commons-go/errors"
+	crefer "github.com/pip-services3-go/pip-services3-commons-go/refer"
+	cauth "github.com/pip-services3-go/pip-services3-components-go/auth"
+	ccon "github.com/pip-services3-go/pip-services3-components-go/connect"
 )
 
 /*
