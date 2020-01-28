@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 	"time"
+	"ioutil"
 
 	"github.com/gorilla/mux"
 	cconf "github.com/pip-services3-go/pip-services3-commons-go/config"
@@ -420,7 +421,7 @@ func (c *HttpEndpoint ) RegisterRouteWithAuth(method string, route string, schem
         })
     }
 
-    c.registerRoute(method, route, schema, action);
+    c.RegisterRoute(method, route, schema, action);
 }
 
 /*
@@ -433,7 +434,7 @@ func (c *HttpEndpoint ) RegisterInterceptor(route string, action func(w http.Res
 
     route = c.fixRoute(route)
 	interceptorFunc := func(next http.HandlerFunc) http.HandlerFunc {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) 
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request){ 
 		if route != "" && !strings.HasPrefix(r.Url.startsWith,route) {
 			next.ServeHTTP(w, r)
 		} else {
@@ -441,4 +442,5 @@ func (c *HttpEndpoint ) RegisterInterceptor(route string, action func(w http.Res
 		}
 	})
 	c.router.use(interceptorFunc)
+}
 }

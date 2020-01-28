@@ -9,12 +9,19 @@ github.com/hashicorp/go-hclog v0.9.2 h1:CG6TE5H9/JXsFWJCfoIVpKFIkFe6ysEuHirp4DxC
 github.com/hashicorp/go-hclog v0.9.2/go.mod h1:5CU+agLiy3J7N7QjHK5d05KxGsuXiQLrjA0H7acj2lQ=
 github.com/hashicorp/go-retryablehttp v0.6.4 h1:BbgctKO892xEyOXnGiaAwIoSq1QZ/SS4AhjoAh9DnfY=
 github.com/hashicorp/go-retryablehttp v0.6.4/go.mod h1:vAew36LZh98gCBJNLH42IQ1ER/9wtLZZ8meHqQvEYWY=
+github.com/kr/pretty v0.2.0/go.mod h1:ipq/a2n7PKx3OHsz4KJII5eveXtPO4qwEXGdVfWzfnI=
+github.com/kr/pty v1.1.1/go.mod h1:pFQYn66WHrOpPYNljwOMqo10TkYh1fy3cYio2l3bCsQ=
+github.com/kr/text v0.1.0/go.mod h1:4Jbv+DJW3UT/LiOwJeYQe1efqtUx/iVham/4vfdArNI=
 github.com/pip-services3-go/pip-services3-commons-go v0.0.0-20200122115504-d6c6fb5edd7f h1:qY3gKsriaJ8worEfG68rrf+JTpSr1Aezu+C5MEZAkhg=
 github.com/pip-services3-go/pip-services3-commons-go v0.0.0-20200122115504-d6c6fb5edd7f/go.mod h1:a2fIaCl4TUShJhgMMHmO+7773pf+Nkyrq1JDmJVYjd0=
+github.com/pip-services3-go/pip-services3-commons-go v1.0.0 h1:hAX42NwjY6k9KGDfsVyeL+8lfNZAzcpJ5+bgAP5PPsc=
+github.com/pip-services3-go/pip-services3-commons-go v1.0.0/go.mod h1:a2fIaCl4TUShJhgMMHmO+7773pf+Nkyrq1JDmJVYjd0=
 github.com/pip-services3-go/pip-services3-commons-go v3.0.0 h1:HNKmnxiTGlSVe4F3Ln2D9wS4+s2c0okzRzeFg4XEhNQ=
 github.com/pip-services3-go/pip-services3-commons-go v3.0.0/go.mod h1:pmSo3TFpcIw1PmXFuSaZLx90ivv/MyKkONJn+7mDV8M=
 github.com/pip-services3-go/pip-services3-components-go v0.0.0-20200123182309-056a0aff0a4a h1:L8kkW41DEkgihaKCrEyLea083edpFsWN+T1ZI+ozjkY=
 github.com/pip-services3-go/pip-services3-components-go v0.0.0-20200123182309-056a0aff0a4a/go.mod h1:0MZ7mxKozl3Oe5Z1hjJUEu8UtY2tm54A2+GVbaPQaUo=
+github.com/pip-services3-go/pip-services3-components-go v1.0.0 h1:v2aJdHYohzNg50jcCrWDmprYRvXwhMaKnDXhNo3WkgM=
+github.com/pip-services3-go/pip-services3-components-go v1.0.0/go.mod h1:Me/KFWw/xeMML89twlGdFKqnvprgt2qyi8xAV1+XKGs=
 github.com/pip-services3-go/pip-services3-components-go v3.0.0 h1:6CcNFJoWmQJqwtNPedIa7lbFAZ8hLHEeyuEgaSslhaU=
 github.com/pip-services3-go/pip-services3-components-go v3.0.0/go.mod h1:/6Q6GGcQ4rdJoxDvv5Z6Mytbbs6vRW9J5knu7gmuj9M=
 github.com/pip-services3-go/pip-services3-rpc-go v0.0.0-20180713194440-7e8a3d0eb75c h1:USVC053qHEWHdM6nrEAgsVnoCWpquhMLk2LeLtOt8JA=
@@ -30,3 +37,4 @@ gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8
 gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/yaml.v2 v2.2.2/go.mod h1:hI93XBmqTisBFMUTm0b8Fm+jr3Dg1NNxqwp+5A1VGuI=
 gopkg.in/yaml.v2 v2.2.7/go.mod h1:hI93XBmqTisBFMUTm0b8Fm+jr3Dg1NNxqwp+5A1VGuI=
+gopkg.in/yaml.v2 v2.2.8/go.mod h1:hI93XBmqTisBFMUTm0b8Fm+jr3Dg1NNxqwp+5A1VGuI=
