@@ -2,9 +2,10 @@ package services
 
 import (
 	"encoding/json"
-	cerr "github.com/pip-services3-go/pip-services3-commons-go/errors"
 	"io"
 	"net/http"
+
+	cerr "github.com/pip-services3-go/pip-services3-commons-go/errors"
 )
 
 /*
@@ -24,7 +25,7 @@ var HttpResponseSender THttpResponseSender = THttpResponseSender{}
    - res       a HTTP response object.
    - error     an error object to be sent.
 */
-func (c *THttpResponseSender) SendError(req *http.Request, res http.ResponseWriter, err error) {
+func (c *THttpResponseSender) SendError(res http.ResponseWriter, req *http.Request, err error) {
 	// if err == nil {
 	// 	err = Error{}
 	// }
@@ -65,21 +66,21 @@ If error occur it sends ErrorDescription with approproate status code.
 - res       a HTTP response object.
 - callback function that receives execution result or error.
 */
-func (c *THttpResponseSender) SendResult(req *http.Request, res http.ResponseWriter) func(result interface{}, err error) {
-	return func(result interface{}, err error) {
-		if err != nil {
-			HttpResponseSender.SendError(req, res, err)
-			return
-		}
-		if result == nil {
-			res.WriteHeader(204)
-		} else {
-			jsonObj, jsonErr := json.Marshal(result)
-			if jsonErr == nil {
-				io.WriteString(res, (string)(jsonObj))
-			}
+func (c *THttpResponseSender) SendResult(res http.ResponseWriter, req *http.Request, result interface{}, err error) {
+	//return func(result interface{}, err error) {
+	if err != nil {
+		HttpResponseSender.SendError(res, req, err)
+		return
+	}
+	if result == nil {
+		res.WriteHeader(204)
+	} else {
+		jsonObj, jsonErr := json.Marshal(result)
+		if jsonErr == nil {
+			io.WriteString(res, (string)(jsonObj))
 		}
 	}
+	//}
 }
 
 /*
@@ -90,14 +91,14 @@ If error occur it sends ErrorDescription with approproate status code.
 - res       a HTTP response object.
 - callback function that receives error or nil for success.
 */
-func (c *THttpResponseSender) SendEmptyResult(req *http.Request, res http.ResponseWriter) func(err error) {
-	return func(err error) {
-		if err != nil {
-			HttpResponseSender.SendError(req, res, err)
-			return
-		}
-		res.WriteHeader(204)
+func (c *THttpResponseSender) SendEmptyResult(res http.ResponseWriter, req *http.Request, err error) {
+	//return func(err error) {
+	if err != nil {
+		HttpResponseSender.SendError(res, req, err)
+		return
 	}
+	res.WriteHeader(204)
+	//}
 }
 
 /*
@@ -113,23 +114,23 @@ If error occur it sends ErrorDescription with approproate status code.
 - res       a HTTP response object.
 - callback function that receives execution result or error.
 */
-func (c *THttpResponseSender) SendCreatedResult(req *http.Request, res http.ResponseWriter) func(result interface{}, err error) {
-	return func(result interface{}, err error) {
-		if err != nil {
-			HttpResponseSender.SendError(req, res, err)
-			return
-		}
-		if result == nil {
-			res.WriteHeader(204)
-		} else {
-			res.WriteHeader(201)
-			//res.Json(result)
-			jsonObj, jsonErr := json.Marshal(result)
-			if jsonErr == nil {
-				io.WriteString(res, (string)(jsonObj))
-			}
+func (c *THttpResponseSender) SendCreatedResult(res http.ResponseWriter, req *http.Request, result interface{}, err error) {
+	//return func(result interface{}, err error) {
+	if err != nil {
+		HttpResponseSender.SendError(res, req, err)
+		return
+	}
+	if result == nil {
+		res.WriteHeader(204)
+	} else {
+		res.WriteHeader(201)
+		//res.Json(result)
+		jsonObj, jsonErr := json.Marshal(result)
+		if jsonErr == nil {
+			io.WriteString(res, (string)(jsonObj))
 		}
 	}
+	//}
 }
 
 /*
@@ -145,21 +146,21 @@ If error occur it sends ErrorDescription with approproate status code.
 - res       a HTTP response object.
 - callback function that receives execution result or error.
 */
-func (c *THttpResponseSender) SendDeletedResult(req *http.Request, res http.ResponseWriter) func(result interface{}, err error) {
-	return func(result interface{}, err error) {
-		if err != nil {
-			HttpResponseSender.SendError(req, res, err)
-			return
-		}
-		if result == nil {
-			res.WriteHeader(204)
-		} else {
-			res.WriteHeader(200)
-			//res.Json(result)
-			jsonObj, jsonErr := json.Marshal(result)
-			if jsonErr == nil {
-				io.WriteString(res, (string)(jsonObj))
-			}
+func (c *THttpResponseSender) SendDeletedResult(res http.ResponseWriter, req *http.Request, result interface{}, err error) {
+	//return func(result interface{}, err error) {
+	if err != nil {
+		HttpResponseSender.SendError(res, req, err)
+		return
+	}
+	if result == nil {
+		res.WriteHeader(204)
+	} else {
+		res.WriteHeader(200)
+		//res.Json(result)
+		jsonObj, jsonErr := json.Marshal(result)
+		if jsonErr == nil {
+			io.WriteString(res, (string)(jsonObj))
 		}
 	}
+	//}
 }

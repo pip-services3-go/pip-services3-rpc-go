@@ -1,72 +1,97 @@
 package services
 
-// /* @module services */
-// import { ContextInfo } from "pip-services3-components-node";
-// import { Descriptor } from "pip-services3-commons-node";
-// import { IReferences } from "pip-services3-commons-node";
-// import { StringConverter } from "pip-services3-commons-node";
-// import { ConfigParams } from "pip-services3-commons-node";
+import (
+	"net/http"
+	"time"
 
-// import { RestOperations } from "./RestOperations";
+	cconv "github.com/pip-services3-go/pip-services3-commons-go/convert"
+	crefer "github.com/pip-services3-go/pip-services3-commons-go/refer"
+	cinfo "github.com/pip-services3-go/pip-services3-components-go/info"
+)
 
-// export class StatusOperations extends RestOperations {
-//     private _startTime: Date = new Date();
-//     private _references2: IReferences;
-//     private _contextInfo: ContextInfo;
+type StatusOperations struct {
+	RestOperations
+	startTime   time.Time
+	references2 crefer.IReferences
+	contextInfo *cinfo.ContextInfo
+}
 
-//     public constructor() {
-//         super();
-//         this._dependencyResolver.put("context-info", new Descriptor("pip-services", "context-info", "default", "*", "1.0"));
-//     }
+func NewStatusOperations() *StatusOperations {
+	//super();
+	so := StatusOperations{}
+	so.startTime = time.Now()
+	so.DependencyResolver.Put("context-info", crefer.NewDescriptor("pip-services", "context-info", "default", "*", "1.0"))
+	return &so
+}
 
-//     /*
-// 	Sets references to dependent components.
-//
-// 	@param references 	references to locate the component dependencies.
-//      */
-//     public setReferences(references: IReferences): void {
-//         this._references2 = references;
-//         super.setReferences(references);
+/*
+	Sets references to dependent components.
 
-//         this._contextInfo = this._dependencyResolver.getOneOptional<ContextInfo>("context-info");
-//     }
+	@param references 	references to locate the component dependencies.
+*/
+func (c *StatusOperations) SetReferences(references crefer.IReferences) {
+	c.references2 = references
+	c.RestOperations.SetReferences(references)
 
-//     public getStatusOperation() {
-//         return (req, res) => {
-//             this.status(req, res);
-//         };
-//     }
+	depRes := c.DependencyResolver.GetOneOptional("context-info")
+	if depRes != nil {
+		c.contextInfo = depRes.(*cinfo.ContextInfo)
+	}
+}
 
-//     /*
-//     Handles status requests
-//
-//     @param req   an HTTP request
-//     @param res   an HTTP response
-//      */
-//     public status(req, res): void {
-//         let id = this._contextInfo != null ? this._contextInfo.contextId : "";
-//         let name = this._contextInfo != null ? this._contextInfo.name : "Unknown";
-//         let description = this._contextInfo != null ? this._contextInfo.description : "";
-//         let uptime = new Date().getTime() - this._startTime.getTime();
-//         let properties = this._contextInfo != null ? this._contextInfo.properties : "";
+func (c *StatusOperations) GetStatusOperation() func(res http.ResponseWriter, req *http.Request) {
+	return func(res http.ResponseWriter, req *http.Request) {
+		c.Status(res, req)
+	}
+}
 
-//         let components = [];
-//         if (this._references2 != null) {
-//             for (let locator of this._references2.getAllLocators())
-//                 components.push(locator.toString());
-//         }
+/*
+   Handles status requests
 
-//         let status =  {
-//             id: id,
-//             name: name,
-//             description: description,
-//             start_time: StringConverter.toString(this._startTime),
-//             current_time: StringConverter.toString(new Date()),
-//             uptime: uptime,
-//             properties: properties,
-//             components: components
-//         };
+   @param req   an HTTP request
+   @param res   an HTTP response
+*/
+func (c *StatusOperations) Status(res http.ResponseWriter, req *http.Request) {
 
-//         this.sendResult(req, res)(null, status);
-//     }
-// }
+	id := ""
+	if c.contextInfo != nil {
+		id = c.contextInfo.ContextId
+	}
+
+	name := "Unknown"
+	if c.contextInfo != nil {
+		name = c.contextInfo.Name
+	}
+
+	description := ""
+	if c.contextInfo != nil {
+		description = c.contextInfo.Description
+	}
+
+	uptime := time.Now().Sub(c.startTime)
+
+	properties := make(map[string]string)
+	if c.contextInfo != nil {
+		properties = c.contextInfo.Properties
+	}
+
+	var components []string
+	if c.references2 != nil {
+		for _, locator := range c.references2.GetAllLocators() {
+			components = append(components, cconv.StringConverter.ToString(locator))
+		}
+	}
+
+	status := make(map[string]interface{})
+
+	status["id"] = id
+	status["name"] = name
+	status["description"] = description
+	status["start_time"] = cconv.StringConverter.ToString(c.startTime)
+	status["current_time"] = cconv.StringConverter.ToString(time.Now())
+	status["uptime"] = uptime
+	status["properties"] = properties
+	status["components"] = components
+
+	c.SendResult(res, req, status, nil)
+}

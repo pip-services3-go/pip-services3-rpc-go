@@ -1,20 +1,25 @@
 package services
 
-// /* @module services */
-// import { RestOperations } from "./RestOperations";
+import (
+	"net/http"
+	"time"
+)
 
-// export class HeartbeatOperations extends RestOperations {
-//     public constructor() {
-//         super();
-//     }
+type HeartbeatOperations struct {
+	RestOperations
+}
 
-//     public getHeartbeatOperation() {
-//         return (req, res) => {
-//             this.heartbeat(req, res);
-//         };
-//     }
+func NewHeartbeatOperations() *HeartbeatOperations {
+	hbo := HeartbeatOperations{}
+	return &hbo
+}
 
-//     public heartbeat(req, res): void {
-//         this.sendResult(req, res)(null, new Date());
-//     }
-// }
+func (c *HeartbeatOperations) GetHeartbeatOperation() func(res http.ResponseWriter, req *http.Request) {
+	return func(res http.ResponseWriter, req *http.Request) {
+		c.Heartbeat(res, req)
+	}
+}
+
+func (c *HeartbeatOperations) Heartbeat(res http.ResponseWriter, req *http.Request) {
+	c.SendResult(res, req, time.Now(), nil)
+}

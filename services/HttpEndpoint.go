@@ -3,10 +3,10 @@ package services
 import (
 	"context"
 	"encoding/json"
+	"io/ioutil"
 	"net/http"
 	"strings"
 	"time"
-	"ioutil"
 
 	"github.com/gorilla/mux"
 	cconf "github.com/pip-services3-go/pip-services3-commons-go/config"
@@ -311,7 +311,7 @@ Registers a registerable object for dynamic endpoint discovery.
 @see IRegisterable
 */
 func (c *HttpEndpoint) Register(registration IRegisterable) {
-	c.registrations.Push(registration)
+	c.registrations = append(c.registrations, registration)
 }
 
 /*
@@ -373,11 +373,12 @@ func (c *HttpEndpoint) RegisterRoute(method string, route string, schema *cvalid
 		// Perform validation
 		if schema != nil {
 			//params = _.extend({}, req.params, { body: req.body })
-			var params map[string]interface{} = make(map[string]interface{}, 0,0)
+			var params map[string]interface{} = make(map[string]interface{}, 0)
 			params["params"] = r.URL.Query()
-			cpBody := r.GetBody()
-			buf := ioutil.ReadFull(cpBody)
-			body, _ := json.Unmarshal(buf) 
+			cpBody, _ := r.GetBody()
+			buf, _ := ioutil.ReadAll(cpBody)
+			var body interface{}
+			json.Unmarshal(buf, body)
 			params["body"] = body
 
 			correlationId := ""
@@ -409,19 +410,19 @@ by the given method and route.
 - schema        the schema to use for parameter validation.
 - authorize     the authorization interceptor
 - action        the action to perform at the given route.
- */
-func (c *HttpEndpoint ) RegisterRouteWithAuth(method string, route string, schema *cvalid.Schema,
-    authorize func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc),
-    action http.HandlerFunc) {
+*/
+func (c *HttpEndpoint) RegisterRouteWithAuth(method string, route string, schema *cvalid.Schema,
+	authorize func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc),
+	action http.HandlerFunc) {
 
-    if authorize != nil {
-        nextAction := action;
-        action = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request){
-            authorize(w, r, func(){ nextAction(w, r); });
-        })
-    }
+	if authorize != nil {
+		nextAction := action
+		action = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			authorize(w, r, nextAction)
+		})
+	}
 
-    c.RegisterRoute(method, route, schema, action);
+	c.RegisterRoute(method, route, schema, action)
 }
 
 /*
@@ -429,18 +430,19 @@ Registers a middleware action for the given route.
 
 - route         the route to register in this object"s REST server (service).
 - action        the middleware action to perform at the given route.
- */
-func (c *HttpEndpoint ) RegisterInterceptor(route string, action func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc)) {
+*/
+func (c *HttpEndpoint) RegisterInterceptor(route string, action func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc)) {
 
-    route = c.fixRoute(route)
-	interceptorFunc := func(next http.HandlerFunc) http.HandlerFunc {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request){ 
-		if route != "" && !strings.HasPrefix(r.Url.startsWith,route) {
-			next.ServeHTTP(w, r)
-		} else {
-			action(w, r, next);
-		}
-	})
-	c.router.use(interceptorFunc)
-}
+	route = c.fixRoute(route)
+	interceptorFunc := func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+			if route != "" && !strings.HasPrefix(r.URL.String(), route) {
+				next.ServeHTTP(w, r)
+			} else {
+				action(w, r, next.ServeHTTP)
+			}
+		})
+	}
+	c.router.Use(interceptorFunc)
 }

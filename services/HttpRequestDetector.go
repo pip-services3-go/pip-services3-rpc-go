@@ -1,143 +1,201 @@
 package services
 
+import (
+	"net/http"
+	"regexp"
+)
+
 // /* @module services */
 
-// /*
-// Helper class that retrieves parameters from HTTP requests.
-//  */
-//  export class HttpRequestDetector {
+/*
+Helper class that retrieves parameters from HTTP requests.
+*/
+var HttpRequestDetector = THttpRequestDetector{}
 
-//     /*
-//     Detects the platform (using "user-agent") from which the given HTTP request was made.
-//      *
-//     @param req   an HTTP request to process.
-//     @returns the detected platform and version. Detectable platforms: "mobile", "iphone",
-//     "ipad",  "macosx", "android",  "webos", "mac", "windows". Otherwise - "unknown" will
-//     be returned.
-//      */
-//     public static detectPlatform(req: any): string {
-//         let ua = req.headers["user-agent"];
-//         let version;
+type THttpRequestDetector struct {
+}
 
-//         if (/mobile/i.test(ua)) {
-//             return "mobile";
-//         }
-//         if (/like Mac OS X/.test(ua)) {
-//             version = /CPU( iPhone)? OS ([0-9\._]+) like Mac OS X/.exec(ua)[2].replace(/_/g, ".");
-//             if (/iPhone/.test(ua)) {
-//                 return "iphone " + version;
-//             }
-//             if (/iPad/.test(ua)) {
-//                 return "ipad " + version;
-//             }
-//             return "macosx " + version;
-//         }
-//         if (/Android/.test(ua)) {
-//             version = /Android ([0-9\.]+)[\);]/.exec(ua)[1];
-//             return "android " + version;
-//         }
-//         if (/webOS\//.test(ua)) {
-//             version = /webOS\/([0-9\.]+)[\);]/.exec(ua)[1];
-//             return "webos " + version;
-//         }
-//         if (/(Intel|PPC) Mac OS X/.test(ua)) {
-//             version = /(Intel|PPC) Mac OS X ?([0-9\._]*)[\)\;]/.exec(ua)[2].replace(/_/g, ".");
-//             return "mac " + version;
-//         }
+/*
+   Detects the platform (using "user-agent") from which the given HTTP request was made.
+    *
+   @param req   an HTTP request to process.
+   @returns the detected platform and version. Detectable platforms: "mobile", "iphone",
+   "ipad",  "macosx", "android",  "webos", "mac", "windows". Otherwise - "unknown" will
+   be returned.
+*/
+func (c *THttpRequestDetector) DetectPlatform(req *http.Request) string {
+	ua := req.Header.Get("user-agent")
+	var version string
+	var pattern string
 
-//         if (/Windows NT/.test(ua)) {
-//             try {
-//                 version = /Windows NT ([0-9\._]+)[\);]/.exec(ua)[1];
-//                 return "windows " + version;
-//             }
-//             catch (ex) {
-//                 return "unknown";
-//             }
-//         }
-//         return "unknown";
-//     }
+	pattern = "/mobile/i"
+	match, _ := regexp.Match(pattern, ([]byte)(ua))
+	if match {
+		return "mobile"
+	}
 
-//     /*
-//     Detects the browser (using "user-agent") from which the given HTTP request was made.
-//      *
-//     @param req   an HTTP request to process.
-//     @returns the detected browser. Detectable browsers: "chrome", "msie", "firefox",
-//              "safari". Otherwise - "unknown" will be returned.
-//      */
-//     public static detectBrowser(req: any): string {
-//         let ua = req.headers["user-agent"];
+	pattern = "/like Mac OS X/"
+	match, _ = regexp.Match(pattern, ([]byte)(ua))
+	if match {
+		re := regexp.MustCompile(`/CPU( iPhone)? OS ([0-9\._]+) like Mac OS X/`)
+		result := re.FindAllStringSubmatch(ua, -1)
+		re = regexp.MustCompile("/_/g")
+		version = re.ReplaceAllString(result[0][2], ".")
 
-//         if (/chrome/i.test(ua))
-//             return "chrome"
-//         if (/msie/i.test(ua))
-//             return "msie";
-//         if (/firefox/i.test(ua))
-//             return "firefox";
-//         if (/safari/i.test(ua))
-//             return "safari";
+		pattern = "/iPhone/"
+		match, _ = regexp.Match(pattern, ([]byte)(ua))
+		if match {
+			return "iphone " + version
+		}
+		pattern = "/iPad/"
+		match, _ = regexp.Match(pattern, ([]byte)(ua))
 
-//         return ua || "unknown";
-//     }
+		if match {
+			return "ipad " + version
+		}
+		return "macosx " + version
+	}
 
-//     /*
-//     Detects the IP address from which the given HTTP request was received.
-//      *
-//     @param req   an HTTP request to process.
-//     @returns the detected IP address (without a port). If no IP is detected -
-//     <code>null</code> will be returned.
-//      */
-//     public static detectAddress(req: any): string {
-//         let ip = null;
+	pattern = "/Android/"
+	match, _ = regexp.Match(pattern, ([]byte)(ua))
+	if match {
+		re := regexp.MustCompile(`/Android ([0-9\.]+)[\);]/`)
+		version = re.FindAllStringSubmatch(ua, -1)[0][1]
+		return "android " + version
+	}
 
-//         if (req.headers["x-forwarded-for"]) {
-//             ip = req.headers["x-forwarded-for"].split(",")[0]
-//         }
+	pattern = `/webOS\//`
+	match, _ = regexp.Match(pattern, ([]byte)(ua))
+	if match {
+		re := regexp.MustCompile(`/webOS\/([0-9\.]+)[\);]\`)
+		version = re.FindAllStringSubmatch(ua, -1)[0][1]
+		return "webos " + version
+	}
 
-//         if (ip == null && req.ip) {
-//             ip = req.ip;
-//         }
+	pattern = "/(Intel|PPC) Mac OS X/"
+	match, _ = regexp.Match(pattern, ([]byte)(ua))
+	if match {
+		re := regexp.MustCompile(`/(Intel|PPC) Mac OS X ?([0-9\._]*)[\)\;]/`)
+		result := re.FindAllStringSubmatch(ua, -1)
+		re = regexp.MustCompile("/_/g")
+		version = re.ReplaceAllString(result[0][2], ".")
+		return "mac " + version
+	}
 
-//         if (ip == null && req.connection) {
-//             ip = req.connection.remoteAddress;
-//             if (!ip && req.connection.socket) {
-//                 ip = req.connection.socket.remoteAddress;
-//             }
-//         }
+	pattern = "/Windows NT/"
+	match, _ = regexp.Match(pattern, ([]byte)(ua))
+	if match {
+		//try {
+		re := regexp.MustCompile(`/Windows NT ([0-9\._]+)[\);]/`)
+		version = re.FindAllStringSubmatch(ua, -1)[0][1]
+		return "windows " + version
+		// }
+		//catch (ex) {
+		return "unknown"
+		//}
+	}
+	return "unknown"
+}
 
-//         if (ip == null && req.socket) {
-//             ip = req.socket.remoteAddress;
-//         }
+/*
+   Detects the browser (using "user-agent") from which the given HTTP request was made.
+    *
+   @param req   an HTTP request to process.
+   @returns the detected browser. Detectable browsers: "chrome", "msie", "firefox",
+            "safari". Otherwise - "unknown" will be returned.
+*/
+func (c *THttpRequestDetector) DetectBrowser(req *http.Request) string {
 
-//         // Remove port
-//         if (ip != null) {
-//             ip = ip.toString();
-//             var index = ip.indexOf(":");
-//             if (index > 0) {
-//                 ip = ip.substring(0, index);
-//             }
-//         }
+	ua := req.Header.Get("user-agent")
 
-//         return ip;
-//     }
+	var pattern string
+	pattern = "/chrome/i"
+	match, _ := regexp.Match(pattern, ([]byte)(ua))
+	if match {
+		return "chrome"
+	}
 
-//     /*
-//     Detects the host name of the request"s destination server.
-//      *
-//     @param req   an HTTP request to process.
-//     @returns the destination server"s host name.
-//      */
-//     public static detectServerHost(req: any): string {
-//         return "" + req.socket.localAddress;
-//     }
+	pattern = "/msie/i"
+	match, _ = regexp.Match(pattern, ([]byte)(ua))
+	if match {
+		return "msie"
+	}
 
-//     /*
-//     Detects the request"s destination port number.
-//      *
-//     @param req   an HTTP request to process.
-//     @returns the detected port number or <code>80</code> (if none are detected).
-//      */
-//     public static detectServerPort(req) {
-//         return req.socket.localPort;
-//     }
+	pattern = "/firefox/i"
+	match, _ = regexp.Match(pattern, ([]byte)(ua))
+	if match {
+		return "firefox"
+	}
 
-// }
+	pattern = "/safari/i"
+	match, _ = regexp.Match(pattern, ([]byte)(ua))
+	if match {
+		return "safari"
+	}
+
+	if ua == "" {
+		return "unknown"
+	}
+	return ua
+}
+
+/*
+   Detects the IP address from which the given HTTP request was received.
+    *
+   @param req   an HTTP request to process.
+   @returns the detected IP address (without a port). If no IP is detected -
+   <code>nil</code> will be returned.
+*/
+func (c *THttpRequestDetector) DetectAddress(req *http.Request) string {
+	var ip string
+
+	// if req.headers["x-forwarded-for"] {
+	// 	ip = req.headers["x-forwarded-for"].split(",")[0]
+	// }
+
+	// if ip == nil && req.ip {
+	// 	ip = req.ip
+	// }
+
+	// if ip == nil && req.connection {
+	// 	ip = req.connection.remoteAddress
+	// 	if !ip && req.connection.socket {
+	// 		ip = req.connection.socket.remoteAddress
+	// 	}
+	// }
+
+	// if ip == nil && req.socket {
+	// 	ip = req.socket.remoteAddress
+	// }
+
+	// // Remove port
+	// if ip != nil {
+	// 	ip = ip.toString()
+	// 	var index = ip.indexOf(":")
+	// 	if index > 0 {
+	// 		ip = ip.substring(0, index)
+	// 	}
+	// }
+
+	return ip
+}
+
+/*
+   Detects the host name of the request"s destination server.
+    *
+   @param req   an HTTP request to process.
+   @returns the destination server"s host name.
+*/
+func (c *THttpRequestDetector) DetectServerHost(req *http.Request) string {
+	return "" + req.URL.Hostname() // socket.localAddress
+}
+
+/*
+   Detects the request"s destination port number.
+    *
+   @param req   an HTTP request to process.
+   @returns the detected port number or <code>80</code> (if none are detected).
+*/
+func (c *THttpRequestDetector) DetectServerPort(req *http.Request) string {
+	return req.URL.Port() //socket.localPort
+}

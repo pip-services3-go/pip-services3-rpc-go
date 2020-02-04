@@ -6,6 +6,7 @@ import (
 	cconf "github.com/pip-services3-go/pip-services3-commons-go/config"
 	cerr "github.com/pip-services3-go/pip-services3-commons-go/errors"
 	crefer "github.com/pip-services3-go/pip-services3-commons-go/refer"
+	cvalid "github.com/pip-services3-go/pip-services3-commons-go/validate"
 	ccount "github.com/pip-services3-go/pip-services3-components-go/count"
 	clog "github.com/pip-services3-go/pip-services3-components-go/log"
 )
@@ -83,8 +84,8 @@ See RestClient
 */
 // implements IOpenable, IConfigurable, IReferenceable, IUnreferenceable, IRegisterable
 type RestService struct {
-	defaultConfig cconf.ConfigParams
-	config        cconf.ConfigParams
+	defaultConfig *cconf.ConfigParams
+	config        *cconf.ConfigParams
 	references    crefer.IReferences
 	localEndpoint bool
 	opened        bool
@@ -93,11 +94,11 @@ type RestService struct {
 	//The HTTP endpoint that exposes this service.
 	Endpoint *HttpEndpoint
 	//The dependency resolver.
-	DependencyResolver crefer.DependencyResolver
+	DependencyResolver *crefer.DependencyResolver
 	//The logger.
 	Logger *clog.CompositeLogger
 	//The performance counters.
-	Counters ccount.CompositeCounters
+	Counters *ccount.CompositeCounters
 }
 
 // NewRestService is create new RestService
@@ -107,7 +108,8 @@ func NewRestService() *RestService {
 		"base_route", "",
 		"dependencies.endpoint", "*:endpoint:http:*:1.0",
 	)
-	rs.DependencyResolver = crefer.NewDependencyResolver(rs.defaultConfig)
+	rs.DependencyResolver = crefer.NewDependencyResolver()
+	rs.DependencyResolver.Configure(rs.defaultConfig)
 	rs.Logger = clog.NewCompositeLogger()
 	rs.Counters = ccount.NewCompositeCounters()
 	return &rs
@@ -115,7 +117,7 @@ func NewRestService() *RestService {
 
 //Configures component by passing configuration parameters.
 //- config    configuration parameters to be set.
-func (c *RestService) Configure(config cconf.ConfigParams) {
+func (c *RestService) Configure(config *cconf.ConfigParams) {
 	config = config.SetDefaults(c.defaultConfig)
 
 	c.config = config
@@ -137,7 +139,7 @@ func (c *RestService) SetReferences(references crefer.IReferences) {
 	c.DependencyResolver.SetReferences(references)
 
 	// Get endpoint
-	c.Endpoint = c.DependencyResolver.GetOneOptional("endpoint")
+	c.Endpoint = c.DependencyResolver.GetOneOptional("endpoint").(*HttpEndpoint)
 	// Or create a local one
 	if c.Endpoint == nil {
 		c.Endpoint = c.createEndpoint()
@@ -181,7 +183,7 @@ func (c *RestService) createEndpoint() *HttpEndpoint {
    - name              a method name.
    @returns Timing object to end the time measurement.
 */
-func (c *RestService) Instrument(correlationId string, name string) ccount.Timing {
+func (c *RestService) Instrument(correlationId string, name string) *ccount.Timing {
 	c.Logger.Trace(correlationId, "Executing %s method", name)
 	c.Counters.IncrementOne(name + ".exec_count")
 	return c.Counters.BeginTiming(name + ".exec_time")
@@ -255,7 +257,7 @@ func (c *RestService) Close(correlationId string) error {
 	}
 
 	if c.Endpoint == nil {
-		return cerr.NewInvalidStateException(correlationId, "NO_ENDPOINT", "HTTP endpoint is missing")
+		return cerr.NewInvalidStateError(correlationId, "NO_ENDPOINT", "HTTP endpoint is missing")
 	}
 
 	if c.localEndpoint {
@@ -282,8 +284,8 @@ func (c *RestService) Close(correlationId string) error {
    - res       a HTTP response object.
    - callback function that receives execution result or error.
 */
-func (c *RestService) SendResult(req *http.Request, res http.ResponseWriter) (result interface{}, err error) {
-	return HttpResponseSender.SendResult(req, res)
+func (c *RestService) SendResult(res http.ResponseWriter, req *http.Request, result interface{}, err error) {
+	HttpResponseSender.SendResult(res, req, result, err)
 }
 
 /*
@@ -299,8 +301,8 @@ func (c *RestService) SendResult(req *http.Request, res http.ResponseWriter) (re
    - res       a HTTP response object.
    - callback function that receives execution result or error.
 */
-func (c *RestService) SendCreatedResult(req *http.Request, res http.ResponseWriter) (result interface{}, err errro) {
-	return HttpResponseSender.sendCreatedResult(req, res)
+func (c *RestService) SendCreatedResult(req *http.Request, res http.ResponseWriter, result interface{}, err error) {
+	HttpResponseSender.SendCreatedResult(res, req, result, err)
 }
 
 /*
@@ -316,8 +318,8 @@ func (c *RestService) SendCreatedResult(req *http.Request, res http.ResponseWrit
    - res       a HTTP response object.
    - callback function that receives execution result or error.
 */
-func (c *RestService) SendDeletedResult(req *http.Request, res http.ResponseWriter) (result interface{}, err error) {
-	return HttpResponseSender.sendDeletedResult(req, res)
+func (c *RestService) SendDeletedResult(res http.ResponseWriter, req *http.Request, result interface{}, err error) {
+	HttpResponseSender.SendDeletedResult(res, req, result, err)
 }
 
 /*
@@ -329,14 +331,15 @@ func (c *RestService) SendDeletedResult(req *http.Request, res http.ResponseWrit
    - res       a HTTP response object.
    - error     an error object to be sent.
 */
-func (c *RestService) SendError(req *http.Request, res http.ResponseWriter, err error) {
-	HttpResponseSender.SendError(req, res, err)
+func (c *RestService) SendError(res http.ResponseWriter, req *http.Request, err error) {
+	HttpResponseSender.SendError(res, req, err)
 }
 
 func (c *RestService) appendBaseRoute(route string) string {
-	route = route || ""
 
-	if c.BaseRoute != nil && c.BaseRoute.length > 0 {
+	//route = route || ""
+
+	if c.BaseRoute != "" && len(c.BaseRoute) > 0 {
 		baseRoute := c.BaseRoute
 		if baseRoute[0] != "/"[0] {
 			baseRoute = "/" + baseRoute
@@ -354,18 +357,13 @@ func (c *RestService) appendBaseRoute(route string) string {
    - schema        a validation schema to validate received parameters.
    - action        an action function that is called when operation is invoked.
 */
-func (c *RestService) RegisterRoute(method string, route string, schema Schema,
-	action func(req *http.Request, res http.ResponseWriter)) {
+func (c *RestService) RegisterRoute(method string, route string, schema *cvalid.Schema,
+	action func(res http.ResponseWriter, req *http.Request)) {
 	if c.Endpoint == nil {
 		return
 	}
-
 	route = c.appendBaseRoute(route)
-
-	c.Endpoint.registerRoute(
-		method, route, schema, func(req *http.Request, res http.ResponseWriter) {
-			action.call(c, req, res)
-		})
+	c.Endpoint.RegisterRoute(method, route, schema, action)
 }
 
 /*
@@ -377,26 +375,22 @@ func (c *RestService) RegisterRoute(method string, route string, schema Schema,
    - authorize     an authorization interceptor
    - action        an action function that is called when operation is invoked.
 */
-func (c *RestService) RegisterRouteWithAuth(method string, route string, schema Schema,
-	authorize func(req *http.Request, res http.ResponseWriter, next func()),
-	action func(req *http.Request, res http.ResponseWriter)) {
+func (c *RestService) RegisterRouteWithAuth(method string, route string, schema *cvalid.Schema,
+	authorize func(res http.ResponseWriter, req *http.Request, next http.HandlerFunc),
+	action func(res http.ResponseWriter, req *http.Request)) {
 	if c.Endpoint == nil {
 		return
 	}
-
 	route = c.appendBaseRoute(route)
-
-	c.Endpoint.registerRouteWithAuth(
+	c.Endpoint.RegisterRouteWithAuth(
 		method, route, schema,
-		func(req *http.Request, res http.ResponseWriter, next func()) {
-			if authorize {
-				authorize.call(c, req, res, next)
+		func(res http.ResponseWriter, req *http.Request, next http.HandlerFunc) {
+			if authorize != nil {
+				authorize(res, req, next)
 			} else {
-				next()
+				next.ServeHTTP(res, req)
 			}
-		}, func(req *http.Request, res http.ResponseWriter) {
-			action.call(c, req, res)
-		})
+		}, action)
 }
 
 /*
@@ -406,17 +400,15 @@ func (c *RestService) RegisterRouteWithAuth(method string, route string, schema 
    - action        an action function that is called when middleware is invoked.
 */
 func (c *RestService) RegisterInterceptor(route string,
-	action func(req *http.Request, res http.ResponseWriter, next func())) {
+	action func(res http.ResponseWriter, req *http.Request, next http.HandlerFunc)) {
 	if c.Endpoint == nil {
 		return
 	}
 
 	route = c.appendBaseRoute(route)
 
-	c.Endpoint.registerInterceptor(
-		route, func(req *http.Request, res http.ResponseWriter, next func()) {
-			action.call(c, req, res, next)
-		})
+	c.Endpoint.RegisterInterceptor(
+		route, action)
 }
 
 /*

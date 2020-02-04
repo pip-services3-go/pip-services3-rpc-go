@@ -2,25 +2,24 @@ package auth
 
 import (
 	"encoding/base64"
-	cerr "github.com/pip-services3-go/pip-services3-commons-go/errors"
-	services "github.com/pip-services3-go/pip-services3-rpc-go/services"
 	"net/http"
 	"strings"
-)
 
-// import { HttpResponseSender } from "../services/HttpResponseSender";
+	cerr "github.com/pip-services3-go/pip-services3-commons-go/errors"
+	services "github.com/pip-services3-go/pip-services3-rpc-go/services"
+)
 
 type BasicAuthorizer struct {
 }
 
-func (c *BasicAuthorizer) Anybody() func(req *http.Request, res http.ResponseWriter, next func()) {
-	return func(req *http.Request, res http.ResponseWriter, next func()) {
-		next()
+func (c *BasicAuthorizer) Anybody() func(res http.ResponseWriter, req *http.Request, next http.HandlerFunc) {
+	return func(res http.ResponseWriter, req *http.Request, next http.HandlerFunc) {
+		next.ServeHTTP(res, req)
 	}
 }
 
-func (c *BasicAuthorizer) Signed() func(req *http.Request, res http.ResponseWriter, next func()) {
-	return func(req *http.Request, res http.ResponseWriter, next func()) {
+func (c *BasicAuthorizer) Signed() func(res http.ResponseWriter, req *http.Request, next http.HandlerFunc) {
+	return func(res http.ResponseWriter, req *http.Request, next http.HandlerFunc) {
 
 		auth := strings.SplitN(req.Header.Get("Authorization"), " ", 2)
 		if len(auth) != 2 || auth[0] != "Basic" {
@@ -32,10 +31,10 @@ func (c *BasicAuthorizer) Signed() func(req *http.Request, res http.ResponseWrit
 
 		if pair[0] == "" { // username
 			services.HttpResponseSender.SendError(
-				req, res,
+				res, req,
 				cerr.NewUnauthorizedError("", "NOT_SIGNED", "User must be signed in to perform this operation").WithStatus(401))
 		} else {
-			next()
+			next.ServeHTTP(res, req)
 		}
 	}
 }

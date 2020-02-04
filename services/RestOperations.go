@@ -1,127 +1,139 @@
 package services
 
-// /* @module services */
-// const _ = require('lodash');
+import (
+	"net/http"
 
-// import { IConfigurable } from 'pip-services3-commons-node';
-// import { ConfigParams } from 'pip-services3-commons-node';
-// import { IReferences } from 'pip-services3-commons-node';
-// import { IReferenceable } from 'pip-services3-commons-node';
-// import { FilterParams } from 'pip-services3-commons-node';
-// import { PagingParams } from 'pip-services3-commons-node';
-// import { CompositeLogger } from 'pip-services3-components-node';
-// import { CompositeCounters } from 'pip-services3-components-node';
-// import { DependencyResolver } from 'pip-services3-commons-node';
-// import { BadRequestException } from 'pip-services3-commons-node';
-// import { UnauthorizedException } from 'pip-services3-commons-node';
-// import { NotFoundException } from 'pip-services3-commons-node';
-// import { ConflictException } from 'pip-services3-commons-node';
-// import { UnknownException } from 'pip-services3-commons-node';
-// import { HttpResponseSender } from './HttpResponseSender';
+	cconf "github.com/pip-services3-go/pip-services3-commons-go/config"
+	cdata "github.com/pip-services3-go/pip-services3-commons-go/data"
+	cerr "github.com/pip-services3-go/pip-services3-commons-go/errors"
+	crefer "github.com/pip-services3-go/pip-services3-commons-go/refer"
+	ccount "github.com/pip-services3-go/pip-services3-components-go/count"
+	clog "github.com/pip-services3-go/pip-services3-components-go/log"
+)
 
-// export abstract class RestOperations implements IConfigurable, IReferenceable {
-//     protected _logger = new CompositeLogger();
-//     protected _counters = new CompositeCounters();
-//     protected _dependencyResolver = new DependencyResolver();
+type RestOperations struct {
+	Logger             *clog.CompositeLogger
+	Counters           *ccount.CompositeCounters
+	DependencyResolver *crefer.DependencyResolver
+}
 
-//     public constructor() {}
+func NewRestOperations() *RestOperations {
+	ro := RestOperations{}
+	ro.Logger = clog.NewCompositeLogger()
+	ro.Counters = ccount.NewCompositeCounters()
+	ro.DependencyResolver = crefer.NewDependencyResolver()
+	return &ro
+}
 
-//     public configure(config: ConfigParams): void {
-//         this._dependencyResolver.configure(config);
-//     }
+func (c *RestOperations) Configure(config *cconf.ConfigParams) {
+	c.DependencyResolver.Configure(config)
+}
 
-//     public setReferences(references: IReferences): void {
-//         this._logger.setReferences(references);
-//         this._counters.setReferences(references);
-//         this._dependencyResolver.setReferences(references);
-//     }
+func (c *RestOperations) SetReferences(references crefer.IReferences) {
+	c.Logger.SetReferences(references)
+	c.Counters.SetReferences(references)
+	c.DependencyResolver.SetReferences(references)
+}
 
-//     protected getCorrelationId(req: any): any {
-//         return req.params.correlation_id;
-//     }
+func (c *RestOperations) GetCorrelationId(req *http.Request) string {
+	params := req.URL.Query()
+	return params.Get("correlation_id")
+}
 
-//     protected getFilterParams(req: any): FilterParams {
-//         let filter = FilterParams.fromValue(
-//             _.omit(req.query, 'skip', 'take', 'total')
-//         );
-//         return filter;
-//     }
+func (c *RestOperations) GetFilterParams(req *http.Request) *cdata.FilterParams {
 
-//     protected getPagingParams(req: any): PagingParams {
-//         let paging = PagingParams.fromValue(
-//             _.pick(req.query, 'skip', 'take', 'total')
-//         );
-//         return paging;
-//     }
+	params := req.URL.Query()
+	delete(params, "skip")
+	delete(params, "take")
+	delete(params, "total")
+	filter := cdata.NewFilterParamsFromValue(
+		params,
+	)
+	return filter
+}
 
-//     protected sendResult(req, res): (err: any, result: any) => void {
-//         return HttpResponseSender.sendResult(req, res);
-//     }
+func (c *RestOperations) GetPagingParams(req *http.Request) *cdata.PagingParams {
 
-//     protected sendEmptyResult(req, res): (err: any) => void {
-//         return HttpResponseSender.sendEmptyResult(req, res);
-//     }
+	params := req.URL.Query()
+	paginParams := make(map[string]string, 0)
 
-//     protected sendCreatedResult(req, res): (err: any, result: any) => void {
-//         return HttpResponseSender.sendCreatedResult(req, res);
-//     }
+	paginParams["skip"] = params.Get("skip")
+	paginParams["take"] = params.Get("take")
+	paginParams["total"] = params.Get("total")
 
-//     protected sendDeletedResult(req, res): (err: any, result: any) => void {
-//         return HttpResponseSender.sendDeletedResult(req, res);
-//     }
+	paging := cdata.NewPagingParamsFromValue(
+		paginParams,
+	)
+	return paging
+}
 
-//     protected sendError(req, res, error): void {
-//         HttpResponseSender.sendError(req, res, error);
-//     }
+func (c *RestOperations) SendResult(res http.ResponseWriter, req *http.Request, result interface{}, err error) {
+	HttpResponseSender.SendResult(res, req, result, err)
+}
 
-//     protected sendBadRequest(req: any, res: any, message: string): void {
-//         let correlationId = this.getCorrelationId(req);
-//         let error = new BadRequestException(correlationId, 'BAD_REQUEST', message);
-//         this.sendError(req, res, error);
-//     }
+func (c *RestOperations) SendEmptyResult(res http.ResponseWriter, req *http.Request, err error) {
+	HttpResponseSender.SendEmptyResult(res, req, err)
+}
 
-//     protected sendUnauthorized(req: any, res: any, message: string): void  {
-//         let correlationId = this.getCorrelationId(req);
-//         let error = new UnauthorizedException(correlationId, 'UNAUTHORIZED', message);
-//         this.sendError(req, res, error);
-//     }
+func (c *RestOperations) SendCreatedResult(res http.ResponseWriter, req *http.Request, result interface{}, err error) {
+	HttpResponseSender.SendCreatedResult(res, req, result, err)
+}
 
-//     protected sendNotFound(req: any, res: any, message: string): void  {
-//         let correlationId = this.getCorrelationId(req);
-//         let error = new NotFoundException(correlationId, 'NOT_FOUND', message);
-//         this.sendError(req, res, error);
-//     }
+func (c *RestOperations) SendDeletedResult(res http.ResponseWriter, req *http.Request, result interface{}, err error) {
+	HttpResponseSender.SendDeletedResult(res, req, result, err)
+}
 
-//     protected sendConflict(req: any, res: any, message: string): void  {
-//         let correlationId = this.getCorrelationId(req);
-//         let error = new ConflictException(correlationId, 'CONFLICT', message);
-//         this.sendError(req, res, error);
-//     }
+func (c *RestOperations) SendError(res http.ResponseWriter, req *http.Request, err error) {
+	HttpResponseSender.SendError(res, req, err)
+}
 
-//     protected sendSessionExpired(req: any, res: any, message: string): void  {
-//         let correlationId = this.getCorrelationId(req);
-//         let error = new UnknownException(correlationId, 'SESSION_EXPIRED', message);
-//         error.status = 440;
-//         this.sendError(req, res, error);
-//     }
+func (c *RestOperations) SendBadRequest(res http.ResponseWriter, req *http.Request, message string) {
+	correlationId := c.GetCorrelationId(req)
+	error := cerr.NewBadRequestError(correlationId, "BAD_REQUEST", message)
+	c.SendError(res, req, error)
+}
 
-//     protected sendInternalError(req: any, res: any, message: string): void  {
-//         let correlationId = this.getCorrelationId(req);
-//         let error = new UnknownException(correlationId, 'INTERNAL', message);
-//         this.sendError(req, res, error);
-//     }
+func (c *RestOperations) SendUnauthorized(res http.ResponseWriter, req *http.Request, message string) {
+	correlationId := c.GetCorrelationId(req)
+	error := cerr.NewUnauthorizedError(correlationId, "UNAUTHORIZED", message)
+	c.SendError(res, req, error)
+}
 
-//     protected sendServerUnavailable(req: any, res: any, message: string): void  {
-//         let correlationId = this.getCorrelationId(req);
-//         let error = new ConflictException(correlationId, 'SERVER_UNAVAILABLE', message);
-//         error.status = 503;
-//         this.sendError(req, res, error);
-//     }
+func (c *RestOperations) SendNotFound(res http.ResponseWriter, req *http.Request, message string) {
+	correlationId := c.GetCorrelationId(req)
+	error := cerr.NewNotFoundError(correlationId, "NOT_FOUND", message)
+	c.SendError(res, req, error)
+}
 
-//     public invoke(operation: string): (req: any, res: any) => void {
-//         return (req, res) => {
-//             this[operation](req, res);
-//         }
-//     }
+func (c *RestOperations) SendConflict(res http.ResponseWriter, req *http.Request, message string) {
+	correlationId := c.GetCorrelationId(req)
+	error := cerr.NewConflictError(correlationId, "CONFLICT", message)
+	c.SendError(res, req, error)
+}
 
+func (c *RestOperations) SendSessionExpired(res http.ResponseWriter, req *http.Request, message string) {
+	correlationId := c.GetCorrelationId(req)
+	err := cerr.NewUnknownError(correlationId, "SESSION_EXPIRED", message)
+	err.Status = 440
+	c.SendError(res, req, err)
+}
+
+func (c *RestOperations) SendInternalError(res http.ResponseWriter, req *http.Request, message string) {
+	correlationId := c.GetCorrelationId(req)
+	error := cerr.NewUnknownError(correlationId, "INTERNAL", message)
+	c.SendError(res, req, error)
+}
+
+func (c *RestOperations) SendServerUnavailable(res http.ResponseWriter, req *http.Request, message string) {
+	correlationId := c.GetCorrelationId(req)
+	err := cerr.NewConflictError(correlationId, "SERVER_UNAVAILABLE", message)
+	err.Status = 503
+	c.SendError(res, req, err)
+}
+
+// func (c *RestOperations) Invoke(operation string) func(res http.ResponseWriter, req *http.Request) {
+// 	return func(res http.ResponseWriter, req *http.Request) {
+// 		// TODO: what is it
+// 		//c[operation](res http.ResponseWriter, req *http.Request);
+// 	}
 // }

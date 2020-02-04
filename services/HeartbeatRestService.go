@@ -1,90 +1,100 @@
 package services
 
+import (
+	"net/http"
+	"time"
+
+	cconf "github.com/pip-services3-go/pip-services3-commons-go/config"
+)
+
 // /* @module services */
 // import { RestService } from "./RestService";
 // import { ConfigParams } from "pip-services3-commons-node";
 
-// /*
-// Service returns heartbeat via HTTP/REST protocol.
-//
-// The service responds on /heartbeat route (can be changed)
-// with a string with the current time in UTC.
-//
-// This service route can be used to health checks by loadbalancers and
-// container orchestrators.
-//
-// ### Configuration parameters ###
-//
-// - base_route:              base route for remote URI (default: "")
-// - route:                   route to heartbeat operation (default: "heartbeat")
-// - dependencies:
-//   - endpoint:              override for HTTP Endpoint dependency
-// - connection(s):
-//   - discovery_key:         (optional) a key to retrieve the connection from [[https://rawgit.com/pip-services-node/pip-services3-components-node/master/doc/api/interfaces/connect.idiscovery.html IDiscovery]]
-//   - protocol:              connection protocol: http or https
-//   - host:                  host name or IP address
-//   - port:                  port number
-//   - uri:                   resource URI or connection string with all parameters in it
-//
-// ### References ###
-//
-// - \*:logger:\*:\*:1.0               (optional) [[https://rawgit.com/pip-services-node/pip-services3-components-node/master/doc/api/interfaces/log.ilogger.html ILogger]] components to pass log messages
-// - \*:counters:\*:\*:1.0             (optional) [[https://rawgit.com/pip-services-node/pip-services3-components-node/master/doc/api/interfaces/count.icounters.html ICounters]] components to pass collected measurements
-// - \*:discovery:\*:\*:1.0            (optional) [[https://rawgit.com/pip-services-node/pip-services3-components-node/master/doc/api/interfaces/connect.idiscovery.html IDiscovery]] services to resolve connection
-// - \*:endpoint:http:\*:1.0          (optional) [[HttpEndpoint]] reference
-//
-// @see [[RestService]]
-// @see [[RestClient]]
-//
-// ### Example ###
-//
-//     let service = new HeartbeatService();
-//     service.configure(ConfigParams.fromTuples(
-//         "route", "ping",
-//         "connection.protocol", "http",
-//         "connection.host", "localhost",
-//         "connection.port", 8080
-//     ));
-//
-//     service.open("123", (err) => {
-//        console.log("The Heartbeat service is accessible at http://+:8080/ping");
-//     });
-//  */
-// export class HeartbeatRestService extends RestService {
-//     private _route: string = "heartbeat";
+/*
+Service returns heartbeat via HTTP/REST protocol.
 
-//     /**
-//     Creates a new instance of this service.
-//      */
-//     public constructor() {
-//         super();
-//     }
+The service responds on /heartbeat route (can be changed)
+with a string with the current time in UTC.
 
-//     /**
-//     Configures component by passing configuration parameters.
-//
-//     @param config    configuration parameters to be set.
-//      */
-//     public configure(config: ConfigParams): void {
-//         super.configure(config);
+This service route can be used to health checks by loadbalancers and
+container orchestrators.
 
-//         this._route = config.getAsStringWithDefault("route", this._route);
-//     }
+### Configuration parameters ###
 
-//     /**
-//     Registers all service routes in HTTP endpoint.
-//      */
-//     public register(): void {
-//         this.registerRoute("get", this._route, null, (req, res) => { this.heartbeat(req, res); });
-//     }
+- baseroute:              base route for remote URI (default: "")
+- route:                   route to heartbeat operation (default: "heartbeat")
+- dependencies:
+  - endpoint:              override for HTTP Endpoint dependency
+- connection(s):
+  - discovery_key:         (optional) a key to retrieve the connection from [[https://rawgit.com/pip-services-node/pip-services3-components-node/master/doc/api/interfaces/connect.idiscovery.html IDiscovery]]
+  - protocol:              connection protocol: http or https
+  - host:                  host name or IP address
+  - port:                  port number
+  - uri:                   resource URI or connection string with all parameters in it
 
-//     /**
-//     Handles heartbeat requests
-//
-//     @param req   an HTTP request
-//     @param res   an HTTP response
-//      */
-//     private heartbeat(req, res): void {
-//         this.sendResult(req, res)(null, new Date());
-//     }
-// }
+### References ###
+
+- \*:logger:\*:\*:1.0               (optional) [[https://rawgit.com/pip-services-node/pip-services3-components-node/master/doc/api/interfaces/log.ilogger.html ILogger]] components to pass log messages
+- \*:counters:\*:\*:1.0             (optional) [[https://rawgit.com/pip-services-node/pip-services3-components-node/master/doc/api/interfaces/count.icounters.html ICounters]] components to pass collected measurements
+- \*:discovery:\*:\*:1.0            (optional) [[https://rawgit.com/pip-services-node/pip-services3-components-node/master/doc/api/interfaces/connect.idiscovery.html IDiscovery]] services to resolve connection
+- \*:endpoint:http:\*:1.0          (optional) [[HttpEndpoint]] reference
+
+@see [[RestService]]
+@see [[RestClient]]
+
+### Example ###
+
+    let service = new HeartbeatService();
+    service.configure(ConfigParams.fromTuples(
+        "route", "ping",
+        "connection.protocol", "http",
+        "connection.host", "localhost",
+        "connection.port", 8080
+    ));
+
+    service.open("123", (err) => {
+       console.log("The Heartbeat service is accessible at http://+:8080/ping");
+    });
+*/
+
+type HeartbeatRestService struct {
+	RestService
+	route string
+}
+
+/**
+  Creates a new instance of c service.
+*/
+func NewHeartbeatRestService() *HeartbeatRestService {
+	hrs := HeartbeatRestService{}
+	hrs.route = "heartbeat"
+	return &hrs
+}
+
+/**
+  Configures component by passing configuration parameters.
+
+  @param config    configuration parameters to be set.
+*/
+func (c *HeartbeatRestService) Configure(config *cconf.ConfigParams) {
+	c.RestService.Configure(config)
+	c.route = config.GetAsStringWithDefault("route", c.route)
+}
+
+/**
+  Registers all service routes in HTTP endpoint.
+*/
+func (c *HeartbeatRestService) Register() {
+	c.RegisterRoute("get", c.route, nil, func(res http.ResponseWriter, req *http.Request) { c.heartbeat(req, res) })
+}
+
+/**
+  Handles heartbeat requests
+
+  @param req   an HTTP request
+  @param res   an HTTP response
+*/
+func (c *HeartbeatRestService) heartbeat(req *http.Request, res http.ResponseWriter) {
+	c.SendResult(res, req, time.Now(), nil)
+}
