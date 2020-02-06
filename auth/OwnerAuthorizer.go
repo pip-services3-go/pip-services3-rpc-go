@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strings"
 
+	cdata "github.com/pip-services3-go/pip-services3-commons-go/data"
 	cerr "github.com/pip-services3-go/pip-services3-commons-go/errors"
 	services "github.com/pip-services3-go/pip-services3-rpc-go/services"
 )
@@ -12,11 +13,11 @@ import (
 type OwnerAuthorizer struct {
 }
 
-func (c *OwnerAuthorizer) Owner(idParam string) func(res http.ResponseWriter, req *http.Request, next http.HandlerFunc) {
+func (c *OwnerAuthorizer) Owner(idParam string) func(res http.ResponseWriter, req *http.Request, user *cdata.AnyValueMap, next http.HandlerFunc) {
 	if idParam == "" {
 		idParam = "user_id"
 	}
-	return func(res http.ResponseWriter, req *http.Request, next http.HandlerFunc) {
+	return func(res http.ResponseWriter, req *http.Request, user *cdata.AnyValueMap, next http.HandlerFunc) {
 		auth := strings.SplitN(req.Header.Get("Authorization"), " ", 2)
 		if len(auth) != 2 || auth[0] != "Basic" {
 			http.Error(res, "authorization failed", http.StatusUnauthorized)
@@ -45,11 +46,11 @@ func (c *OwnerAuthorizer) Owner(idParam string) func(res http.ResponseWriter, re
 	}
 }
 
-func (c *OwnerAuthorizer) ownerOrAdmin(idParam string) func(res http.ResponseWriter, req *http.Request, next http.HandlerFunc) {
+func (c *OwnerAuthorizer) OwnerOrAdmin(idParam string) func(res http.ResponseWriter, req *http.Request, user *cdata.AnyValueMap, next http.HandlerFunc) {
 	if idParam == "" {
 		idParam = "user_id"
 	}
-	return func(res http.ResponseWriter, req *http.Request, next http.HandlerFunc) {
+	return func(res http.ResponseWriter, req *http.Request, user *cdata.AnyValueMap, next http.HandlerFunc) {
 
 		auth := strings.SplitN(req.Header.Get("Authorization"), " ", 2)
 		if len(auth) != 2 || auth[0] != "Basic" {

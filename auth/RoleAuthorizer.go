@@ -1,51 +1,71 @@
 package auth
 
+import (
+	"net/http"
+	"strings"
+
+	cdata "github.com/pip-services3-go/pip-services3-commons-go/data"
+	cerr "github.com/pip-services3-go/pip-services3-commons-go/errors"
+	services "github.com/pip-services3-go/pip-services3-rpc-go/services"
+)
+
 // /** @module auth */
 // const _ = require("lodash");
 
 // import { UnauthorizedException } from "pip-services3-commons-node";
 // import { HttpResponseSender } from "../services/HttpResponseSender";
 
-// export class RoleAuthorizer {
+type RoleAuthorizer struct {
+}
 
-//     public userInRoles(roles: string[]): (req: any, res: any, next: () => void) => void {
-//         return (req, res, next) => {
-//             let user = req.user;
-//             if (user == null) {
-//                 HttpResponseSender.sendError(
-//                     req, res,
-//                     new UnauthorizedException(
-//                         null, "NOT_SIGNED",
-//                         "User must be signed in to perform this operation"
-//                     ).withStatus(401)
-//                 );
-//             } else {
-//                 let authorized = false;
+func (c *RoleAuthorizer) UserInRoles(roles []string) func(res http.ResponseWriter, req *http.Request, user *cdata.AnyValueMap, next http.HandlerFunc) {
+	return func(res http.ResponseWriter, req *http.Request, user *cdata.AnyValueMap, next http.HandlerFunc) {
 
-//                 for (let role of roles)
-//                     authorized = authorized || _.includes(user.roles, role);
+		if user == nil {
+			services.HttpResponseSender.SendError(
+				res, req,
+				cerr.NewUnauthorizedError("", "NOT_SIGNED",
+					"User must be signed in to perform this operation").WithStatus(401))
+		} else {
+			authorized := false
+			userRoles := user.GetAsNullableArray("roles")
 
-//                 if (!authorized) {
-//                     HttpResponseSender.sendError(
-//                         req, res,
-//                         new UnauthorizedException(
-//                             null, "NOT_IN_ROLE",
-//                             "User must be " + roles.join(" or ") + " to perform this operation"
-//                         ).withDetails("roles", roles).withStatus(403)
-//                     );
-//                 } else {
-//                     next();
-//                 }
-//             }
-//         };
-//     }
+			if userRoles == nil {
+				services.HttpResponseSender.SendError(
+					res, req,
+					cerr.NewUnauthorizedError("", "NOT_SIGNED",
+						"User must be signed in to perform this operation").WithStatus(401))
+				return
+			}
 
-//     public userInRole(role: string): (req: any, res: any, next: () => void) => void {
-//         return this.userInRoles([role]);
-//     }
+			for _, role := range roles {
+				for _, userRole := range userRoles.Value() {
+					if role == userRole.(string) {
+						authorized = true
+					}
+				}
+			}
 
-//     public admin(): (req: any, res: any, next: () => void) => void {
-//         return this.userInRole("admin");
-//     }
+			if !authorized {
 
-// }
+				services.HttpResponseSender.SendError(
+					res, req,
+					cerr.NewUnauthorizedError(
+						"", "NOT_IN_ROLE",
+						"User must be "+strings.Join(roles, " or ")+" to perform this operation").WithDetails("roles", roles).WithStatus(403))
+			} else {
+				next.ServeHTTP(res, req)
+			}
+		}
+	}
+}
+
+func (c *RoleAuthorizer) UserInRole(role string) func(res http.ResponseWriter, req *http.Request, user *cdata.AnyValueMap, next http.HandlerFunc) {
+	roles := make([]string, 1)
+	roles[0] = role
+	return c.UserInRoles(roles)
+}
+
+func (c *RoleAuthorizer) Admin() func(res http.ResponseWriter, req *http.Request, user *cdata.AnyValueMap, next http.HandlerFunc) {
+	return c.UserInRole("admin")
+}

@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	cconf "github.com/pip-services3-go/pip-services3-commons-go/config"
+	cdata "github.com/pip-services3-go/pip-services3-commons-go/data"
 	cerr "github.com/pip-services3-go/pip-services3-commons-go/errors"
 	crefer "github.com/pip-services3-go/pip-services3-commons-go/refer"
 	cvalid "github.com/pip-services3-go/pip-services3-commons-go/validate"
@@ -376,7 +377,7 @@ func (c *RestService) RegisterRoute(method string, route string, schema *cvalid.
    - action        an action function that is called when operation is invoked.
 */
 func (c *RestService) RegisterRouteWithAuth(method string, route string, schema *cvalid.Schema,
-	authorize func(res http.ResponseWriter, req *http.Request, next http.HandlerFunc),
+	authorize func(res http.ResponseWriter, req *http.Request, user *cdata.AnyValueMap, next http.HandlerFunc),
 	action func(res http.ResponseWriter, req *http.Request)) {
 	if c.Endpoint == nil {
 		return
@@ -384,9 +385,9 @@ func (c *RestService) RegisterRouteWithAuth(method string, route string, schema 
 	route = c.appendBaseRoute(route)
 	c.Endpoint.RegisterRouteWithAuth(
 		method, route, schema,
-		func(res http.ResponseWriter, req *http.Request, next http.HandlerFunc) {
+		func(res http.ResponseWriter, req *http.Request, user *cdata.AnyValueMap, next http.HandlerFunc) {
 			if authorize != nil {
-				authorize(res, req, next)
+				authorize(res, req, user, next)
 			} else {
 				next.ServeHTTP(res, req)
 			}
