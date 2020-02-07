@@ -1,0 +1,180 @@
+package test_rpc_services
+
+import (
+	"encoding/json"
+	"io/ioutil"
+	"net/http"
+
+	cconv "github.com/pip-services3-go/pip-services3-commons-go/convert"
+	cdata "github.com/pip-services3-go/pip-services3-commons-go/data"
+	cerr "github.com/pip-services3-go/pip-services3-commons-go/errors"
+	crefer "github.com/pip-services3-go/pip-services3-commons-go/refer"
+	cvalid "github.com/pip-services3-go/pip-services3-commons-go/validate"
+	"github.com/pip-services3-go/pip-services3-rpc-go/services"
+	testrpc "github.com/pip-services3-go/pip-services3-rpc-go/test"
+)
+
+type DummyRestService struct {
+	services.RestService
+	controller    testrpc.IDummyController
+	numberOfCalls int
+}
+
+func NewDummyRestService() *DummyRestService {
+	drs := &DummyRestService{}
+	drs.RestService = *services.NewRestService()
+	drs.RestService.IRegisterable = drs
+	drs.numberOfCalls = 0
+	drs.DependencyResolver.Put("controller", crefer.NewDescriptor("pip-services-dummies", "controller", "default", "*", "*"))
+	return drs
+}
+
+func (c *DummyRestService) SetReferences(references crefer.IReferences) {
+	c.RestService.SetReferences(references)
+	depRes, depErr := c.DependencyResolver.GetOneRequired("controller")
+	if depErr == nil && depRes != nil {
+		c.controller = depRes.(testrpc.IDummyController)
+	}
+}
+
+func (c *DummyRestService) GetNumberOfCalls() int {
+	return c.numberOfCalls
+}
+
+func (c *DummyRestService) incrementNumberOfCalls(res http.ResponseWriter, req *http.Request, next http.HandlerFunc) {
+	c.numberOfCalls++
+	next.ServeHTTP(res, req)
+}
+
+func (c *DummyRestService) getPageByFilter(res http.ResponseWriter, req *http.Request) {
+	params := req.URL.Query()
+	paginParams := make(map[string]string, 0)
+
+	paginParams["skip"] = params.Get("skip")
+	paginParams["take"] = params.Get("take")
+	paginParams["total"] = params.Get("total")
+
+	delete(params, "skip")
+	delete(params, "take")
+	delete(params, "total")
+
+	result, err := c.controller.GetPageByFilter(
+		params.Get("correlation_id"),
+		cdata.NewFilterParamsFromValue(params), // W! need test
+		cdata.NewPagingParamsFromTuples(paginParams),
+	)
+	c.SendResult(res, req, result, err)
+}
+
+func (c *DummyRestService) getOneById(res http.ResponseWriter, req *http.Request) {
+	params := req.URL.Query()
+
+	result, err := c.controller.GetOneById(
+		params.Get("correlation_id"),
+		params.Get("dummy_id"))
+	c.SendResult(res, req, result, err)
+}
+
+func (c *DummyRestService) create(res http.ResponseWriter, req *http.Request) {
+	params := req.URL.Query()
+	correlationId := params.Get("correlation_id")
+	var dummy testrpc.Dummy
+
+	body, bodyErr := ioutil.ReadAll(req.Body)
+	if bodyErr != nil {
+		err := cerr.NewInternalError(correlationId, "JSON_CNV_ERR", "Cant convert from JSON to Dummy").WithCause(bodyErr)
+		c.SendError(res, req, err)
+		return
+	}
+	defer req.Body.Close()
+	jsonErr := json.Unmarshal(body, &dummy)
+
+	if jsonErr != nil {
+		err := cerr.NewInternalError(correlationId, "JSON_CNV_ERR", "Cant convert from JSON to Dummy").WithCause(jsonErr)
+		c.SendError(res, req, err)
+		return
+	}
+
+	result, err := c.controller.Create(
+		correlationId,
+		dummy,
+	)
+	c.SendCreatedResult(res, req, result, err)
+}
+
+func (c *DummyRestService) update(res http.ResponseWriter, req *http.Request) {
+	params := req.URL.Query()
+	correlationId := params.Get("correlation_id")
+
+	var dummy testrpc.Dummy
+
+	body, bodyErr := ioutil.ReadAll(req.Body)
+	if bodyErr != nil {
+		err := cerr.NewInternalError(correlationId, "JSON_CNV_ERR", "Cant convert from JSON to Dummy").WithCause(bodyErr)
+		c.SendError(res, req, err)
+		return
+	}
+	defer req.Body.Close()
+	jsonErr := json.Unmarshal(body, &dummy)
+
+	if jsonErr != nil {
+		err := cerr.NewInternalError(correlationId, "JSON_CNV_ERR", "Cant convert from JSON to Dummy").WithCause(jsonErr)
+		c.SendError(res, req, err)
+		return
+	}
+	result, err := c.controller.Update(
+		correlationId,
+		dummy,
+	)
+	c.SendResult(res, req, result, err)
+}
+
+func (c *DummyRestService) deleteById(res http.ResponseWriter, req *http.Request) {
+	params := req.URL.Query()
+	result, err := c.controller.DeleteById(
+		params.Get("correlation_id"),
+		params.Get("dummy_id"),
+	)
+	c.SendDeletedResult(res, req, result, err)
+}
+
+func (c *DummyRestService) Register() {
+	c.RegisterInterceptor("/dummies", c.incrementNumberOfCalls)
+
+	c.RegisterRoute(
+		"get", "/dummies",
+		&cvalid.NewObjectSchema().WithOptionalProperty("skip", cconv.String).
+			WithOptionalProperty("take", cconv.String).
+			WithOptionalProperty("total", cconv.String).
+			WithOptionalProperty("body", cvalid.NewFilterParamsSchema()).Schema,
+		c.getPageByFilter,
+	)
+
+	c.RegisterRoute(
+		"get", "/dummies/:dummy_id",
+		&cvalid.NewObjectSchema().
+			WithRequiredProperty("dummy_id", cconv.String).Schema,
+		c.getOneById,
+	)
+
+	c.RegisterRoute(
+		"post", "/dummies",
+		&cvalid.NewObjectSchema().
+			WithRequiredProperty("body", testrpc.NewDummySchema()).Schema,
+		c.create,
+	)
+
+	c.RegisterRoute(
+		"put", "/dummies",
+		&cvalid.NewObjectSchema().
+			WithRequiredProperty("body", testrpc.NewDummySchema()).Schema,
+		c.update,
+	)
+
+	c.RegisterRoute(
+		"delete", "/dummies/:dummy_id",
+		&cvalid.NewObjectSchema().
+			WithRequiredProperty("dummy_id", cconv.String).Schema,
+		c.deleteById,
+	)
+}

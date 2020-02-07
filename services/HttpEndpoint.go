@@ -1,10 +1,13 @@
 package services
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -181,7 +184,8 @@ func (c *HttpEndpoint) Open(correlationId string) error {
 	}
 
 	c.uri = connection.Uri()
-	c.server = &http.Server{Addr: c.uri}
+	url := connection.Host() + ":" + strconv.Itoa(connection.Port())
+	c.server = &http.Server{Addr: url}
 	c.router = mux.NewRouter()
 	//     c.server.use(restify.CORS());
 	//     c.server.use(restify.plugins.dateParser());
@@ -197,17 +201,25 @@ func (c *HttpEndpoint) Open(correlationId string) error {
 
 	c.server.Handler = c.router
 
+	c.performRegistrations()
+
 	if connection.Protocol() == "https" { //"http"
 		sslKeyFile := credential.GetAsString("ssl_key_file")
 		sslCrtFile := credential.GetAsString("ssl_crt_file")
 
 		go func() {
-			c.server.ListenAndServeTLS(sslKeyFile, sslCrtFile)
+			servErr := c.server.ListenAndServeTLS(sslKeyFile, sslCrtFile)
+			if servErr != nil {
+				fmt.Println("Server error %s", servErr.Error())
+			}
 		}()
 
 	} else {
 		go func() {
-			c.server.ListenAndServe()
+			servErr := c.server.ListenAndServe()
+			if servErr != nil {
+				fmt.Println("Server error %s", servErr.Error())
+			}
 		}()
 	}
 
@@ -230,6 +242,8 @@ func (c *HttpEndpoint) addCors(next http.Handler) http.Handler {
 
 func (c *HttpEndpoint) addCompatibility(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		//TODO: Write code
 
 		// req.param = (name) => {
 		//     if (req.query) {
@@ -266,10 +280,9 @@ func (c *HttpEndpoint) noCache(next http.Handler) http.Handler {
 // Returns maintenance error code
 func (c *HttpEndpoint) doMaintenance(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// // Make this more sophisticated
+		// Make this more sophisticated
 		if c.maintenanceEnabled {
 			w.Header().Add("Retry-After", "3600")
-			//res.json(503)
 			jsonStr, _ := json.Marshal(503)
 			w.Write(jsonStr)
 			next.ServeHTTP(w, r)
@@ -335,7 +348,6 @@ func (c *HttpEndpoint) Unregister(registration IRegisterable) {
 			i++
 		}
 	}
-	//c.registrations = _.remove(c.registrations, r => r == registration);
 }
 
 func (c *HttpEndpoint) performRegistrations() {
@@ -371,15 +383,23 @@ func (c *HttpEndpoint) RegisterRoute(method string, route string, schema *cvalid
 
 	// Hack!!! Wrapping action to preserve prototyping context
 	actionCurl := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Perform validation
+		//  Perform validation
 		if schema != nil {
 			//params = _.extend({}, req.params, { body: req.body })
 			var params map[string]interface{} = make(map[string]interface{}, 0)
 			params["params"] = r.URL.Query()
-			cpBody, _ := r.GetBody()
-			buf, _ := ioutil.ReadAll(cpBody)
+
+			// Make copy of request
+			bodyBuf, bodyErr := ioutil.ReadAll(r.Body)
+			if bodyErr != nil {
+				HttpResponseSender.SendError(w, r, bodyErr)
+				return
+			}
+			r.Body.Close()
+			r.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBuf))
+			//-------------------------
 			var body interface{}
-			json.Unmarshal(buf, body)
+			json.Unmarshal(bodyBuf, &body)
 			params["body"] = body
 
 			correlationId := ""

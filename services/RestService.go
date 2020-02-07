@@ -85,6 +85,7 @@ See RestClient
 */
 // implements IOpenable, IConfigurable, IReferenceable, IUnreferenceable, IRegisterable
 type RestService struct {
+	IRegisterable
 	defaultConfig *cconf.ConfigParams
 	config        *cconf.ConfigParams
 	references    crefer.IReferences
@@ -140,7 +141,11 @@ func (c *RestService) SetReferences(references crefer.IReferences) {
 	c.DependencyResolver.SetReferences(references)
 
 	// Get endpoint
-	c.Endpoint = c.DependencyResolver.GetOneOptional("endpoint").(*HttpEndpoint)
+	depRes := c.DependencyResolver.GetOneOptional("endpoint")
+	if depRes != nil {
+		c.Endpoint = depRes.(*HttpEndpoint)
+	}
+
 	// Or create a local one
 	if c.Endpoint == nil {
 		c.Endpoint = c.createEndpoint()
@@ -302,7 +307,7 @@ func (c *RestService) SendResult(res http.ResponseWriter, req *http.Request, res
    - res       a HTTP response object.
    - callback function that receives execution result or error.
 */
-func (c *RestService) SendCreatedResult(req *http.Request, res http.ResponseWriter, result interface{}, err error) {
+func (c *RestService) SendCreatedResult(res http.ResponseWriter, req *http.Request, result interface{}, err error) {
 	HttpResponseSender.SendCreatedResult(res, req, result, err)
 }
 
@@ -418,4 +423,4 @@ func (c *RestService) RegisterInterceptor(route string,
    This method is called by the service and must be overriden
    in child classes.
 */
-func (c *RestService) Register() {}
+//func (c *RestService) Register() {}

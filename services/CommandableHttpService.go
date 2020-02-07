@@ -1,6 +1,7 @@
 package services
 
 import (
+	"bytes"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -114,14 +115,18 @@ func (c *CommandableHttpService) Register() {
 
 		c.RegisterRoute("post", route, nil, func(res http.ResponseWriter, req *http.Request) {
 
-			bodyReader, bodyErr := req.GetBody()
+			// Make copy of request
+			bodyBuf, bodyErr := ioutil.ReadAll(req.Body)
 			if bodyErr != nil {
-				c.SendResult(res, req, nil, bodyErr)
+				HttpResponseSender.SendError(res, req, bodyErr)
+				return
 			}
+			req.Body.Close()
+			req.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBuf))
+			//-------------------------
 
-			body, _ := ioutil.ReadAll(bodyReader)
 			var params interface{}
-			json.Unmarshal(body, params)
+			json.Unmarshal(bodyBuf, &params)
 			urlParams := req.URL.Query()
 			correlationId := urlParams.Get("correlation_id")
 			args := crun.NewParametersFromValue(params)
