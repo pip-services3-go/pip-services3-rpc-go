@@ -68,6 +68,8 @@ type HeartbeatRestService struct {
 */
 func NewHeartbeatRestService() *HeartbeatRestService {
 	hrs := HeartbeatRestService{}
+	hrs.RestService = *NewRestService()
+	hrs.RestService.IRegisterable = &hrs
 	hrs.route = "heartbeat"
 	return &hrs
 }

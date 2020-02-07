@@ -187,12 +187,6 @@ func (c *HttpEndpoint) Open(correlationId string) error {
 	url := connection.Host() + ":" + strconv.Itoa(connection.Port())
 	c.server = &http.Server{Addr: url}
 	c.router = mux.NewRouter()
-	//     c.server.use(restify.CORS());
-	//     c.server.use(restify.plugins.dateParser());
-	//     c.server.use(restify.plugins.queryParser());
-	//     c.server.use(restify.plugins.jsonp());
-	//     c.server.use(restify.plugins.gzipResponse());
-	//     c.server.use(restify.plugins.jsonBodyParser());
 
 	c.router.Use(c.addCors)
 	c.router.Use(c.addCompatibility)
@@ -375,8 +369,8 @@ func (c *HttpEndpoint) RegisterRoute(method string, route string, schema *cvalid
 	action http.HandlerFunc) {
 
 	method = strings.ToLower(method)
-	if method == "delete" {
-		method = "del"
+	if method == "del" {
+		method = "delete"
 	}
 
 	route = c.fixRoute(route)
@@ -387,7 +381,13 @@ func (c *HttpEndpoint) RegisterRoute(method string, route string, schema *cvalid
 		if schema != nil {
 			//params = _.extend({}, req.params, { body: req.body })
 			var params map[string]interface{} = make(map[string]interface{}, 0)
-			params["params"] = r.URL.Query()
+			for k, v := range r.URL.Query() {
+				params[k] = v[0]
+			}
+
+			for k, v := range mux.Vars(r) {
+				params[k] = v
+			}
 
 			// Make copy of request
 			bodyBuf, bodyErr := ioutil.ReadAll(r.Body)
@@ -402,11 +402,7 @@ func (c *HttpEndpoint) RegisterRoute(method string, route string, schema *cvalid
 			json.Unmarshal(bodyBuf, &body)
 			params["body"] = body
 
-			correlationId := ""
-			if correlationIds, ok := r.URL.Query()["correlaton_id"]; ok {
-				correlationId = correlationIds[0]
-			}
-
+			correlationId := r.URL.Query().Get("correlaton_id")
 			err := schema.ValidateAndReturnError(correlationId, params, false)
 			if err != nil {
 				HttpResponseSender.SendError(w, r, err)

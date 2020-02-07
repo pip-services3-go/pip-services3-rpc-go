@@ -1,83 +1,69 @@
 package test_rpc_services
 
-// let assert = require('chai').assert;
-// let restify = require('restify-clients');
-// let async = require('async');
+import (
+	"encoding/json"
+	"io/ioutil"
+	"net/http"
+	"testing"
 
-// import { Descriptor } from 'pip-services3-commons-node';
-// import { ConfigParams } from 'pip-services3-commons-node';
-// import { References } from 'pip-services3-commons-node';
+	cconf "github.com/pip-services3-go/pip-services3-commons-go/config"
+	crefer "github.com/pip-services3-go/pip-services3-commons-go/refer"
+	"github.com/pip-services3-go/pip-services3-rpc-go/services"
+	testrpc "github.com/pip-services3-go/pip-services3-rpc-go/test"
+	"github.com/stretchr/testify/assert"
+)
 
-// import { HttpEndpoint } from '../../src/services/HttpEndpoint';
-// import { Dummy } from '../Dummy';
-// import { DummyController } from '../DummyController';
-// import { DummyRestService } from './DummyRestService';
+func TestHttpEndpoint(t *testing.T) {
 
-// var restConfig = ConfigParams.fromTuples(
-//     "connection.protocol", "http",
-//     "connection.host", "localhost",
-//     "connection.port", 3000
-// );
+	restConfig := cconf.NewConfigParamsFromTuples(
+		"connection.protocol", "http",
+		"connection.host", "localhost",
+		"connection.port", "3000",
+	)
 
-// suite('HttpEndpoint', ()=> {
-//     var _dummy1: Dummy;
-//     var _dummy2: Dummy;
+	var endpoint *services.HttpEndpoint
+	var service *DummyRestService
 
-//     let endpoint: HttpEndpoint;
-//     let service: DummyRestService;
+	ctrl := testrpc.NewDummyController()
+	service = NewDummyRestService()
+	service.Configure(cconf.NewConfigParamsFromTuples(
+		"base_route",
+		"/api/v1",
+	))
 
-//     let rest: any;
+	endpoint = services.NewHttpEndpoint()
+	endpoint.Configure(restConfig)
 
-//     suiteSetup((done) => {
-//         let ctrl = new DummyController();
+	references := crefer.NewReferencesFromTuples(
+		crefer.NewDescriptor("pip-services-dummies", "controller", "default", "default", "1.0"), ctrl,
+		crefer.NewDescriptor("pip-services-dummies", "service", "rest", "default", "1.0"), service,
+		crefer.NewDescriptor("pip-services", "endpoint", "http", "default", "1.0"), endpoint,
+	)
+	service.SetReferences(references)
 
-//         service = new DummyRestService();
-//         service.configure(ConfigParams.fromTuples(
-//             'base_route', '/api/v1'
-//         ));
+	err := endpoint.Open("")
 
-//         endpoint = new HttpEndpoint();
-//         endpoint.configure(restConfig);
+	if err != nil {
+		assert.Nil(t, err)
+	} else {
+		defer endpoint.Close("")
+		err = service.Open("")
+		if err != nil {
+			assert.Nil(t, err)
+		} else {
+			defer service.Close("")
+		}
+	}
 
-//         let references: References = References.fromTuples(
-//             new Descriptor('pip-services-dummies', 'controller', 'default', 'default', '1.0'), ctrl,
-//             new Descriptor('pip-services-dummies', 'service', 'rest', 'default', '1.0'), service,
-//             new Descriptor('pip-services', 'endpoint', 'http', 'default', '1.0'), endpoint
-//         );
-//         service.setReferences(references);
+	url := "http://localhost:3000"
 
-//         endpoint.open(null, (err) => {
-//             if (err) done(err);
-//             else service.open(null, done);
-//         });
-//     });
-
-//     suiteTeardown((done) => {
-//         service.close(null, (err) => {
-//             if (err) done(err);
-//             else endpoint.close(null, done);
-//         });
-//     });
-
-//     setup(() => {
-//         let url = 'http://localhost:3000';
-//         rest = restify.createJsonClient({ url: url, version: '*' });
-
-//         _dummy1 = { id: null, key: "Key 1", content: "Content 1"};
-//         _dummy2 = { id: null, key: "Key 2", content: "Content 2"};
-//     });
-
-//     test('CRUD Operations', (done) => {
-//         rest.get('/api/v1/dummies',
-//             (err, req, res, dummies) => {
-//                 assert.isNull(err);
-
-//                 assert.isObject(dummies);
-//                 assert.lengthOf(dummies.data, 0);
-
-//                 done();
-//             }
-//         );
-//     });
-
-// });
+	getResponse, getErr := http.Get(url + "/api/v1/dummies")
+	assert.Nil(t, getErr)
+	resBody, bodyErr := ioutil.ReadAll(getResponse.Body)
+	assert.Nil(t, bodyErr)
+	var dummies testrpc.DummyDataPage
+	jsonErr := json.Unmarshal(resBody, &dummies)
+	assert.Nil(t, jsonErr)
+	assert.NotNil(t, dummies)
+	assert.Len(t, dummies.Data, 0)
+}

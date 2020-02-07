@@ -76,6 +76,8 @@ type StatusRestService struct {
 func NewStatusRestService() *StatusRestService {
 	//super();
 	srs := StatusRestService{}
+	srs.RestService = *NewRestService()
+	srs.RestService.IRegisterable = &srs
 	srs.startTime = time.Now()
 	srs.route = "status"
 	srs.DependencyResolver.Put("context-info", crefer.NewDescriptor("pip-services", "context-info", "default", "*", "1.0"))

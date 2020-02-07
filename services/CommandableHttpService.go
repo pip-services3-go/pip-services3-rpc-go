@@ -88,6 +88,8 @@ type CommandableHttpService struct {
 */
 func NewCommandableHttpService(baseRoute string) *CommandableHttpService {
 	chs := CommandableHttpService{}
+	chs.RestService = *NewRestService()
+	chs.RestService.IRegisterable = &chs
 	chs.BaseRoute = baseRoute
 	chs.DependencyResolver.Put("controller", "none")
 	return &chs
@@ -101,7 +103,11 @@ func (c *CommandableHttpService) Register() {
 	if depErr != nil {
 		return
 	}
-	controller := resCtrl.(ccomands.ICommandable)
+	controller, ok := resCtrl.(ccomands.ICommandable)
+	if !ok {
+		c.Logger.Error("CommandableHttpService", nil, "Can't cast Controller to ICommandable")
+		return
+	}
 	c.commandSet = controller.GetCommandSet()
 
 	commands := c.commandSet.Commands()

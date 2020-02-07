@@ -16,11 +16,11 @@ func NewDummyController() *DummyController {
 	return &dc
 }
 
-func (c *DummyController) GetCommandSet() ccomand.CommandSet {
+func (c *DummyController) GetCommandSet() *ccomand.CommandSet {
 	if c.commandSet == nil {
 		c.commandSet = NewDummyCommandSet(c)
 	}
-	return c.commandSet.CommandSet
+	return &c.commandSet.CommandSet
 }
 
 func (c *DummyController) GetPageByFilter(correlationId string, filter *cdata.FilterParams, paging *cdata.PagingParams) (items *DummyDataPage, err error) {

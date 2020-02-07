@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"github.com/gorilla/mux"
 	cconv "github.com/pip-services3-go/pip-services3-commons-go/convert"
 	cdata "github.com/pip-services3-go/pip-services3-commons-go/data"
 	cerr "github.com/pip-services3-go/pip-services3-commons-go/errors"
@@ -21,12 +22,12 @@ type DummyRestService struct {
 }
 
 func NewDummyRestService() *DummyRestService {
-	drs := &DummyRestService{}
+	drs := DummyRestService{}
 	drs.RestService = *services.NewRestService()
-	drs.RestService.IRegisterable = drs
+	drs.RestService.IRegisterable = &drs
 	drs.numberOfCalls = 0
 	drs.DependencyResolver.Put("controller", crefer.NewDescriptor("pip-services-dummies", "controller", "default", "*", "*"))
-	return drs
+	return &drs
 }
 
 func (c *DummyRestService) SetReferences(references crefer.IReferences) {
@@ -68,10 +69,15 @@ func (c *DummyRestService) getPageByFilter(res http.ResponseWriter, req *http.Re
 
 func (c *DummyRestService) getOneById(res http.ResponseWriter, req *http.Request) {
 	params := req.URL.Query()
+	vars := mux.Vars(req)
 
+	dummyId := params.Get("dummy_id")
+	if dummyId == "" {
+		dummyId = vars["dummy_id"]
+	}
 	result, err := c.controller.GetOneById(
 		params.Get("correlation_id"),
-		params.Get("dummy_id"))
+		dummyId)
 	c.SendResult(res, req, result, err)
 }
 
@@ -131,9 +137,16 @@ func (c *DummyRestService) update(res http.ResponseWriter, req *http.Request) {
 
 func (c *DummyRestService) deleteById(res http.ResponseWriter, req *http.Request) {
 	params := req.URL.Query()
+	vars := mux.Vars(req)
+
+	dummyId := params.Get("dummy_id")
+	if dummyId == "" {
+		dummyId = vars["dummy_id"]
+	}
+
 	result, err := c.controller.DeleteById(
 		params.Get("correlation_id"),
-		params.Get("dummy_id"),
+		dummyId,
 	)
 	c.SendDeletedResult(res, req, result, err)
 }
@@ -151,7 +164,7 @@ func (c *DummyRestService) Register() {
 	)
 
 	c.RegisterRoute(
-		"get", "/dummies/:dummy_id",
+		"get", "/dummies/{dummy_id}",
 		&cvalid.NewObjectSchema().
 			WithRequiredProperty("dummy_id", cconv.String).Schema,
 		c.getOneById,
@@ -172,7 +185,7 @@ func (c *DummyRestService) Register() {
 	)
 
 	c.RegisterRoute(
-		"delete", "/dummies/:dummy_id",
+		"delete", "/dummies/{dummy_id}",
 		&cvalid.NewObjectSchema().
 			WithRequiredProperty("dummy_id", cconv.String).Schema,
 		c.deleteById,

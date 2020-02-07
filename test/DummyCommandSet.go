@@ -16,6 +16,7 @@ type DummyCommandSet struct {
 func NewDummyCommandSet(controller IDummyController) *DummyCommandSet {
 	//super();
 	dcs := DummyCommandSet{}
+	dcs.CommandSet = *ccomand.NewCommandSet()
 
 	dcs.controller = controller
 

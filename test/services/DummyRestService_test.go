@@ -42,7 +42,7 @@ func TestDummyRestService(t *testing.T) {
 	_dummy1 = testrpc.Dummy{Id: "", Key: "Key 1", Content: "Content 1"}
 	_dummy2 = testrpc.Dummy{Id: "", Key: "Key 2", Content: "Content 2"}
 
-	//var dummy1, dummy2 testrpc.Dummy
+	var dummy1 testrpc.Dummy
 
 	// Create one dummy
 	jsonBody, _ := json.Marshal(_dummy1)
@@ -61,7 +61,7 @@ func TestDummyRestService(t *testing.T) {
 	assert.Equal(t, dummy.Content, _dummy1.Content)
 	assert.Equal(t, dummy.Key, _dummy1.Key)
 
-	//dummy1 = dummy
+	dummy1 = dummy
 
 	// Create another dummy
 	jsonBody, _ = json.Marshal(_dummy2)
@@ -81,58 +81,52 @@ func TestDummyRestService(t *testing.T) {
 	//dummy2 = dummy
 
 	// Get all dummies
-	postResponse, postErr = http.Get(url + "/dummies")
-
-	resBody, bodyErr = ioutil.ReadAll(postResponse.Body)
+	getResponse, getErr := http.Get(url + "/dummies")
+	assert.Nil(t, getErr)
+	resBody, bodyErr = ioutil.ReadAll(getResponse.Body)
 	assert.Nil(t, bodyErr)
+
 	var dummies testrpc.DummyDataPage
 	jsonErr = json.Unmarshal(resBody, &dummies)
-	assert.Nil(t, postErr)
+	assert.Nil(t, jsonErr)
 	assert.NotNil(t, dummies)
 	assert.Len(t, dummies.Data, 2)
 
-	//         // Update the dummy
-	//             (callback) => {
-	//                 dummy1.content = "Updated Content 1";
-	//                 rest.put("/dummies",
-	//                     dummy1,
-	//                     (err, req, res, dummy) => {
-	//                         assert.isNull(err);
+	// Update the dummy
 
-	//                         assert.isObject(dummy);
-	//                         assert.equal(dummy.content, "Updated Content 1");
-	//                         assert.equal(dummy.key, _dummy1.key);
+	dummy1.Content = "Updated Content 1"
+	jsonBody, _ = json.Marshal(dummy1)
 
-	//                         dummy1 = dummy;
+	client := &http.Client{}
+	data := bytes.NewReader(jsonBody)
+	putReq, putErr := http.NewRequest(http.MethodPut, url+"/dummies", data)
+	assert.Nil(t, putErr)
+	putRes, putErr := client.Do(putReq)
+	assert.Nil(t, putErr)
+	resBody, bodyErr = ioutil.ReadAll(putRes.Body)
+	jsonErr = json.Unmarshal(resBody, &dummy)
+	assert.Nil(t, putErr)
+	assert.NotNil(t, dummy)
 
-	//                         callback();
-	//                     }
-	//                 );
-	//             },
-	//         // Delete dummy
-	//             (callback) => {
-	//                 rest.del("/dummies/" + dummy1.id,
-	//                     (err, req, res) => {
-	//                         assert.isNull(err);
+	assert.Equal(t, dummy.Content, "Updated Content 1")
+	assert.Equal(t, dummy.Key, _dummy1.Key)
+	dummy1 = dummy
 
-	//                         callback();
-	//                     }
-	//                 );
-	//             },
-	//         // Try to get delete dummy
-	//             (callback) => {
-	//                 rest.get("/dummies/" + dummy1.id,
-	//                     (err, req, res, dummy) => {
-	//                         assert.isNull(err);
+	// Delete dummy
+	delReq, delErr := http.NewRequest(http.MethodDelete, url+"/dummies/"+dummy1.Id, nil)
+	assert.Nil(t, delErr)
+	_, delErr = client.Do(delReq)
+	assert.Nil(t, delErr)
 
-	//                         // assert.isObject(dummy);
-
-	//                         callback();
-	//                     }
-	//                 );
-	//             }
-	//         ], done);
-	//     });
-
-	// });
+	// Try to get delete dummy
+	dummies.Data = dummies.Data[:0]
+	*dummies.Total = 0
+	getResponse, getErr = http.Get(url + "/dummies/" + dummy1.Id)
+	assert.Nil(t, getErr)
+	resBody, bodyErr = ioutil.ReadAll(getResponse.Body)
+	assert.Nil(t, bodyErr)
+	jsonErr = json.Unmarshal(resBody, &dummies)
+	assert.Nil(t, jsonErr)
+	assert.NotNil(t, dummies)
+	assert.Len(t, dummies.Data, 0)
 }
