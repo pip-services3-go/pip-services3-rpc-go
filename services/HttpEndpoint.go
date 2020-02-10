@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -204,7 +203,7 @@ func (c *HttpEndpoint) Open(correlationId string) error {
 		go func() {
 			servErr := c.server.ListenAndServeTLS(sslKeyFile, sslCrtFile)
 			if servErr != nil {
-				fmt.Println("Server error %s", servErr.Error())
+				//fmt.Println("Server stoped:", servErr.Error())
 			}
 		}()
 
@@ -212,7 +211,7 @@ func (c *HttpEndpoint) Open(correlationId string) error {
 		go func() {
 			servErr := c.server.ListenAndServe()
 			if servErr != nil {
-				fmt.Println("Server error %s", servErr.Error())
+				//fmt.Println("Server stoped:", servErr.Error())
 			}
 		}()
 	}

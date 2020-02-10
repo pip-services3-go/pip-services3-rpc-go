@@ -16,14 +16,14 @@ import (
 )
 
 type DummyRestService struct {
-	services.RestService
+	*services.RestService
 	controller    testrpc.IDummyController
 	numberOfCalls int
 }
 
 func NewDummyRestService() *DummyRestService {
 	drs := DummyRestService{}
-	drs.RestService = *services.NewRestService()
+	drs.RestService = services.NewRestService()
 	drs.RestService.IRegisterable = &drs
 	drs.numberOfCalls = 0
 	drs.DependencyResolver.Put("controller", crefer.NewDescriptor("pip-services-dummies", "controller", "default", "*", "*"))

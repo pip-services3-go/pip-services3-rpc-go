@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"github.com/gorilla/mux"
 	ccomands "github.com/pip-services3-go/pip-services3-commons-go/commands"
 	crun "github.com/pip-services3-go/pip-services3-commons-go/run"
 )
@@ -77,7 +78,7 @@ HTTP-based remote interface.
 // extends RestService
 
 type CommandableHttpService struct {
-	RestService
+	*RestService
 	commandSet *ccomands.CommandSet
 }
 
@@ -88,7 +89,7 @@ type CommandableHttpService struct {
 */
 func NewCommandableHttpService(baseRoute string) *CommandableHttpService {
 	chs := CommandableHttpService{}
-	chs.RestService = *NewRestService()
+	chs.RestService = NewRestService()
 	chs.RestService.IRegisterable = &chs
 	chs.BaseRoute = baseRoute
 	chs.DependencyResolver.Put("controller", "none")
@@ -99,6 +100,7 @@ func NewCommandableHttpService(baseRoute string) *CommandableHttpService {
    Registers all service routes in HTTP endpoint.
 */
 func (c *CommandableHttpService) Register() {
+
 	resCtrl, depErr := c.DependencyResolver.GetOneRequired("controller")
 	if depErr != nil {
 		return
@@ -119,6 +121,8 @@ func (c *CommandableHttpService) Register() {
 			route = "/" + route
 		}
 
+		// Todo: Need wrote validate or geting validation schema from command
+
 		c.RegisterRoute("post", route, nil, func(res http.ResponseWriter, req *http.Request) {
 
 			// Make copy of request
@@ -130,10 +134,17 @@ func (c *CommandableHttpService) Register() {
 			req.Body.Close()
 			req.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBuf))
 			//-------------------------
-
-			var params interface{}
+			var params map[string]interface{} = make(map[string]interface{}, 0)
 			json.Unmarshal(bodyBuf, &params)
+
 			urlParams := req.URL.Query()
+			for k, v := range urlParams {
+				params[k] = v[0]
+			}
+			for k, v := range mux.Vars(req) {
+				params[k] = v
+			}
+
 			correlationId := urlParams.Get("correlation_id")
 			args := crun.NewParametersFromValue(params)
 			timing := c.Instrument(correlationId, c.BaseRoute+"."+command.Name())

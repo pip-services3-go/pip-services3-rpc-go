@@ -3,6 +3,7 @@ package test_rpc_services
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"testing"
@@ -21,13 +22,14 @@ func TestDummyCommandableHttpService(t *testing.T) {
 		"connection.port", "3000",
 	)
 	var _dummy1 testrpc.Dummy
-	//var _dummy2 testrpc.Dummy
+	var _dummy2 testrpc.Dummy
 
 	var service *DummyCommandableHttpService
 
 	ctrl := testrpc.NewDummyController()
 
 	service = NewDummyCommandableHttpService()
+
 	service.Configure(restConfig)
 
 	references := cref.NewReferencesFromTuples(
@@ -42,7 +44,7 @@ func TestDummyCommandableHttpService(t *testing.T) {
 	url := "http://localhost:3000"
 
 	_dummy1 = testrpc.Dummy{Id: "", Key: "Key 1", Content: "Content 1"}
-	//_dummy2 = testrpc.Dummy{Id: "", Key: "Key 2", Content: "Content 2"}
+	_dummy2 = testrpc.Dummy{Id: "", Key: "Key 2", Content: "Content 2"}
 
 	// Create one dummy
 
@@ -65,88 +67,80 @@ func TestDummyCommandableHttpService(t *testing.T) {
 	assert.Equal(t, dummy.Content, _dummy1.Content)
 	assert.Equal(t, dummy.Key, _dummy1.Key)
 
-	// 						dummy1 = dummy;
+	dummy1 := dummy
 
-	// 		// Create another dummy
-	// 			(callback) => {
-	// 				rest.post("/dummy/create_dummy",
-	// 					{
-	// 						dummy: _dummy2
-	// 					},
-	// 					(err, req, res, dummy) => {
-	// 						assert.isNull(err);
+	// Create another dummy
+	bodyMap = make(map[string]interface{})
+	bodyMap["dummy"] = _dummy2
 
-	// 						assert.isObject(dummy);
-	// 						assert.equal(dummy.content, _dummy2.content);
-	// 						assert.equal(dummy.key, _dummy2.key);
+	jsonBody, _ = json.Marshal(bodyMap)
 
-	// 						dummy2 = dummy;
+	bodyReader = bytes.NewReader(jsonBody)
+	postResponse, postErr = http.Post(url+"/dummies/create_dummy", "application/json", bodyReader)
+	assert.Nil(t, postErr)
+	resBody, bodyErr = ioutil.ReadAll(postResponse.Body)
+	assert.Nil(t, bodyErr)
 
-	// 						callback();
-	// 					}
-	// 				);
-	// 			},
-	// 		// Get all dummies
-	// 			(callback) => {
-	// 				rest.post("/dummy/get_dummies",
-	// 					null,
-	// 					(err, req, res, dummies) => {
-	// 						assert.isNull(err);
+	jsonErr = json.Unmarshal(resBody, &dummy)
 
-	// 						assert.isObject(dummies);
-	// 						assert.lengthOf(dummies.data, 2);
+	assert.Nil(t, jsonErr)
+	assert.NotNil(t, dummy)
+	assert.Equal(t, dummy.Content, _dummy2.Content)
+	assert.Equal(t, dummy.Key, _dummy2.Key)
 
-	// 						callback();
-	// 					}
-	// 				);
-	// 			},
-	// 		// Update the dummy
-	// 			(callback) => {
-	// 				dummy1.content = "Updated Content 1";
-	// 				rest.post("/dummy/update_dummy",
-	// 					{
-	// 						dummy: dummy1
-	// 					},
-	// 					(err, req, res, dummy) => {
-	// 						assert.isNull(err);
+	// Get all dummies
 
-	// 						assert.isObject(dummy);
-	// 						assert.equal(dummy.content, "Updated Content 1");
-	// 						assert.equal(dummy.key, _dummy1.key);
+	postResponse, postErr = http.Post(url+"/dummies/get_dummies", "application/json", nil)
+	assert.Nil(t, postErr)
+	resBody, bodyErr = ioutil.ReadAll(postResponse.Body)
+	assert.Nil(t, bodyErr)
+	var dummies testrpc.DummyDataPage
+	jsonErr = json.Unmarshal(resBody, &dummies)
+	assert.Nil(t, jsonErr)
+	assert.NotNil(t, dummies)
+	assert.Len(t, dummies.Data, 2)
 
-	// 						dummy1 = dummy;
+	// Update the dummy
+	dummy1.Content = "Updated Content 1"
+	bodyMap = make(map[string]interface{})
+	bodyMap["dummy"] = dummy1
 
-	// 						callback();
-	// 					}
-	// 				);
-	// 			},
-	// 		// Delete dummy
-	// 			(callback) => {
-	// 				rest.post("/dummy/delete_dummy",
-	// 					{
-	// 						dummy_id: dummy1.id
-	// 					},
-	// 					(err, req, res) => {
-	// 						assert.isNull(err);
+	jsonBody, _ = json.Marshal(bodyMap)
 
-	// 						callback();
-	// 					}
-	// 				);
-	// 			},
-	// 		// Try to get delete dummy
-	// 			(callback) => {
-	// 				rest.post("/dummy/get_dummy_by_id",
-	// 					{
-	// 						dummy_id: dummy1.id
-	// 					},
-	// 					(err, req, res, dummy) => {
-	// 						assert.isNull(err);
+	bodyReader = bytes.NewReader(jsonBody)
+	postResponse, postErr = http.Post(url+"/dummies/update_dummy", "application/json", bodyReader)
+	assert.Nil(t, postErr)
+	resBody, bodyErr = ioutil.ReadAll(postResponse.Body)
+	assert.Nil(t, bodyErr)
+	jsonErr = json.Unmarshal(resBody, &dummy)
+	assert.Nil(t, jsonErr)
+	assert.NotNil(t, dummy)
+	assert.Equal(t, dummy.Content, "Updated Content 1")
+	assert.Equal(t, dummy.Key, _dummy1.Key)
 
-	// 						// assert.isObject(dummy);
+	// Delete dummy
+	bodyMap = make(map[string]interface{})
+	bodyMap["dummy_id"] = dummy1.Id
+	jsonBody, _ = json.Marshal(bodyMap)
+	bodyReader = bytes.NewReader(jsonBody)
+	postResponse, postErr = http.Post(url+"/dummies/delete_dummy", "application/json", bodyReader)
+	assert.Nil(t, postErr)
+	resBody, bodyErr = ioutil.ReadAll(postResponse.Body)
+	assert.Nil(t, bodyErr)
 
-	// 						callback();
-	// 					}
-	// 				);
-	// 			}
+	// Try to get delete dummy
+	bodyMap = make(map[string]interface{})
+	bodyMap["dummy_id"] = dummy1.Id
+	jsonBody, _ = json.Marshal(bodyMap)
+	bodyReader = bytes.NewReader(jsonBody)
+	postResponse, postErr = http.Post(url+"/dummies/get_dummy_by_id", "application/json", bodyReader)
+	assert.Nil(t, postErr)
+	resBody, bodyErr = ioutil.ReadAll(postResponse.Body)
+	assert.Nil(t, bodyErr)
+
+	fmt.Println((string)(resBody))
+
+	jsonErr = json.Unmarshal(resBody, &dummy)
+	assert.Nil(t, jsonErr)
 
 }

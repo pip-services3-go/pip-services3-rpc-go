@@ -6,12 +6,13 @@ import (
 )
 
 type DummyCommandableHttpService struct {
-	services.CommandableHttpService
+	*services.CommandableHttpService
 }
 
 func NewDummyCommandableHttpService() *DummyCommandableHttpService {
-	dchs := DummyCommandableHttpService{}
-	dchs.CommandableHttpService = *services.NewCommandableHttpService("dummy")
+	dchs := DummyCommandableHttpService{
+		CommandableHttpService: services.NewCommandableHttpService("dummies"),
+	}
 	dchs.DependencyResolver.Put("controller", cref.NewDescriptor("pip-services-dummies", "controller", "default", "*", "*"))
 	return &dchs
 }

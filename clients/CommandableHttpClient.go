@@ -68,7 +68,7 @@ type CommandableHttpClient struct {
 
 // NewCommandableHttpClientr is creates a new instance of the client.
 // - baseRoute     a base route for remote service.
-func NewCommandableHttpClientr(baseRoute string) *CommandableHttpClient {
+func NewCommandableHttpClient(baseRoute string) *CommandableHttpClient {
 	chc := CommandableHttpClient{}
 	chc.BaseRoute = baseRoute
 	return &chc

@@ -1,6 +1,8 @@
 package test_rpc
 
 import (
+	"encoding/json"
+
 	ccomand "github.com/pip-services3-go/pip-services3-commons-go/commands"
 	cconv "github.com/pip-services3-go/pip-services3-commons-go/convert"
 	cdata "github.com/pip-services3-go/pip-services3-commons-go/data"
@@ -14,7 +16,6 @@ type DummyCommandSet struct {
 }
 
 func NewDummyCommandSet(controller IDummyController) *DummyCommandSet {
-	//super();
 	dcs := DummyCommandSet{}
 	dcs.CommandSet = *ccomand.NewCommandSet()
 
@@ -56,7 +57,10 @@ func (c *DummyCommandSet) makeCreateCommand() ccomand.ICommand {
 		"create_dummy",
 		cvalid.NewObjectSchema().WithRequiredProperty("dummy", NewDummySchema()),
 		func(correlationId string, args *crun.Parameters) (result interface{}, err error) {
-			var entity Dummy = args.Get("dummy").(Dummy)
+			val, _ := json.Marshal(args.Get("dummy"))
+			var entity Dummy
+			json.Unmarshal(val, &entity)
+
 			return c.controller.Create(correlationId, entity)
 		},
 	)
@@ -67,7 +71,9 @@ func (c *DummyCommandSet) makeUpdateCommand() ccomand.ICommand {
 		"update_dummy",
 		cvalid.NewObjectSchema().WithRequiredProperty("dummy", NewDummySchema()),
 		func(correlationId string, args *crun.Parameters) (result interface{}, err error) {
-			var entity Dummy = args.Get("dummy").(Dummy)
+			val, _ := json.Marshal(args.Get("dummy"))
+			var entity Dummy
+			json.Unmarshal(val, &entity)
 			return c.controller.Update(correlationId, entity)
 		},
 	)

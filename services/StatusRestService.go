@@ -63,7 +63,7 @@ The service responds on /status route (can be changed) with a JSON object:
     });
 */
 type StatusRestService struct {
-	RestService
+	*RestService
 	startTime   time.Time
 	references2 crefer.IReferences
 	contextInfo *cinfo.ContextInfo
@@ -76,7 +76,7 @@ type StatusRestService struct {
 func NewStatusRestService() *StatusRestService {
 	//super();
 	srs := StatusRestService{}
-	srs.RestService = *NewRestService()
+	srs.RestService = NewRestService()
 	srs.RestService.IRegisterable = &srs
 	srs.startTime = time.Now()
 	srs.route = "status"
@@ -89,7 +89,7 @@ func NewStatusRestService() *StatusRestService {
 
    @param config    configuration parameters to be set.
 */
-func (c *StatusRestService) configure(config *cconf.ConfigParams) {
+func (c *StatusRestService) Configure(config *cconf.ConfigParams) {
 	c.RestService.Configure(config)
 	c.route = config.GetAsStringWithDefault("route", c.route)
 }

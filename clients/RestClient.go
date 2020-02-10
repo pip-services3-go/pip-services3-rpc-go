@@ -432,41 +432,4 @@ func (c *RestClient) Call(method string, route string, correlationId string, par
 	}
 	return r, rErr
 
-	// if callback != nil {
-	// 	callback(respErr, req, *resp, resp.Body)
-	// }
-
-	// self := c
-	// action := nil
-	// if callback == nil {
-	// 	action = func(err error, req *http.Request, res http.Response, data interface{}) {
-	// 		// Handling 204 codes
-	// 		if res && res.StatusCode == 204 {
-	// 			callback.Call(self, nil, nil)
-	// 		} else if err == nil {
-	// 			callback.Call(self, nil, data)
-	// 		} else {
-	// 			// Restore application exception
-	// 			if data != nil {
-	// 				err = cerr.ApplicationErrorFactory.Create(data).WithCause(err)
-	// 			}
-	// 			callback.Call(self, err, nil)
-	// 		}
-	// 	}
-	// }
-
-	// if method == "get" {
-	// 	c.Client.Get(route, action)
-	// } else if method == "head" {
-	// 	c.Client.Head(route, action)
-	// } else if method == "post" {
-	// 	c.Client.Post(route, data, action)
-	// } else if method == "put" {
-	// 	c.Client.Put(route, data, action)
-	// } else if method == "delete" {
-	// 	c.Client.Del(route, action)
-	// } else {
-	// 	err = cerr.NewUnknownError(correlationId, "UNSUPPORTED_METHOD", "Method is not supported by REST client").WithDetails("verb", method)
-	// 	return nil, err
-	// }
 }

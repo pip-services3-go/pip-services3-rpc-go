@@ -130,7 +130,6 @@ func (c *RestService) Configure(config *cconf.ConfigParams) {
 
 /*
 	Sets references to dependent components.
-
 	- references 	references to locate the component dependencies.
 */
 func (c *RestService) SetReferences(references crefer.IReferences) {
@@ -423,4 +422,5 @@ func (c *RestService) RegisterInterceptor(route string,
    This method is called by the service and must be overriden
    in child classes.
 */
-//func (c *RestService) Register() {}
+// func (c *RestService) Register() {
+// }
