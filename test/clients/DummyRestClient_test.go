@@ -1,46 +1,46 @@
 package test_rpc_clients
 
-// import (
-// 	"testing"
+import (
+	"testing"
 
-// 	cconf "github.com/pip-services3-go/pip-services3-commons-go/config"
-// 	cref "github.com/pip-services3-go/pip-services3-commons-go/refer"
-// 	testrpc "github.com/pip-services3-go/pip-services3-rpc-go/test"
-// 	testservices "github.com/pip-services3-go/pip-services3-rpc-go/test/services"
-// )
+	cconf "github.com/pip-services3-go/pip-services3-commons-go/config"
+	cref "github.com/pip-services3-go/pip-services3-commons-go/refer"
+	testrpc "github.com/pip-services3-go/pip-services3-rpc-go/test"
+	testservices "github.com/pip-services3-go/pip-services3-rpc-go/test/services"
+)
 
-// func TestDummyRestClient(t *testing.T) {
+func TestDummyRestClient(t *testing.T) {
 
-// 	restConfig := cconf.NewConfigParamsFromTuples(
-// 		"connection.protocol", "http",
-// 		"connection.host", "localhost",
-// 		"connection.port", "3000",
-// 	)
+	restConfig := cconf.NewConfigParamsFromTuples(
+		"connection.protocol", "http",
+		"connection.host", "localhost",
+		"connection.port", "3000",
+	)
 
-// 	var service *testservices.DummyRestService
-// 	var client *DummyRestClient
+	var service *testservices.DummyRestService
+	var client *DummyRestClient
 
-// 	var fixture *DummyClientFixture
+	var fixture *DummyClientFixture
 
-// 	ctrl := testrpc.NewDummyController()
+	ctrl := testrpc.NewDummyController()
 
-// 	service = testservices.NewDummyRestService()
-// 	service.Configure(restConfig)
+	service = testservices.NewDummyRestService()
+	service.Configure(restConfig)
 
-// 	references := cref.NewReferencesFromTuples(
-// 		cref.NewDescriptor("pip-services-dummies", "controller", "default", "default", "1.0"), ctrl,
-// 		cref.NewDescriptor("pip-services-dummies", "service", "rest", "default", "1.0"), service,
-// 	)
-// 	service.SetReferences(references)
-// 	service.Open("")
-// 	defer service.Close("")
+	references := cref.NewReferencesFromTuples(
+		cref.NewDescriptor("pip-services-dummies", "controller", "default", "default", "1.0"), ctrl,
+		cref.NewDescriptor("pip-services-dummies", "service", "rest", "default", "1.0"), service,
+	)
+	service.SetReferences(references)
+	service.Open("")
+	defer service.Close("")
 
-// 	client = NewDummyRestClient()
-// 	fixture = NewDummyClientFixture(client)
+	client = NewDummyRestClient()
+	fixture = NewDummyClientFixture(client)
 
-// 	client.Configure(restConfig)
-// 	client.SetReferences(cref.NewEmptyReferences())
-// 	client.Open("")
+	client.Configure(restConfig)
+	client.SetReferences(cref.NewEmptyReferences())
+	client.Open("")
 
-// 	t.Run("DummyRestClient.CrudOperations", fixture.TestCrudOperations)
-// }
+	t.Run("DummyRestClient.CrudOperations", fixture.TestCrudOperations)
+}

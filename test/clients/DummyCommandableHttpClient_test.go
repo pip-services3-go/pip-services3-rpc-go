@@ -1,41 +1,49 @@
 package test_rpc_clients
 
-// import (
-// 	"testing"
-// )
+import (
+	"testing"
 
-// func TestDummyCommandableHttpClient(t *testing.T) {
+	cconf "github.com/pip-services3-go/pip-services3-commons-go/config"
+	cref "github.com/pip-services3-go/pip-services3-commons-go/refer"
+	testrpc "github.com/pip-services3-go/pip-services3-rpc-go/test"
+	testservices "github.com/pip-services3-go/pip-services3-rpc-go/test/services"
+)
 
-// 	 restConfig := cconf.NewConfigParamsFromTuples(
-// 		"connection.protocol", "http",
-// 		"connection.host", "localhost",
-// 		"connection.port", "3000"
-// 	);
+func TestDummyCommandableHttpClient(t *testing.T) {
 
-// 		var service* DummyCommandableHttpService;
-// 		var client* DummyCommandableHttpClient;
+	restConfig := cconf.NewConfigParamsFromTuples(
+		"connection.protocol", "http",
+		"connection.host", "localhost",
+		"connection.port", "3000",
+	)
 
-// 	 	var fixture *DummyClientFixture;
+	var service *testservices.DummyCommandableHttpService
+	var client *DummyCommandableHttpClient
 
-// 			ctrl := NewDummyController();
+	var fixture *DummyClientFixture
 
-// 			service = NewDummyCommandableHttpService();
-// 			service.Configure(restConfig);
+	ctrl := testrpc.NewDummyController()
 
-// 			references = cref.NewReferencesFromTuples(
-// 				cref.NewDescriptor("pip-services-dummies", "controller", "default", "default", "1.0"), ctrl,
-// 				cref.NewDescriptor("pip-services-dummies", "service", "http", "default", "1.0"), service,
-// 			);
-// 			service.SetReferences(references);
+	service = testservices.NewDummyCommandableHttpService()
+	service.Configure(restConfig)
 
-// 			service.Open("");
-// 			defer service.Close("")
+	references := cref.NewReferencesFromTuples(
+		cref.NewDescriptor("pip-services-dummies", "controller", "default", "default", "1.0"), ctrl,
+		cref.NewDescriptor("pip-services-dummies", "service", "http", "default", "1.0"), service,
+	)
+	service.SetReferences(references)
 
-// 			client = NewDummyCommandableHttpClient();
-// 			fixture = NewDummyClientFixture(client);
+	service.Open("")
+	defer service.Close("")
 
-// 			client.Configure(restConfig);
-// 			client.SetReferences(cref.NewReferences());
-// 			client.Open("");
-// 	t.Run( "CRUD Operations",		fixture.testCrudOperations)
-// }
+	// for true {
+	// }
+
+	client = NewDummyCommandableHttpClient()
+	fixture = NewDummyClientFixture(client)
+
+	client.Configure(restConfig)
+	client.SetReferences(cref.NewEmptyReferences())
+	client.Open("")
+	t.Run("CRUD Operations", fixture.TestCrudOperations)
+}

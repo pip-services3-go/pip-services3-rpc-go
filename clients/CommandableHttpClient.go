@@ -70,6 +70,7 @@ type CommandableHttpClient struct {
 // - baseRoute     a base route for remote service.
 func NewCommandableHttpClient(baseRoute string) *CommandableHttpClient {
 	chc := CommandableHttpClient{}
+	chc.RestClient = *NewRestClient()
 	chc.BaseRoute = baseRoute
 	return &chc
 }
@@ -83,10 +84,9 @@ func NewCommandableHttpClient(baseRoute string) *CommandableHttpClient {
 // - params            command parameters.
 // - callback          callback function that receives result or error.
 
-func (c *CommandableHttpClient) CallCommand(name string, correlationId string, params cdata.StringValueMap) (result interface{}, err error) {
+func (c *CommandableHttpClient) CallCommand(name string, correlationId string, params *cdata.StringValueMap, data interface{}) (result interface{}, err error) {
 	timing := c.Instrument(correlationId, c.BaseRoute+"."+name)
-	cRes, cErr := c.Call("post", name, correlationId, &params, nil)
+	cRes, cErr := c.Call("post", name, correlationId, params, data)
 	timing.EndTiming()
 	return c.InstrumentError(correlationId, c.BaseRoute+"."+name, cErr, cRes)
-
 }

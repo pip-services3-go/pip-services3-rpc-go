@@ -207,7 +207,9 @@ func (c *RestClient) Open(correlationId string) error {
 	}
 
 	c.Uri = connection.Uri()
-	c.Client = &http.Client{Timeout: (time.Duration)(c.Client.Timeout) * time.Millisecond}
+	localClient := http.Client{}
+	localClient.Timeout = (time.Duration)(c.Timeout) * time.Millisecond
+	c.Client = &localClient
 	if c.Client == nil {
 		ex := cerr.NewConnectionError(correlationId, "CANNOT_CONNECT", "Connection to REST service failed").WithDetails("url", c.Uri)
 		return ex
@@ -290,10 +292,6 @@ func (c *RestClient) AddFilterParams(params *cdata.StringValueMap, filter *cdata
 		for k, v := range filter.Value() {
 			params.Put(k, v)
 		}
-		// for (let prop in filter) {
-		//     if (filter.HasOwnProperty(prop))
-		//         params[prop] = filter[prop];
-		// }
 	}
 	return params
 }
@@ -353,12 +351,9 @@ func (c *RestClient) createRequestRoute(route string) string {
 func (c *RestClient) Call(method string, route string, correlationId string, params *cdata.StringValueMap, data interface{}) (result interface{}, err error) {
 
 	method = strings.ToUpper(method)
-
-	// if _.isFunction(data) {
-	// 	callback = data
-	// 	//data = {};
-	// }
-
+	if params == nil {
+		params = cdata.NewEmptyStringValueMap()
+	}
 	route = c.createRequestRoute(route)
 	params = c.AddCorrelationId(params, correlationId)
 	if params.Len() > 0 {
@@ -403,16 +398,18 @@ func (c *RestClient) Call(method string, route string, correlationId string, par
 		// Try send request
 		resp, respErr = c.Client.Do(req)
 		if respErr != nil {
+
 			retries--
 			if retries == 0 {
-				err = cerr.NewUnknownError(correlationId, "COMMUNICATION_ERROR", "Unknown communication problem on REST client").WithCause(reqErr)
+				err = cerr.NewUnknownError(correlationId, "COMMUNICATION_ERROR", "Unknown communication problem on REST client").WithCause(respErr)
 				return nil, err
 			}
 			continue
+
 		}
 		break
 	}
-	defer resp.Body.Close()
+	//	defer resp.Body.Close()
 
 	if resp.StatusCode == 204 {
 		return nil, nil

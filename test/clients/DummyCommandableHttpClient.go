@@ -1,64 +1,116 @@
 package test_rpc_clients
 
-// import (
-// 	cdata "github.com/pip-services3-go/pip-services3-commons-go/data"
-// 	"github.com/pip-services3-go/pip-services3-rpc-go/clients"
-// )
+import (
+	"encoding/json"
 
-// type DummyCommandableHttpClient struct {
-// 	clients.CommandableHttpClient
-// }
+	cdata "github.com/pip-services3-go/pip-services3-commons-go/data"
+	"github.com/pip-services3-go/pip-services3-rpc-go/clients"
+	testrpc "github.com/pip-services3-go/pip-services3-rpc-go/test"
+)
 
-// func NewDummyCommandableHttpClient() *DummyCommandableHttpClient {
-// 	dchc := DummyCommandableHttpClient{}
-// 	dchc.CommandableHttpClient = *clients.NewCommandableHttpClient("dummy")
-// 	return &dchc
-// }
+type DummyCommandableHttpClient struct {
+	clients.CommandableHttpClient
+}
 
-// func (c *DummyCommandableHttpClient) GetDummies(correlationId string, filter *cdata.FilterParams, paging *cdata.PagingParams) (result *DummyDataPage, err error) {
+func NewDummyCommandableHttpClient() *DummyCommandableHttpClient {
+	dchc := DummyCommandableHttpClient{}
+	dchc.CommandableHttpClient = *clients.NewCommandableHttpClient("dummies")
+	return &dchc
+}
 
-// 	params := make(map[string]interface{})
-// 	params["filter"] = *filter
-// 	params["paging"] = *paging
-// 	c.CallCommand("get_dummies", correlationId, params)
+func (c *DummyCommandableHttpClient) GetDummies(correlationId string, filter *cdata.FilterParams, paging *cdata.PagingParams) (result *testrpc.DummyDataPage, err error) {
 
-// }
+	params := cdata.NewEmptyStringValueMap()
+	c.AddFilterParams(params, filter)
+	c.AddPagingParams(params, paging)
 
-// func (c *DummyCommandableHttpClient) GetDummyById(correlationId string, dummyId string) (result *tesstrpc.Dummy, err error) {
+	calValue, calErr := c.CallCommand("get_dummies", correlationId, params, nil)
+	if calErr != nil {
+		return nil, calErr
+	}
+	var data testrpc.DummyDataPage
+	convErr := json.Unmarshal(calValue.([]byte), &data)
+	if convErr != nil {
+		return nil, convErr
+	}
+	return &data, nil
+}
 
-// 	params := make(map[string]interface{})
-// 	params["dummy_id"] = dummyId
-// 	c.CallCommand(
-// 		"get_dummy_by_id",
-// 		correlationId,
-// 		params)
-// }
+func (c *DummyCommandableHttpClient) GetDummyById(correlationId string, dummyId string) (result *testrpc.Dummy, err error) {
 
-// func (c *DummyCommandableHttpClient) CreateDummy(correlationId string, dummy tesstrpc.Dummy) (result *tesstrpc.Dummy, err error) {
+	params := cdata.NewEmptyStringValueMap()
+	params.Put("dummy_id", dummyId)
 
-// 	params := make(map[string]interface{})
-// 	params["dummy"] = dummy
-// 	c.CallCommand(
-// 		"create_dummy",
-// 		correlationId,
-// 		params)
-// }
+	calValue, calErr := c.CallCommand("get_dummy_by_id", correlationId, params, nil)
+	if calErr != nil {
+		return nil, calErr
+	}
+	if (string)(calValue.([]byte)) == "null" {
+		return nil, nil
+	}
+	var data testrpc.Dummy
+	convErr := json.Unmarshal(calValue.([]byte), &data)
+	if convErr != nil {
+		return nil, convErr
+	}
+	return &data, nil
+}
 
-// func (c *DummyCommandableHttpClient) UpdateDummy(correlationId string, dummy tesstrpc.Dummy) (result *tesstrpc.Dummy, err error) {
-// 	params := make(map[string]interface{})
-// 	params["dummy"] = dummy
-// 	c.CallCommand(
-// 		"update_dummy",
-// 		correlationId,
-// 		params)
-// }
+func (c *DummyCommandableHttpClient) CreateDummy(correlationId string, dummy testrpc.Dummy) (result *testrpc.Dummy, err error) {
 
-// func (c *DummyCommandableHttpClient) DeleteDummy(correlationId string, dummyId string) (result *tesstrpc.Dummy) {
+	bodyMap := make(map[string]interface{})
+	bodyMap["dummy"] = dummy
+	calValue, calErr := c.CallCommand("create_dummy", correlationId, nil, bodyMap)
+	if calErr != nil {
+		return nil, calErr
+	}
+	if (string)(calValue.([]byte)) == "null" {
+		return nil, nil
+	}
+	var data testrpc.Dummy
+	convErr := json.Unmarshal(calValue.([]byte), &data)
+	if convErr != nil {
+		return nil, convErr
+	}
 
-// 	params := make(map[string]interface{})
-// 	params["dummy_id"] = dummyId
-// 	c.CallCommand(
-// 		"delete_dummy",
-// 		correlationId,
-// 		params)
-// }
+	return &data, nil
+}
+
+func (c *DummyCommandableHttpClient) UpdateDummy(correlationId string, dummy testrpc.Dummy) (result *testrpc.Dummy, err error) {
+
+	bodyMap := make(map[string]interface{})
+	bodyMap["dummy"] = dummy
+	calValue, calErr := c.CallCommand("update_dummy", correlationId, nil, bodyMap)
+	if calErr != nil {
+		return nil, calErr
+	}
+	if (string)(calValue.([]byte)) == "null" {
+		return nil, nil
+	}
+	var data testrpc.Dummy
+	convErr := json.Unmarshal(calValue.([]byte), &data)
+	if convErr != nil {
+		return nil, convErr
+	}
+	return &data, nil
+}
+
+func (c *DummyCommandableHttpClient) DeleteDummy(correlationId string, dummyId string) (result *testrpc.Dummy, err error) {
+
+	params := cdata.NewEmptyStringValueMap()
+	params.Put("dummy_id", dummyId)
+
+	calValue, calErr := c.CallCommand("delete_dummy", correlationId, params, nil)
+	if calErr != nil {
+		return nil, calErr
+	}
+	if (string)(calValue.([]byte)) == "null" {
+		return nil, nil
+	}
+	var data testrpc.Dummy
+	convErr := json.Unmarshal(calValue.([]byte), &data)
+	if convErr != nil {
+		return nil, convErr
+	}
+	return &data, nil
+}
