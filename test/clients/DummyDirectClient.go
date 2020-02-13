@@ -9,7 +9,7 @@ import (
 
 type DummyDirectClient struct {
 	clients.DirectClient
-	concreateController testrpc.IDummyController
+	specificController testrpc.IDummyController
 }
 
 func NewDummyDirectClient() *DummyDirectClient {
@@ -22,18 +22,18 @@ func NewDummyDirectClient() *DummyDirectClient {
 func (c *DummyDirectClient) SetReferences(references cref.IReferences) {
 	c.DirectClient.SetReferences(references)
 
-	concreateController, ok := c.Controller.(testrpc.IDummyController)
+	specificController, ok := c.Controller.(testrpc.IDummyController)
 	if !ok {
 		panic("DummyDirectClient: Cant't resolv dependency 'controller' to IDummyController")
 	}
-	c.concreateController = concreateController
+	c.specificController = specificController
 
 }
 
 func (c *DummyDirectClient) GetDummies(correlationId string, filter *cdata.FilterParams, paging *cdata.PagingParams) (result *testrpc.DummyDataPage, err error) {
 
 	timing := c.Instrument(correlationId, "dummy.get_page_by_filter")
-	result, err = c.concreateController.GetPageByFilter(correlationId, filter, paging)
+	result, err = c.specificController.GetPageByFilter(correlationId, filter, paging)
 	timing.EndTiming()
 	return result, err
 
@@ -42,7 +42,7 @@ func (c *DummyDirectClient) GetDummies(correlationId string, filter *cdata.Filte
 func (c *DummyDirectClient) GetDummyById(correlationId string, dummyId string) (result *testrpc.Dummy, err error) {
 
 	timing := c.Instrument(correlationId, "dummy.get_one_by_id")
-	result, err = c.concreateController.GetOneById(correlationId, dummyId)
+	result, err = c.specificController.GetOneById(correlationId, dummyId)
 	timing.EndTiming()
 	return result, err
 }
@@ -50,7 +50,7 @@ func (c *DummyDirectClient) GetDummyById(correlationId string, dummyId string) (
 func (c *DummyDirectClient) CreateDummy(correlationId string, dummy testrpc.Dummy) (result *testrpc.Dummy, err error) {
 
 	timing := c.Instrument(correlationId, "dummy.create")
-	result, err = c.concreateController.Create(correlationId, dummy)
+	result, err = c.specificController.Create(correlationId, dummy)
 	timing.EndTiming()
 	return result, err
 }
@@ -58,7 +58,7 @@ func (c *DummyDirectClient) CreateDummy(correlationId string, dummy testrpc.Dumm
 func (c *DummyDirectClient) UpdateDummy(correlationId string, dummy testrpc.Dummy) (result *testrpc.Dummy, err error) {
 
 	timing := c.Instrument(correlationId, "dummy.update")
-	result, err = c.concreateController.Update(correlationId, dummy)
+	result, err = c.specificController.Update(correlationId, dummy)
 	timing.EndTiming()
 	return result, err
 }
@@ -66,7 +66,7 @@ func (c *DummyDirectClient) UpdateDummy(correlationId string, dummy testrpc.Dumm
 func (c *DummyDirectClient) DeleteDummy(correlationId string, dummyId string) (result *testrpc.Dummy, err error) {
 
 	timing := c.Instrument(correlationId, "dummy.delete_by_id")
-	result, err = c.concreateController.DeleteById(correlationId, dummyId)
+	result, err = c.specificController.DeleteById(correlationId, dummyId)
 	timing.EndTiming()
 	return result, err
 }
