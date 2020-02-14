@@ -3,7 +3,6 @@ package test_rpc_services
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"testing"
@@ -137,10 +136,8 @@ func TestDummyCommandableHttpService(t *testing.T) {
 	assert.Nil(t, postErr)
 	resBody, bodyErr = ioutil.ReadAll(postResponse.Body)
 	assert.Nil(t, bodyErr)
-
-	fmt.Println((string)(resBody))
-
+	dummy = testrpc.Dummy{}
 	jsonErr = json.Unmarshal(resBody, &dummy)
 	assert.Nil(t, jsonErr)
-
+	assert.Empty(t, dummy)
 }
