@@ -11,13 +11,6 @@ import (
 	crun "github.com/pip-services3-go/pip-services3-commons-go/run"
 )
 
-// /* @module services */
-// import { ICommandable } from "pip-services3-commons-node";
-// import { CommandSet } from "pip-services3-commons-node";
-// import { Parameters } from "pip-services3-commons-node";
-
-// import { RestService } from "./RestService";
-
 /*
 Abstract service that receives remove calls via HTTP/REST protocol
 to operations automatically generated for commands defined in [[https://rawgit.com/pip-services-node/pip-services3-commons-node/master/doc/api/interfaces/commands.icommandable.html ICommandable components]].
