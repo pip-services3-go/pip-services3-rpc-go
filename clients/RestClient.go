@@ -405,7 +405,6 @@ func (c *RestClient) Call(method string, route string, correlationId string, par
 				return nil, err
 			}
 			continue
-
 		}
 		break
 	}
