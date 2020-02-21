@@ -36,9 +36,6 @@ func TestDummyCommandableHttpClient(t *testing.T) {
 	service.Open("")
 	defer service.Close("")
 
-	// for true {
-	// }
-
 	client = NewDummyCommandableHttpClient()
 	fixture = NewDummyClientFixture(client)
 

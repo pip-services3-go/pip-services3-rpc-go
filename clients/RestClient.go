@@ -155,7 +155,7 @@ func (c *RestClient) SetReferences(references crefer.IReferences) {
     *
    - correlationId     (optional) transaction id to trace execution through call chain.
    - name              a method name.
-   @returns Timing object to end the time measurement.
+   Return Timing object to end the time measurement.
 */
 func (c *RestClient) Instrument(correlationId string, name string) *ccount.Timing {
 	c.Logger.Trace(correlationId, "Calling %s method", name)
@@ -184,7 +184,7 @@ func (c *RestClient) InstrumentError(correlationId string, name string, inErr er
 /*
 	Checks if the component is opened.
 	 *
-	@returns true if the component has been opened and false otherwise.
+	Return true if the component has been opened and false otherwise.
 */
 func (c *RestClient) IsOpen() bool {
 	return c.Client != nil
@@ -214,24 +214,8 @@ func (c *RestClient) Open(correlationId string) error {
 		ex := cerr.NewConnectionError(correlationId, "CANNOT_CONNECT", "Connection to REST service failed").WithDetails("url", c.Uri)
 		return ex
 	}
-	// let restify = require("restify-clients");
-	// c.Client = restify.createJsonClient({
-	//     url: c.Uri,
-	//     connectTimeout: c.ConnectTimeout,
-	//     requestTimeout: c.Timeout,
-	//     headers: c.Headers,
-	//     retry: {
-	//         minTimeout: c.Timeout,
-	//         maxTimeout: Infinity,
-	//         retries: c.Retries
-	//     },
-	//     version: "*"
-	// });
 
 	return nil
-	// } catch (err) {
-
-	//}
 }
 
 /*
@@ -242,12 +226,7 @@ func (c *RestClient) Open(correlationId string) error {
 */
 func (c *RestClient) Close(correlationId string) error {
 	if c.Client != nil {
-		// Eat exceptions
-		//try {
 		c.Logger.Debug(correlationId, "Closed REST service at %s", c.Uri)
-		//} catch (ex) {
-		// c.Logger.Warn(correlationId, "Failed while closing REST service: %s", ex);
-		//}
 		c.Client = nil
 		c.Uri = ""
 	}
@@ -256,10 +235,10 @@ func (c *RestClient) Close(correlationId string) error {
 
 /*
    Adds a correlation id (correlation_id) to invocation parameter map.
-    *
+
    - params            invocation parameters.
    - correlationId     (optional) a correlation id to be added.
-   @returns invocation parameters with added correlation id.
+   Return invocation parameters with added correlation id.
 */
 func (c *RestClient) AddCorrelationId(params *cdata.StringValueMap, correlationId string) *cdata.StringValueMap {
 	// Automatically generate short ids for now
@@ -278,10 +257,9 @@ func (c *RestClient) AddCorrelationId(params *cdata.StringValueMap, correlationI
 /*
    Adds filter parameters (with the same name as they defined)
    to invocation parameter map.
-    *
    - params        invocation parameters.
    - filter        (optional) filter parameters
-   @returns invocation parameters with added filter parameters.
+   Return invocation parameters with added filter parameters.
 */
 func (c *RestClient) AddFilterParams(params *cdata.StringValueMap, filter *cdata.FilterParams) *cdata.StringValueMap {
 
@@ -300,7 +278,7 @@ func (c *RestClient) AddFilterParams(params *cdata.StringValueMap, filter *cdata
    Adds paging parameters (skip, take, total) to invocation parameter map.
    - params        invocation parameters.
    - paging        (optional) paging parameters
-   @returns invocation parameters with added paging parameters.
+   Return invocation parameters with added paging parameters.
 */
 func (c *RestClient) AddPagingParams(params *cdata.StringValueMap, paging *cdata.PagingParams) *cdata.StringValueMap {
 	if params == nil {
@@ -340,7 +318,7 @@ func (c *RestClient) createRequestRoute(route string) string {
 
 /*
    Calls a remote method via HTTP/REST protocol.
-    *
+
    - method            HTTP method: "get", "head", "post", "put", "delete"
    - route             a command route. Base route will be added to this route
    - correlationId     (optional) transaction id to trace execution through call chain.
@@ -408,7 +386,10 @@ func (c *RestClient) Call(method string, route string, correlationId string, par
 		}
 		break
 	}
-	//	defer resp.Body.Close()
+
+	if resp != nil {
+		defer resp.Body.Close()
+	}
 
 	if resp.StatusCode == 204 {
 		return nil, nil

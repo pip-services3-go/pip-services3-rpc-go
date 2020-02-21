@@ -1,7 +1,7 @@
 package test_rpc_clients
 
 import (
-	"encoding/json"
+	"reflect"
 
 	cdata "github.com/pip-services3-go/pip-services3-commons-go/data"
 	"github.com/pip-services3-go/pip-services3-rpc-go/clients"
@@ -28,12 +28,10 @@ func (c *DummyCommandableHttpClient) GetDummies(correlationId string, filter *cd
 	if calErr != nil {
 		return nil, calErr
 	}
-	var data testrpc.DummyDataPage
-	convErr := json.Unmarshal(calValue.([]byte), &data)
-	if convErr != nil {
-		return nil, convErr
-	}
-	return &data, nil
+
+	convRes, err := clients.ConvertComandResult(calValue, reflect.TypeOf(&testrpc.DummyDataPage{}))
+	result, _ = convRes.(*testrpc.DummyDataPage)
+	return result, err
 }
 
 func (c *DummyCommandableHttpClient) GetDummyById(correlationId string, dummyId string) (result *testrpc.Dummy, err error) {
@@ -45,15 +43,9 @@ func (c *DummyCommandableHttpClient) GetDummyById(correlationId string, dummyId 
 	if calErr != nil {
 		return nil, calErr
 	}
-	if (string)(calValue.([]byte)) == "null" {
-		return nil, nil
-	}
-	var data testrpc.Dummy
-	convErr := json.Unmarshal(calValue.([]byte), &data)
-	if convErr != nil {
-		return nil, convErr
-	}
-	return &data, nil
+	convRes, err := clients.ConvertComandResult(calValue, reflect.TypeOf(&testrpc.Dummy{}))
+	result, _ = convRes.(*testrpc.Dummy)
+	return result, err
 }
 
 func (c *DummyCommandableHttpClient) CreateDummy(correlationId string, dummy testrpc.Dummy) (result *testrpc.Dummy, err error) {
@@ -64,16 +56,10 @@ func (c *DummyCommandableHttpClient) CreateDummy(correlationId string, dummy tes
 	if calErr != nil {
 		return nil, calErr
 	}
-	if (string)(calValue.([]byte)) == "null" {
-		return nil, nil
-	}
-	var data testrpc.Dummy
-	convErr := json.Unmarshal(calValue.([]byte), &data)
-	if convErr != nil {
-		return nil, convErr
-	}
 
-	return &data, nil
+	convRes, err := clients.ConvertComandResult(calValue, reflect.TypeOf(&testrpc.Dummy{}))
+	result, _ = convRes.(*testrpc.Dummy)
+	return result, err
 }
 
 func (c *DummyCommandableHttpClient) UpdateDummy(correlationId string, dummy testrpc.Dummy) (result *testrpc.Dummy, err error) {
@@ -84,15 +70,9 @@ func (c *DummyCommandableHttpClient) UpdateDummy(correlationId string, dummy tes
 	if calErr != nil {
 		return nil, calErr
 	}
-	if (string)(calValue.([]byte)) == "null" {
-		return nil, nil
-	}
-	var data testrpc.Dummy
-	convErr := json.Unmarshal(calValue.([]byte), &data)
-	if convErr != nil {
-		return nil, convErr
-	}
-	return &data, nil
+	convRes, err := clients.ConvertComandResult(calValue, reflect.TypeOf(&testrpc.Dummy{}))
+	result, _ = convRes.(*testrpc.Dummy)
+	return result, err
 }
 
 func (c *DummyCommandableHttpClient) DeleteDummy(correlationId string, dummyId string) (result *testrpc.Dummy, err error) {
@@ -104,13 +84,7 @@ func (c *DummyCommandableHttpClient) DeleteDummy(correlationId string, dummyId s
 	if calErr != nil {
 		return nil, calErr
 	}
-	if (string)(calValue.([]byte)) == "null" {
-		return nil, nil
-	}
-	var data testrpc.Dummy
-	convErr := json.Unmarshal(calValue.([]byte), &data)
-	if convErr != nil {
-		return nil, convErr
-	}
-	return &data, nil
+	convRes, err := clients.ConvertComandResult(calValue, reflect.TypeOf(&testrpc.Dummy{}))
+	result, _ = convRes.(*testrpc.Dummy)
+	return result, err
 }

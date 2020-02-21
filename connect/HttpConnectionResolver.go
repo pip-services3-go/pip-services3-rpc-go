@@ -65,7 +65,7 @@ func NewHttpConnectionResolver() *HttpConnectionResolver {
 
 /*
    Configures component by passing configuration parameters.
-   @param config    configuration parameters to be set.
+   - config    configuration parameters to be set.
 */
 func (c *HttpConnectionResolver) Configure(config *cconf.ConfigParams) {
 	c.ConnectionResolver.Configure(config)
@@ -75,7 +75,7 @@ func (c *HttpConnectionResolver) Configure(config *cconf.ConfigParams) {
 /*
 	Sets references to dependent components.
 
-	@param references 	references to locate the component dependencies.
+	- references 	references to locate the component dependencies.
 */
 func (c *HttpConnectionResolver) SetReferences(references crefer.IReferences) {
 	c.ConnectionResolver.SetReferences(references)
@@ -155,8 +155,8 @@ func (c *HttpConnectionResolver) updateConnection(connection *ccon.ConnectionPar
 Resolves a single component connection. If connections are configured to be retrieved
 from Discovery service it finds a IDiscovery and resolves the connection there.
 
-@param correlationId     (optional) transaction id to trace execution through call chain.
-@param callback 			callback function that receives resolved connection or error.
+- correlationId     (optional) transaction id to trace execution through call chain.
+- callback 			callback function that receives resolved connection or error.
 */
 func (c *HttpConnectionResolver) Resolve(correlationId string) (connection *ccon.ConnectionParams, credential *cauth.CredentialParams, err error) {
 
@@ -180,8 +180,8 @@ func (c *HttpConnectionResolver) Resolve(correlationId string) (connection *ccon
 Resolves all component connection. If connections are configured to be retrieved
 from Discovery service it finds a IDiscovery and resolves the connection there.
 
-@param correlationId     (optional) transaction id to trace execution through call chain.
-@param callback 			callback function that receives resolved connections or error.
+- correlationId     (optional) transaction id to trace execution through call chain.
+- callback 			callback function that receives resolved connections or error.
 */
 func (c *HttpConnectionResolver) ResolveAll(correlationId string) (connections []*ccon.ConnectionParams, credential *cauth.CredentialParams, err error) {
 
@@ -210,9 +210,9 @@ func (c *HttpConnectionResolver) ResolveAll(correlationId string) (connections [
 Registers the given connection in all referenced discovery services.
 c method can be used for dynamic service discovery.
 
-@param correlationId     (optional) transaction id to trace execution through call chain.
-@param connection        a connection to register.
-@param callback          callback function that receives registered connection or error.
+- correlationId     (optional) transaction id to trace execution through call chain.
+- connection        a connection to register.
+- callback          callback function that receives registered connection or error.
 */
 func (c *HttpConnectionResolver) Register(correlationId string) error {
 
