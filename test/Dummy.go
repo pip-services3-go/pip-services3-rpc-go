@@ -1,7 +1,5 @@
 package test_rpc
 
-//import { IStringIdentifiable } from 'pip-services3-commons-node';
-// IStringIdentifiable
 type Dummy struct {
 	Id      string `json:"id"`
 	Key     string `json:"key"`
