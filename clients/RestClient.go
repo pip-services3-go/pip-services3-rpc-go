@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+	"reflect"
 	"strings"
 	"time"
 
@@ -326,7 +327,8 @@ func (c *RestClient) createRequestRoute(route string) string {
    - data              (optional) body object.
    - callback          (optional) callback function that receives result object or error.
 */
-func (c *RestClient) Call(method string, route string, correlationId string, params *cdata.StringValueMap, data interface{}) (result interface{}, err error) {
+func (c *RestClient) Call(method string, route string, correlationId string, params *cdata.StringValueMap,
+	data interface{}, prototype reflect.Type) (result interface{}, err error) {
 
 	method = strings.ToUpper(method)
 	if params == nil {
@@ -407,6 +409,11 @@ func (c *RestClient) Call(method string, route string, correlationId string, par
 		}
 		err = cerr.ApplicationErrorFactory.Create(&eDesct).WithCause(rErr)
 	}
+
+	if prototype != nil && rErr == nil {
+		return ConvertComandResult(r, prototype)
+	}
+
 	return r, rErr
 
 }

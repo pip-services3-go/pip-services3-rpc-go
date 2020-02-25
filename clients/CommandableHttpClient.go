@@ -1,6 +1,8 @@
 package clients
 
 import (
+	"reflect"
+
 	cdata "github.com/pip-services3-go/pip-services3-commons-go/data"
 )
 
@@ -84,9 +86,10 @@ func NewCommandableHttpClient(baseRoute string) *CommandableHttpClient {
 // - params            command parameters.
 // - callback          callback function that receives result or error.
 
-func (c *CommandableHttpClient) CallCommand(name string, correlationId string, params *cdata.StringValueMap, data interface{}) (result interface{}, err error) {
+func (c *CommandableHttpClient) CallCommand(name string, correlationId string, params *cdata.StringValueMap,
+	data interface{}, prototype reflect.Type) (result interface{}, err error) {
 	timing := c.Instrument(correlationId, c.BaseRoute+"."+name)
-	cRes, cErr := c.Call("post", name, correlationId, params, data)
+	cRes, cErr := c.Call("post", name, correlationId, params, data, prototype)
 	timing.EndTiming()
 	return c.InstrumentError(correlationId, c.BaseRoute+"."+name, cErr, cRes)
 }

@@ -1,8 +1,6 @@
 package test_rpc_clients
 
 import (
-	"reflect"
-
 	cdata "github.com/pip-services3-go/pip-services3-commons-go/data"
 	"github.com/pip-services3-go/pip-services3-rpc-go/clients"
 	testrpc "github.com/pip-services3-go/pip-services3-rpc-go/test"
@@ -24,13 +22,11 @@ func (c *DummyCommandableHttpClient) GetDummies(correlationId string, filter *cd
 	c.AddFilterParams(params, filter)
 	c.AddPagingParams(params, paging)
 
-	calValue, calErr := c.CallCommand("get_dummies", correlationId, params, nil)
+	calValue, calErr := c.CallCommand("get_dummies", correlationId, params, nil, dummyDataPageType)
 	if calErr != nil {
 		return nil, calErr
 	}
-
-	convRes, err := clients.ConvertComandResult(calValue, reflect.TypeOf(&testrpc.DummyDataPage{}))
-	result, _ = convRes.(*testrpc.DummyDataPage)
+	result, _ = calValue.(*testrpc.DummyDataPage)
 	return result, err
 }
 
@@ -39,12 +35,11 @@ func (c *DummyCommandableHttpClient) GetDummyById(correlationId string, dummyId 
 	params := cdata.NewEmptyStringValueMap()
 	params.Put("dummy_id", dummyId)
 
-	calValue, calErr := c.CallCommand("get_dummy_by_id", correlationId, params, nil)
+	calValue, calErr := c.CallCommand("get_dummy_by_id", correlationId, params, nil, dummyType)
 	if calErr != nil {
 		return nil, calErr
 	}
-	convRes, err := clients.ConvertComandResult(calValue, reflect.TypeOf(&testrpc.Dummy{}))
-	result, _ = convRes.(*testrpc.Dummy)
+	result, _ = calValue.(*testrpc.Dummy)
 	return result, err
 }
 
@@ -52,13 +47,11 @@ func (c *DummyCommandableHttpClient) CreateDummy(correlationId string, dummy tes
 
 	bodyMap := make(map[string]interface{})
 	bodyMap["dummy"] = dummy
-	calValue, calErr := c.CallCommand("create_dummy", correlationId, nil, bodyMap)
+	calValue, calErr := c.CallCommand("create_dummy", correlationId, nil, bodyMap, dummyType)
 	if calErr != nil {
 		return nil, calErr
 	}
-
-	convRes, err := clients.ConvertComandResult(calValue, reflect.TypeOf(&testrpc.Dummy{}))
-	result, _ = convRes.(*testrpc.Dummy)
+	result, _ = calValue.(*testrpc.Dummy)
 	return result, err
 }
 
@@ -66,12 +59,11 @@ func (c *DummyCommandableHttpClient) UpdateDummy(correlationId string, dummy tes
 
 	bodyMap := make(map[string]interface{})
 	bodyMap["dummy"] = dummy
-	calValue, calErr := c.CallCommand("update_dummy", correlationId, nil, bodyMap)
+	calValue, calErr := c.CallCommand("update_dummy", correlationId, nil, bodyMap, dummyType)
 	if calErr != nil {
 		return nil, calErr
 	}
-	convRes, err := clients.ConvertComandResult(calValue, reflect.TypeOf(&testrpc.Dummy{}))
-	result, _ = convRes.(*testrpc.Dummy)
+	result, _ = calValue.(*testrpc.Dummy)
 	return result, err
 }
 
@@ -80,11 +72,10 @@ func (c *DummyCommandableHttpClient) DeleteDummy(correlationId string, dummyId s
 	params := cdata.NewEmptyStringValueMap()
 	params.Put("dummy_id", dummyId)
 
-	calValue, calErr := c.CallCommand("delete_dummy", correlationId, params, nil)
+	calValue, calErr := c.CallCommand("delete_dummy", correlationId, params, nil, dummyType)
 	if calErr != nil {
 		return nil, calErr
 	}
-	convRes, err := clients.ConvertComandResult(calValue, reflect.TypeOf(&testrpc.Dummy{}))
-	result, _ = convRes.(*testrpc.Dummy)
+	result, _ = calValue.(*testrpc.Dummy)
 	return result, err
 }
