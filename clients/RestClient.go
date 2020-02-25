@@ -327,8 +327,8 @@ func (c *RestClient) createRequestRoute(route string) string {
    - data              (optional) body object.
    - callback          (optional) callback function that receives result object or error.
 */
-func (c *RestClient) Call(method string, route string, correlationId string, params *cdata.StringValueMap,
-	data interface{}, prototype reflect.Type) (result interface{}, err error) {
+func (c *RestClient) Call(prototype reflect.Type, method string, route string, correlationId string, params *cdata.StringValueMap,
+	data interface{}) (result interface{}, err error) {
 
 	method = strings.ToUpper(method)
 	if params == nil {

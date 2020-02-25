@@ -30,7 +30,7 @@ func (c *DummyRestClient) GetDummies(correlationId string, filter *cdata.FilterP
 	c.AddFilterParams(params, filter)
 	c.AddPagingParams(params, paging)
 
-	calValue, calErr := c.Call("get", "/dummies", correlationId, params, nil, dummyDataPageType)
+	calValue, calErr := c.Call(dummyDataPageType, "get", "/dummies", correlationId, params, nil)
 	if calErr != nil {
 		return nil, calErr
 	}
@@ -41,7 +41,7 @@ func (c *DummyRestClient) GetDummies(correlationId string, filter *cdata.FilterP
 }
 
 func (c *DummyRestClient) GetDummyById(correlationId string, dummyId string) (result *testrpc.Dummy, err error) {
-	calValue, calErr := c.Call("get", "/dummies/"+dummyId, correlationId, nil, nil, dummyType)
+	calValue, calErr := c.Call(dummyType, "get", "/dummies/"+dummyId, correlationId, nil, nil)
 
 	if calErr != nil {
 		return nil, calErr
@@ -53,7 +53,7 @@ func (c *DummyRestClient) GetDummyById(correlationId string, dummyId string) (re
 }
 
 func (c *DummyRestClient) CreateDummy(correlationId string, dummy testrpc.Dummy) (result *testrpc.Dummy, err error) {
-	calValue, calErr := c.Call("post", "/dummies", correlationId, nil, dummy, dummyType)
+	calValue, calErr := c.Call(dummyType, "post", "/dummies", correlationId, nil, dummy)
 	if calErr != nil {
 		return nil, calErr
 	}
@@ -64,7 +64,7 @@ func (c *DummyRestClient) CreateDummy(correlationId string, dummy testrpc.Dummy)
 }
 
 func (c *DummyRestClient) UpdateDummy(correlationId string, dummy testrpc.Dummy) (result *testrpc.Dummy, err error) {
-	calValue, calErr := c.Call("put", "/dummies", correlationId, nil, dummy, dummyType)
+	calValue, calErr := c.Call(dummyType, "put", "/dummies", correlationId, nil, dummy)
 	if calErr != nil {
 		return nil, calErr
 	}
@@ -75,7 +75,7 @@ func (c *DummyRestClient) UpdateDummy(correlationId string, dummy testrpc.Dummy)
 }
 
 func (c *DummyRestClient) DeleteDummy(correlationId string, dummyId string) (result *testrpc.Dummy, err error) {
-	calValue, calErr := c.Call("delete", "/dummies/"+dummyId, correlationId, nil, nil, dummyType)
+	calValue, calErr := c.Call(dummyType, "delete", "/dummies/"+dummyId, correlationId, nil, nil)
 	if calErr != nil {
 		return nil, calErr
 	}

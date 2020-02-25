@@ -22,7 +22,7 @@ func (c *DummyCommandableHttpClient) GetDummies(correlationId string, filter *cd
 	c.AddFilterParams(params, filter)
 	c.AddPagingParams(params, paging)
 
-	calValue, calErr := c.CallCommand("get_dummies", correlationId, params, nil, dummyDataPageType)
+	calValue, calErr := c.CallCommand(dummyDataPageType, "get_dummies", correlationId, params, nil)
 	if calErr != nil {
 		return nil, calErr
 	}
@@ -35,7 +35,7 @@ func (c *DummyCommandableHttpClient) GetDummyById(correlationId string, dummyId 
 	params := cdata.NewEmptyStringValueMap()
 	params.Put("dummy_id", dummyId)
 
-	calValue, calErr := c.CallCommand("get_dummy_by_id", correlationId, params, nil, dummyType)
+	calValue, calErr := c.CallCommand(dummyType, "get_dummy_by_id", correlationId, params, nil)
 	if calErr != nil {
 		return nil, calErr
 	}
@@ -47,7 +47,7 @@ func (c *DummyCommandableHttpClient) CreateDummy(correlationId string, dummy tes
 
 	bodyMap := make(map[string]interface{})
 	bodyMap["dummy"] = dummy
-	calValue, calErr := c.CallCommand("create_dummy", correlationId, nil, bodyMap, dummyType)
+	calValue, calErr := c.CallCommand(dummyType, "create_dummy", correlationId, nil, bodyMap)
 	if calErr != nil {
 		return nil, calErr
 	}
@@ -59,7 +59,7 @@ func (c *DummyCommandableHttpClient) UpdateDummy(correlationId string, dummy tes
 
 	bodyMap := make(map[string]interface{})
 	bodyMap["dummy"] = dummy
-	calValue, calErr := c.CallCommand("update_dummy", correlationId, nil, bodyMap, dummyType)
+	calValue, calErr := c.CallCommand(dummyType, "update_dummy", correlationId, nil, bodyMap)
 	if calErr != nil {
 		return nil, calErr
 	}
@@ -72,7 +72,7 @@ func (c *DummyCommandableHttpClient) DeleteDummy(correlationId string, dummyId s
 	params := cdata.NewEmptyStringValueMap()
 	params.Put("dummy_id", dummyId)
 
-	calValue, calErr := c.CallCommand("delete_dummy", correlationId, params, nil, dummyType)
+	calValue, calErr := c.CallCommand(dummyType, "delete_dummy", correlationId, params, nil)
 	if calErr != nil {
 		return nil, calErr
 	}
