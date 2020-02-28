@@ -6,16 +6,16 @@ import (
 	cdata "github.com/pip-services3-go/pip-services3-commons-go/data"
 )
 
-/* CommandableHttpClient is abstract client that calls commandable HTTP service.
+/*
+CommandableHttpClient is abstract client that calls commandable HTTP service.
 
 Commandable services are generated automatically for ICommandable objects.
 Each command is exposed as POST operation that receives all parameters
 in body object.
 
- Configuration parameters
+Configuration parameters:
 
 base_route:              base route for remote URI
-
 - connection(s):
   - discovery_key:         (optional) a key to retrieve the connection from connect.idiscovery.html IDiscovery]]
   - protocol:              connection protocol: http or https
@@ -35,57 +35,63 @@ References:
 
 Example:
 
-    class MyCommandableHttpClient extends CommandableHttpClient implements IMyClient {
+    type MyCommandableHttpClient struct{
+        *CommandableHttpClient
+        prototype reflect.Type // type of operation data
        ...
+    }
+       result, err := func (c * MyCommandableHttpClient) GetData(correlationId string, id string)(result MyData, err error){
 
-        func (c * CommandableHttpClient) getData(correlationId: string, id: string,
-           callback: (err: any, result: MyData) => void): void {
-
-           c.callCommand(
+           params:= cdata.NewEmptyStringValueMap()
+           params.Set("id",id)
+            res, err := c.CallCommand(
+                prototype
                "get_data",
                correlationId,
-               { id: id },
-               (err, result) => {
-                   callback(err, result);
-               }
-            );
+               params)
+               ...
+               // convert response to MyData
+               ...
+               return result, err
         }
-        ...
-    }
 
-    let client = new MyCommandableHttpClient();
-    client.configure(ConfigParams.fromTuples(
+
+    client = NewMyCommandableHttpClient();
+    client.Configure(cconf.NewConfigParamsFromTuples(
         "connection.protocol", "http",
         "connection.host", "localhost",
         "connection.port", 8080
     ));
 
-    client.getData("123", "1", (err, result) => {
+    result, err := client.GetData("123", "1")
     ...
-    });
 */
 type CommandableHttpClient struct {
 	RestClient
 }
 
-// NewCommandableHttpClientr is creates a new instance of the client.
-// - baseRoute     a base route for remote service.
+// NewCommandableHttpClient is creates a new instance of the client.
+// Parameters:
+// - baseRoute string a base route for remote service.
+// Returns: *CommandableHttpClient
+// pointer on new instance
 func NewCommandableHttpClient(baseRoute string) *CommandableHttpClient {
-	chc := CommandableHttpClient{}
-	chc.RestClient = *NewRestClient()
-	chc.BaseRoute = baseRoute
-	return &chc
+	c := CommandableHttpClient{}
+	c.RestClient = *NewRestClient()
+	c.BaseRoute = baseRoute
+	return &c
 }
 
 // CallCommand is calls a remote method via HTTP commadable protocol.
 // The call is made via POST operation and all parameters are sent in body object.
 // The complete route to remote method is defined as baseRoute + "/" + name.
-//
-// - name              a name of the command to call.
-// - correlationId     (optional) transaction id to trace execution through call chain.
-// - params            command parameters.
-// - callback          callback function that receives result or error.
-
+// Parameters:
+// - prototype reflect.Type type of returned data
+// - name        string      a name of the command to call.
+// - correlationId  string   (optional) transaction id to trace execution through call chain.
+// - params     cdata.StringValueMap       command parameters.
+// Returns: result interface{}, err error
+// result or error.
 func (c *CommandableHttpClient) CallCommand(prototype reflect.Type, name string, correlationId string, params *cdata.StringValueMap,
 	data interface{}) (result interface{}, err error) {
 	timing := c.Instrument(correlationId, c.BaseRoute+"."+name)

@@ -9,12 +9,6 @@ import (
 	services "github.com/pip-services3-go/pip-services3-rpc-go/services"
 )
 
-// /** @module auth */
-// const _ = require("lodash");
-
-// import { UnauthorizedException } from "pip-services3-commons-node";
-// import { HttpResponseSender } from "../services/HttpResponseSender";
-
 type RoleAuthorizer struct {
 }
 

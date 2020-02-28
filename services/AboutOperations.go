@@ -11,16 +11,6 @@ import (
 	cinfo "github.com/pip-services3-go/pip-services3-components-go/info"
 )
 
-// /* @module services */
-// const os = require("os");
-
-// import { IReferences } from "pip-services3-commons-node";
-// import { Descriptor } from "pip-services3-commons-node";
-// import { ContextInfo } from "pip-services3-components-node";
-// import { HttpRequestDetector } from "./HttpRequestDetector";
-
-// import { RestOperations } from "./RestOperations";
-
 type AboutOperations struct {
 	RestOperations
 	contextInfo *cinfo.ContextInfo

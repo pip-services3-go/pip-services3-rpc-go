@@ -11,6 +11,9 @@ import (
 	clog "github.com/pip-services3-go/pip-services3-components-go/log"
 )
 
+/*
+RestOperations helper class for REST operations
+*/
 type RestOperations struct {
 	Logger             *clog.CompositeLogger
 	Counters           *ccount.CompositeCounters

@@ -9,7 +9,7 @@ import (
 )
 
 /*
-Abstract client that calls controller directly in the same memory space.
+DirectClient is bstract client that calls controller directly in the same memory space.
 
 It is used when multiple microservices are deployed in a single container (monolyth)
 and communication between them can be done by direct calls rather then through
@@ -22,45 +22,47 @@ Configuration parameters:
 
 References:
 
-- \*:logger:\*:\*:1.0         (optional) [[https://rawgit.com/pip-services-node/pip-services3-components-node/master/doc/api/interfaces/log.ilogger.html ILogger]] components to pass log messages
-- \*:counters:\*:\*:1.0       (optional) [[https://rawgit.com/pip-services-node/pip-services3-components-node/master/doc/api/interfaces/count.icounters.html ICounters]] components to pass collected measurements
-- \*:controller:\*:\*:1.0     controller to call business methods
+- *:logger:*:*:1.0         (optional) ILogger components to pass log messages
+- *:counters:*:*:1.0       (optional) ICounters components to pass collected measurements
+- *:controller:*:*:1.0     controller to call business methods
 
 Example:
 
-    class MyDirectClient extends DirectClient<IMyController> implements IMyClient {
-
-        func (c * DirectClient) constructor() {
-          super();
-          c.DependencyResolver.put("controller", new Descriptor(
+	type MyDirectClient struct {
+	*DirectClient
+	}
+        func MyDirectClient()* MyDirectClient {
+		  c:= MyDirectClient{}
+		  c.DirectClient = NewDirectClient()
+          c.DependencyResolver.Put("controller", cref.NewDescriptor(
               "mygroup", "controller", "*", "*", "*"));
+		}
+
+		func (c *MyDirectClient) SetReferences(references cref.IReferences) {
+			c.DirectClient.SetReferences(references)
+			specificController, ok := c.Controller.(testrpc.IMyDataController)
+			if !ok {
+				panic("MyDirectClient: Cant't resolv dependency 'controller' to IMyDataController")
+			}
+			c.specificController = specificController
+		}
+        ...
+
+        func (c * MyDirectClient) GetData(correlationId string, id string)(result MyData, err error) {
+           timing := c.Instrument(correlationId, "myclient.get_data")
+           cmRes, cmdErr := c.specificController.GetData(correlationId, id)
+           timing.EndTiming();
+           return  c.InstrumentError(correlationId, "myclient.get_data", cmdRes, cmdErr)
         }
         ...
 
-        func (c * DirectClient) getData(correlationId: string, id: string,
-          callback: (err: any, result: MyData) => void): void {
-
-          let timing = c.instrument(correlationId, "myclient.get_data");
-          c.Controller.getData(correlationId, id, (err, result) => {
-             timing.endTiming();
-             c.instrumentError(correlationId, "myclient.get_data", err, result, callback);
-          });
-        }
-        ...
-    }
-
-    let client = new MyDirectClient();
-    client.setReferences(References.fromTuples(
-        new Descriptor("mygroup","controller","default","default","1.0"), controller
+    client = NewMyDirectClient();
+    client.SetReferences(cref.NewReferencesFromTuples(
+        cref.NewDescriptor("mygroup","controller","default","default","1.0"), controller,
     ));
 
-    client.getData("123", "1", (err, result) => {
-      ...
-    });
+    res, err := client.GetData("123", "1")
 */
-
-//implements IConfigurable, IReferenceable, IOpenable
-
 type DirectClient struct {
 	//The controller reference.
 	Controller interface{}
@@ -74,9 +76,7 @@ type DirectClient struct {
 	DependencyResolver crefer.DependencyResolver
 }
 
-/*
-   Creates a new instance of the client.
-*/
+// NewDirectClient is creates a new instance of the client.
 func NewDirectClient() *DirectClient {
 	dc := DirectClient{
 		Opened:             true,
@@ -88,20 +88,16 @@ func NewDirectClient() *DirectClient {
 	return &dc
 }
 
-/*
-   Configures component by passing configuration parameters.
-    *
-   - config    configuration parameters to be set.
-*/
+// Configure method are configures component by passing configuration parameters.
+// Parameters:
+//  - config  *cconf.ConfigParams  configuration parameters to be set.
 func (c *DirectClient) Configure(config *cconf.ConfigParams) {
 	c.DependencyResolver.Configure(config)
 }
 
-/*
-	Sets references to dependent components.
-	 *
-	- references 	references to locate the component dependencies.
-*/
+// SetReferences method are sets references to dependent components.
+// Parameters:
+// - references  crefer.IReferences	references to locate the component dependencies.
 func (c *DirectClient) SetReferences(references crefer.IReferences) {
 	c.Logger.SetReferences(references)
 	c.Counters.SetReferences(references)
@@ -113,29 +109,26 @@ func (c *DirectClient) SetReferences(references crefer.IReferences) {
 	c.Controller = res
 }
 
-/*
-   Adds instrumentation to log calls and measure call time.
-   It returns a Timing object that is used to end the time measurement.
-    *
-   - correlationId     (optional) transaction id to trace execution through call chain.
-   - name              a method name.
-   // Returns Timing object to end the time measurement.
-*/
+// Instrument method are adds instrumentation to log calls and measure call time.
+// It returns a Timing object that is used to end the time measurement.
+// Parameters:
+//    - correlationId  string    (optional) transaction id to trace execution through call chain.
+//    - name   string           a method name.
+// Returns Timing object to end the time measurement.
 func (c *DirectClient) Instrument(correlationId string, name string) *ccount.Timing {
 	c.Logger.Trace(correlationId, "Calling %s method", name)
 	c.Counters.IncrementOne(name + ".call_count")
 	return c.Counters.BeginTiming(name + ".call_time")
 }
 
-/*
-   Adds instrumentation to error handling.
-    *
-   - correlationId     (optional) transaction id to trace execution through call chain.
-   - name              a method name.
-   - err               an occured error
-   - result            (optional) an execution result
-   - callback          (optional) an execution callback
-*/
+// InstrumentError method are adds instrumentation to error handling.
+// Parameters:
+//    - correlationId     (optional) transaction id to trace execution through call chain.
+//    - name              a method name.
+//    - err               an occured error
+//    - result            (optional) an execution result
+// Retruns:          result interface{}, err error
+// an execution result and error
 func (c *DirectClient) InstrumentError(correlationId string, name string, inErr error, inRes interface{}) (result interface{}, err error) {
 	if inErr != nil {
 		c.Logger.Error(correlationId, inErr, "Failed to call %s method", name)
@@ -144,21 +137,16 @@ func (c *DirectClient) InstrumentError(correlationId string, name string, inErr 
 	return inRes, inErr
 }
 
-/*
-	Checks if the component is opened.
-	 *
-	// Returns true if the component has been opened and false otherwise.
-*/
+// IsOpen method are checks if the component is opened.
+// Returns true if the component has been opened and false otherwise.
 func (c *DirectClient) IsOpen() bool {
 	return c.Opened
 }
 
-/*
-	Opens the component.
-	 *
-	- correlationId 	(optional) transaction id to trace execution through call chain.
-    - callback 			callback function that receives error or nil no errors occured.
-*/
+// Open method are opens the component.
+// 	- correlationId string	(optional) transaction id to trace execution through call chain.
+// Returns: error
+// error or nil no errors occured.
 func (c *DirectClient) Open(correlationId string) error {
 	if c.Opened {
 		return nil
@@ -175,12 +163,10 @@ func (c *DirectClient) Open(correlationId string) error {
 	return nil
 }
 
-/*
-	Closes component and frees used resources.
-	 *
-	- correlationId 	(optional) transaction id to trace execution through call chain.
-    - callback 			callback function that receives error or nil no errors occured.
-*/
+// Close method are closes component and frees used resources.
+// 	- correlationId string	(optional) transaction id to trace execution through call chain.
+// Returns: error
+// error or nil no errors occured.
 func (c *DirectClient) Close(correlationId string) error {
 	if c.Opened {
 		c.Logger.Info(correlationId, "Closed direct client")

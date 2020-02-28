@@ -9,32 +9,24 @@ import (
 )
 
 /*
-Helper class that handles HTTP-based responses.
+HttpResponseSender helper class that handles HTTP-based responses.
 */
 type THttpResponseSender struct {
 }
 
 var HttpResponseSender THttpResponseSender = THttpResponseSender{}
 
-/*
-   Sends error serialized as ErrorDescription object
-   and appropriate HTTP status code.
-   If status code is not defined, it uses 500 status code.
-
-   - req       a HTTP request object.
-   - res       a HTTP response object.
-   - error     an error object to be sent.
-*/
+// SendError sends error serialized as ErrorDescription object
+// and appropriate HTTP status code.
+// If status code is not defined, it uses 500 status code.
+// Parameters:
+//    - req  *http.Request     a HTTP request object.
+//    - res  http.ResponseWriter     a HTTP response object.
+//    - err  error     an error object to be sent.
 func (c *THttpResponseSender) SendError(res http.ResponseWriter, req *http.Request, err error) {
-	// if err == nil {
-	// 	err = Error{}
-	// }
+
 	appErr := cerr.ApplicationError{}
 	err = appErr.Wrap(err)
-
-	// result = _.pick(error, "code", "status", "name", "details", "component", "message", "stack", "cause");
-	// result = _.defaults(result, { code: "Undefined", status: 500, message: "Unknown error" });
-
 	result := make(map[string]string, 8)
 	result["code"] = "Undefined"
 	result["status"] = "500"
@@ -44,30 +36,25 @@ func (c *THttpResponseSender) SendError(res http.ResponseWriter, req *http.Reque
 	result["message"] = "Unknown error"
 	result["stack"] = ""
 	result["cause"] = ""
-
 	res.WriteHeader(500)
-	// res.JSON(result)
 	jsonObj, jsonErr := json.Marshal(result)
 	if jsonErr == nil {
 		io.WriteString(res, (string)(jsonObj))
 	}
 }
 
-/*
-Creates a callback function that sends result as JSON object.
-That callack function call be called directly or passed
-as a parameter to business logic components.
- *
-If object is not nil it returns 200 status code.
-For nil results it returns 204 status code.
-If error occur it sends ErrorDescription with approproate status code.
- *
-- req       a HTTP request object.
-- res       a HTTP response object.
-- callback function that receives execution result or error.
-*/
+// SendResult sends result as JSON object.
+// That function call be called directly or passed
+// as a parameter to business logic components.
+// If object is not nil it returns 200 status code.
+// For nil results it returns 204 status code.
+// If error occur it sends ErrorDescription with approproate status code.
+// Parameters:
+//    - req  *http.Request     a HTTP request object.
+//    - res  http.ResponseWriter     a HTTP response object.
+//    - result interface{}  result object to be send
+//    - err  error     an error object to be sent.
 func (c *THttpResponseSender) SendResult(res http.ResponseWriter, req *http.Request, result interface{}, err error) {
-	//return func(result interface{}, err error) {
 	if err != nil {
 		HttpResponseSender.SendError(res, req, err)
 		return
@@ -80,42 +67,30 @@ func (c *THttpResponseSender) SendResult(res http.ResponseWriter, req *http.Requ
 			io.WriteString(res, (string)(jsonObj))
 		}
 	}
-	//}
 }
 
-/*
-Creates a callback function that sends an empty result with 204 status code.
-If error occur it sends ErrorDescription with approproate status code.
- *
-- req       a HTTP request object.
-- res       a HTTP response object.
-- callback function that receives error or nil for success.
-*/
+// SendEmptyResult are sends an empty result with 204 status code.
+// If error occur it sends ErrorDescription with approproate status code.
+//    - req  *http.Request     a HTTP request object.
+//    - res  http.ResponseWriter     a HTTP response object.
 func (c *THttpResponseSender) SendEmptyResult(res http.ResponseWriter, req *http.Request, err error) {
-	//return func(err error) {
 	if err != nil {
 		HttpResponseSender.SendError(res, req, err)
 		return
 	}
 	res.WriteHeader(204)
-	//}
 }
 
-/*
-Creates a callback function that sends newly created object as JSON.
-That callack function call be called directly or passed
-as a parameter to business logic components.
- *
-If object is not nil it returns 201 status code.
-For nil results it returns 204 status code.
-If error occur it sends ErrorDescription with approproate status code.
- *
-- req       a HTTP request object.
-- res       a HTTP response object.
-- callback function that receives execution result or error.
-*/
+// SendCreatedResult are sends newly created object as JSON.
+// That function call be called directly or passed
+// as a parameter to business logic components.
+// If object is not nil it returns 201 status code.
+// For nil results it returns 204 status code.
+// If error occur it sends ErrorDescription with approproate status code.
+// Parameters:
+//    - req  *http.Request     a HTTP request object.
+//    - res  http.ResponseWriter     a HTTP response object.
 func (c *THttpResponseSender) SendCreatedResult(res http.ResponseWriter, req *http.Request, result interface{}, err error) {
-	//return func(result interface{}, err error) {
 	if err != nil {
 		HttpResponseSender.SendError(res, req, err)
 		return
@@ -124,30 +99,23 @@ func (c *THttpResponseSender) SendCreatedResult(res http.ResponseWriter, req *ht
 		res.WriteHeader(204)
 	} else {
 		res.WriteHeader(201)
-		//res.Json(result)
 		jsonObj, jsonErr := json.Marshal(result)
 		if jsonErr == nil {
 			io.WriteString(res, (string)(jsonObj))
 		}
 	}
-	//}
 }
 
-/*
-Creates a callback function that sends deleted object as JSON.
-That callack function call be called directly or passed
-as a parameter to business logic components.
- *
-If object is not nil it returns 200 status code.
-For nil results it returns 204 status code.
-If error occur it sends ErrorDescription with approproate status code.
- *
-- req       a HTTP request object.
-- res       a HTTP response object.
-- callback function that receives execution result or error.
-*/
+// SendDeletedResult are sends deleted object as JSON.
+// That function call be called directly or passed
+// as a parameter to business logic components.
+// If object is not nil it returns 200 status code.
+// For nil results it returns 204 status code.
+// If error occur it sends ErrorDescription with approproate status code.
+// Parameters:
+//    - req  *http.Request     a HTTP request object.
+//    - res  http.ResponseWriter     a HTTP response object.
 func (c *THttpResponseSender) SendDeletedResult(res http.ResponseWriter, req *http.Request, result interface{}, err error) {
-	//return func(result interface{}, err error) {
 	if err != nil {
 		HttpResponseSender.SendError(res, req, err)
 		return
@@ -156,11 +124,9 @@ func (c *THttpResponseSender) SendDeletedResult(res http.ResponseWriter, req *ht
 		res.WriteHeader(204)
 	} else {
 		res.WriteHeader(200)
-		//res.Json(result)
 		jsonObj, jsonErr := json.Marshal(result)
 		if jsonErr == nil {
 			io.WriteString(res, (string)(jsonObj))
 		}
 	}
-	//}
 }

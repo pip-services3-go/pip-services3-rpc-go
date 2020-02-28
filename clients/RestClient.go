@@ -18,16 +18,13 @@ import (
 	rpccon "github.com/pip-services3-go/pip-services3-rpc-go/connect"
 )
 
-// import { HttpConnectionResolver } from "../connect/HttpConnectionResolver";
-
 /*
-Abstract client that calls remove endpoints using HTTP/REST protocol.
+RestClient is abstract client that calls remove endpoints using HTTP/REST protocol.
 
 Configuration parameters:
-
 - base_route:              base route for remote URI
 - connection(s):
-  - discovery_key:         (optional) a key to retrieve the connection from [[https://rawgit.com/pip-services-node/pip-services3-components-node/master/doc/api/interfaces/connect.idiscovery.html IDiscovery]]
+  - discovery_key:         (optional) a key to retrieve the connection from IDiscovery
   - protocol:              connection protocol: http or https
   - host:                  host name or IP address
   - port:                  port number
@@ -38,43 +35,45 @@ Configuration parameters:
   - timeout:               invocation timeout in milliseconds (default: 10 sec)
 
 References:
+- *:logger:*:*:1.0         (optional) ILogger components to pass log messages
+- *:counters:*:*:1.0         (optional) ICounters components to pass collected measurements
+- *:discovery:*:*:1.0        (optional)  IDiscovery services to resolve connection
 
-- <code>\*:logger:\*:\*:1.0</code>         (optional) [[https://rawgit.com/pip-services-node/pip-services3-components-node/master/doc/api/interfaces/log.ilogger.html ILogger]] components to pass log messages
-- <code>\*:counters:\*:\*:1.0</code>         (optional) [[https://rawgit.com/pip-services-node/pip-services3-components-node/master/doc/api/interfaces/count.icounters.html ICounters]] components to pass collected measurements
-- <code>\*:discovery:\*:\*:1.0</code>        (optional) [[https://rawgit.com/pip-services-node/pip-services3-components-node/master/doc/api/interfaces/connect.idiscovery.html IDiscovery]] services to resolve connection
- *
-See [[RestService]]
-See [[CommandableHttpService]]
- *
- Example
- *
-    class MyRestClient extends RestClient implements IMyClient {
-       ...
- *
-       func (c* RestClient) getData(correlationId: string, id: string,
-           callback: (err: interface{}, result: MyData) => void): void {
- *
-           let timing = c.instrument(correlationId, "myclient.get_data");
-           c.call("get", "/get_data" correlationId, { id: id }, nil, (err, result) => {
-               timing.endTiming();
-               callback(err, result);
-           });
-       }
-       ...
-    }
- *
-    let client = new MyRestClient();
-    client.configure(ConfigParams.fromTuples(
+See RestService
+See CommandableHttpService
+
+ Example:
+    type MyRestClient struct {
+		*RestClient
+	}
+    ...
+    func (c *MyRestClient) GetData(correlationId string, id string) (result *testrpc.MyDataPage, err error) {
+
+		params := cdata.NewEmptyStringValueMap()
+		params.Set("id", id)
+
+		calValue, calErr := c.Call(MyDataPageType, "get", "/data", correlationId, params, nil)
+		if calErr != nil {
+			return nil, calErr
+		}
+
+		result, _ = calValue.(*testrpc.MyDataPage)
+		c.Instrument(correlationId, "myData.get_page_by_filter")
+		return result, nil
+	}
+
+    client := NewMyRestClient();
+    client.Configure(cconf.NewConfigParamsFromTuples(
         "connection.protocol", "http",
         "connection.host", "localhost",
-        "connection.port", 8080
+        "connection.port", 8080,
     ));
- *
-    client.getData("123", "1", (err, result) => {
-      ...
-    });
+
+	result, err := client.GetData("123", "1")
+	 ...
+
 */
-// implements IOpenable, IConfigurable, IReferenceable
+
 type RestClient struct {
 	defaultConfig cconf.ConfigParams
 	//The HTTP client.
@@ -101,6 +100,8 @@ type RestClient struct {
 	Uri string
 }
 
+// NewRestClient creates new instance of RestClient
+// Retruns pointer on NewRestClient
 func NewRestClient() *RestClient {
 	rc := RestClient{}
 	rc.defaultConfig = *cconf.NewConfigParamsFromTuples(
@@ -123,11 +124,9 @@ func NewRestClient() *RestClient {
 	return &rc
 }
 
-/*
-   Configures component by passing configuration parameters.
-    *
-   - config    configuration parameters to be set.
-*/
+// Configures component by passing configuration parameters.
+// Parameters:
+// - config *cconf.ConfigParams   configuration parameters to be set.
 func (c *RestClient) Configure(config *cconf.ConfigParams) {
 	config = config.SetDefaults(&c.defaultConfig)
 	c.ConnectionResolver.Configure(config)
@@ -135,44 +134,37 @@ func (c *RestClient) Configure(config *cconf.ConfigParams) {
 	c.Retries = config.GetAsIntegerWithDefault("options.retries", c.Retries)
 	c.ConnectTimeout = config.GetAsIntegerWithDefault("options.connectTimeout", c.ConnectTimeout)
 	c.Timeout = config.GetAsIntegerWithDefault("options.timeout", c.Timeout)
-
 	c.BaseRoute = config.GetAsStringWithDefault("base_route", c.BaseRoute)
 }
 
-/*
-	Sets references to dependent components.
-	 *
-	- references 	references to locate the component dependencies.
-*/
+// Sets references to dependent components.
+// Parameters:
+// - references  crefer.IReferences	references to locate the component dependencies.
 func (c *RestClient) SetReferences(references crefer.IReferences) {
 	c.Logger.SetReferences(references)
 	c.Counters.SetReferences(references)
 	c.ConnectionResolver.SetReferences(references)
 }
 
-/*
-   Adds instrumentation to log calls and measure call time.
-   It returns a Timing object that is used to end the time measurement.
-    *
-   - correlationId     (optional) transaction id to trace execution through call chain.
-   - name              a method name.
-   Return Timing object to end the time measurement.
-*/
+// Instrument method are adds instrumentation to log calls and measure call time.
+// It returns a Timing object that is used to end the time measurement.
+// Parameters:
+// - correlationId  string   (optional) transaction id to trace execution through call chain.
+// - name    string          a method name.
+// Return Timing object to end the time measurement.
 func (c *RestClient) Instrument(correlationId string, name string) *ccount.Timing {
 	c.Logger.Trace(correlationId, "Calling %s method", name)
 	c.Counters.IncrementOne(name + ".call_count")
 	return c.Counters.BeginTiming(name + ".call_time")
 }
 
-/*
-   Adds instrumentation to error handling.
-    *
-   - correlationId     (optional) transaction id to trace execution through call chain.
-   - name              a method name.
-   - err               an occured error
-   - result            (optional) an execution result
-   - callback          (optional) an execution callback
-*/
+// InstrumentError method are dds instrumentation to error handling.
+//    - correlationId   string  (optional) transaction id to trace execution through call chain.
+//    - name   string           a method name.
+//    - err    error           an occured error
+//    - result  interface{}           (optional) an execution result
+// Returns: result interface{}, err error
+// an execution result and error
 func (c *RestClient) InstrumentError(correlationId string, name string, inErr error, inRes interface{}) (result interface{}, err error) {
 	if inErr != nil {
 		c.Logger.Error(correlationId, inErr, "Failed to call %s method", name)
@@ -182,21 +174,16 @@ func (c *RestClient) InstrumentError(correlationId string, name string, inErr er
 	return inRes, inErr
 }
 
-/*
-	Checks if the component is opened.
-	 *
-	Return true if the component has been opened and false otherwise.
-*/
+// IsOpen are checks if the component is opened.
+// Return true if the component has been opened and false otherwise.
 func (c *RestClient) IsOpen() bool {
 	return c.Client != nil
 }
 
-/*
-	Opens the component.
-	 *
-	- correlationId 	(optional) transaction id to trace execution through call chain.
-    - callback 			callback function that receives error or nil no errors occured.
-*/
+// Open method are opens the component.
+// 	- correlationId string	(optional) transaction id to trace execution through call chain.
+// Returns: error
+// error or nil no errors occured.
 func (c *RestClient) Open(correlationId string) error {
 	if c.IsOpen() {
 		return nil
@@ -219,12 +206,11 @@ func (c *RestClient) Open(correlationId string) error {
 	return nil
 }
 
-/*
-	Closes component and frees used resources.
-	 *
-	- correlationId 	(optional) transaction id to trace execution through call chain.
-    - callback 			callback function that receives error or nil no errors occured.
-*/
+// Close method are closes component and frees used resources.
+// Parameters:
+// 	- correlationId  string	(optional) transaction id to trace execution through call chain.
+// Retruns: error
+// error or nil no errors occured.
 func (c *RestClient) Close(correlationId string) error {
 	if c.Client != nil {
 		c.Logger.Debug(correlationId, "Closed REST service at %s", c.Uri)
@@ -234,13 +220,11 @@ func (c *RestClient) Close(correlationId string) error {
 	return nil
 }
 
-/*
-   Adds a correlation id (correlation_id) to invocation parameter map.
-
-   - params            invocation parameters.
-   - correlationId     (optional) a correlation id to be added.
-   Return invocation parameters with added correlation id.
-*/
+// AddCorrelationId method are adds a correlation id (correlation_id) to invocation parameter map.
+// Parameters:
+//    - params    *cdata.StringValueMap        invocation parameters.
+//    - correlationId  string  (optional) a correlation id to be added.
+//  Return invocation parameters with added correlation id.
 func (c *RestClient) AddCorrelationId(params *cdata.StringValueMap, correlationId string) *cdata.StringValueMap {
 	// Automatically generate short ids for now
 	if correlationId == "" {
@@ -255,13 +239,12 @@ func (c *RestClient) AddCorrelationId(params *cdata.StringValueMap, correlationI
 	return params
 }
 
-/*
-   Adds filter parameters (with the same name as they defined)
-   to invocation parameter map.
-   - params        invocation parameters.
-   - filter        (optional) filter parameters
-   Return invocation parameters with added filter parameters.
-*/
+// AddFilterParams method are adds filter parameters (with the same name as they defined)
+// to invocation parameter map.
+// Parameters:
+//    - params  *cdata.StringValueMap      invocation parameters.
+//    - filter  *cdata.FilterParams     (optional) filter parameters
+// Return invocation parameters with added filter parameters.
 func (c *RestClient) AddFilterParams(params *cdata.StringValueMap, filter *cdata.FilterParams) *cdata.StringValueMap {
 
 	if params == nil {
@@ -275,12 +258,11 @@ func (c *RestClient) AddFilterParams(params *cdata.StringValueMap, filter *cdata
 	return params
 }
 
-/*
-   Adds paging parameters (skip, take, total) to invocation parameter map.
-   - params        invocation parameters.
-   - paging        (optional) paging parameters
-   Return invocation parameters with added paging parameters.
-*/
+// AddPagingParams method are adds paging parameters (skip, take, total) to invocation parameter map.
+// Parameters:
+//    - params        invocation parameters.
+//    - paging        (optional) paging parameters
+// Return invocation parameters with added paging parameters.
 func (c *RestClient) AddPagingParams(params *cdata.StringValueMap, paging *cdata.PagingParams) *cdata.StringValueMap {
 	if params == nil {
 		params = cdata.NewEmptyStringValueMap()
@@ -317,16 +299,16 @@ func (c *RestClient) createRequestRoute(route string) string {
 	return builder
 }
 
-/*
-   Calls a remote method via HTTP/REST protocol.
-
-   - method            HTTP method: "get", "head", "post", "put", "delete"
-   - route             a command route. Base route will be added to this route
-   - correlationId     (optional) transaction id to trace execution through call chain.
-   - params            (optional) query parameters.
-   - data              (optional) body object.
-   - callback          (optional) callback function that receives result object or error.
-*/
+// Call method are calls a remote method via HTTP/REST protocol.
+// Parameters:
+// 	- prototype reflect.Type type for convert JSON result. Set nil for return raw JSON string
+//  - method 	string           HTTP method: "get", "head", "post", "put", "delete"
+//  - route   string          a command route. Base route will be added to this route
+//  - correlationId  string    (optional) transaction id to trace execution through call chain.
+//  - params  cdata.StringValueMap          (optional) query parameters.
+//  - data   interface{}           (optional) body object.
+// Returns:  result interface{}, err error
+// result object or error.
 func (c *RestClient) Call(prototype reflect.Type, method string, route string, correlationId string, params *cdata.StringValueMap,
 	data interface{}) (result interface{}, err error) {
 

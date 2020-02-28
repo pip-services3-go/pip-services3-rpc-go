@@ -12,7 +12,7 @@ import (
 )
 
 /*
-Helper class to retrieve connections for HTTP-based services abd clients.
+HttpConnectionResolver helper class to retrieve connections for HTTP-based services abd clients.
 
 In addition to regular functions of ConnectionResolver is able to parse http:// URIs
 and validate connection parameters before returning them.
@@ -20,7 +20,7 @@ and validate connection parameters before returning them.
 Configuration parameters:
 
 - connection:
-  - discovery_key:               (optional) a key to retrieve the connection from [[https://rawgit.com/pip-services-node/pip-services3-components-node/master/doc/api/interfaces/connect.idiscovery.html IDiscovery]]
+  - discovery_key:               (optional) a key to retrieve the connection from IDiscovery
   - ...                          other connection parameters
 
 - connections:                   alternative to connection
@@ -31,27 +31,25 @@ Configuration parameters:
 
  References:
 
-- \*:discovery:\*:\*:1.0            (optional) [[https://rawgit.com/pip-services-node/pip-services3-components-node/master/doc/api/interfaces/connect.idiscovery.html IDiscovery]] services
+- *:discovery:*:*:1.0            (optional) IDiscovery services
 
-@see [[https://rawgit.com/pip-services-node/pip-services3-components-node/master/doc/api/classes/connect.connectionparams.html ConnectionParams]]
-@see [[https://rawgit.com/pip-services-node/pip-services3-components-node/master/doc/api/classes/connect.connectionresolver.html ConnectionResolver]]
+See: ConnectionParams
+See: ConnectionResolver
 
 Example:
 
-    let config = ConfigParams.fromTuples(
+    config := cconf.NewConfigParamsFromTuples(
          "connection.host", "10.1.1.100",
-         "connection.port", 8080
+         "connection.port", 8080,
     );
 
-    let connectionResolver = new HttpConnectionResolver();
-    connectionResolver.configure(config);
-    connectionResolver.setReferences(references);
+    connectionResolver = NewHttpConnectionResolver();
+    connectionResolver.Configure(config);
+    connectionResolver.SetReferences(references);
 
-    connectionResolver.resolve("123", (err, connection) => {
+    connection, err := connectionResolver.Resolve("123")
 	// Now use connection...
-    });
 */
-// implements IReferenceable, IConfigurable
 type HttpConnectionResolver struct {
 	//The base connection resolver.
 	ConnectionResolver ccon.ConnectionResolver
@@ -59,24 +57,23 @@ type HttpConnectionResolver struct {
 	CredentialResolver cauth.CredentialResolver
 }
 
+// NewHttpConnectionResolver creates new instance NewHttpConnectionResolver
+// Returns pointer on NewHttpConnectionResolver
 func NewHttpConnectionResolver() *HttpConnectionResolver {
 	return &HttpConnectionResolver{*ccon.NewEmptyConnectionResolver(), *cauth.NewEmptyCredentialResolver()}
 }
 
-/*
-   Configures component by passing configuration parameters.
-   - config    configuration parameters to be set.
-*/
+// Configure method are configures component by passing configuration parameters.
+// Parameters:
+//    - config  *cconf.ConfigParams  configuration parameters to be set.
 func (c *HttpConnectionResolver) Configure(config *cconf.ConfigParams) {
 	c.ConnectionResolver.Configure(config)
 	c.CredentialResolver.Configure(config)
 }
 
-/*
-	Sets references to dependent components.
-
-	- references 	references to locate the component dependencies.
-*/
+// SetReferences method are sets references to dependent components.
+// Parameters:
+// 	 - references crefer.IReferences	references to locate the component dependencies.
 func (c *HttpConnectionResolver) SetReferences(references crefer.IReferences) {
 	c.ConnectionResolver.SetReferences(references)
 	c.CredentialResolver.SetReferences(references)
@@ -151,13 +148,12 @@ func (c *HttpConnectionResolver) updateConnection(connection *ccon.ConnectionPar
 	}
 }
 
-/*
-Resolves a single component connection. If connections are configured to be retrieved
-from Discovery service it finds a IDiscovery and resolves the connection there.
-
-- correlationId     (optional) transaction id to trace execution through call chain.
-- callback 			callback function that receives resolved connection or error.
-*/
+// Resolve method are resolves a single component connection. If connections are configured to be retrieved
+// from Discovery service it finds a IDiscovery and resolves the connection there.
+// Parameters:
+// - correlationId  string     (optional) transaction id to trace execution through call chain.
+// Returns: connection *ccon.ConnectionParams, credential *cauth.CredentialParams, err error
+// resolved connection and credential or error.
 func (c *HttpConnectionResolver) Resolve(correlationId string) (connection *ccon.ConnectionParams, credential *cauth.CredentialParams, err error) {
 
 	connection, err = c.ConnectionResolver.Resolve(correlationId)
@@ -176,13 +172,12 @@ func (c *HttpConnectionResolver) Resolve(correlationId string) (connection *ccon
 	return connection, credential, err
 }
 
-/*
-Resolves all component connection. If connections are configured to be retrieved
-from Discovery service it finds a IDiscovery and resolves the connection there.
-
-- correlationId     (optional) transaction id to trace execution through call chain.
-- callback 			callback function that receives resolved connections or error.
-*/
+// ResolveAll method are resolves all component connection. If connections are configured to be retrieved
+// from Discovery service it finds a IDiscovery and resolves the connection there.
+// Parameters:
+// - correlationId  string   (optional) transaction id to trace execution through call chain.
+// Returns:  connections []*ccon.ConnectionParams, credential *cauth.CredentialParams, err error
+// resolved connections and credential or error.
 func (c *HttpConnectionResolver) ResolveAll(correlationId string) (connections []*ccon.ConnectionParams, credential *cauth.CredentialParams, err error) {
 
 	connections, err = c.ConnectionResolver.ResolveAll(correlationId)
@@ -206,14 +201,13 @@ func (c *HttpConnectionResolver) ResolveAll(correlationId string) (connections [
 	return connections, credential, err
 }
 
-/*
-Registers the given connection in all referenced discovery services.
-c method can be used for dynamic service discovery.
+// Register method are registers the given connection in all referenced discovery services.
+// c method can be used for dynamic service discovery.
+// Parameters:
+// - correlationId  string   (optional) transaction id to trace execution through call chain.
+// Returns: error
+// nil if registered connection or error.
 
-- correlationId     (optional) transaction id to trace execution through call chain.
-- connection        a connection to register.
-- callback          callback function that receives registered connection or error.
-*/
 func (c *HttpConnectionResolver) Register(correlationId string) error {
 
 	connection, err := c.ConnectionResolver.Resolve(correlationId)

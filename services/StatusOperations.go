@@ -9,6 +9,9 @@ import (
 	cinfo "github.com/pip-services3-go/pip-services3-components-go/info"
 )
 
+/*
+StatusOperations helper class for status service
+*/
 type StatusOperations struct {
 	RestOperations
 	startTime   time.Time
@@ -16,19 +19,16 @@ type StatusOperations struct {
 	contextInfo *cinfo.ContextInfo
 }
 
+// NewStatusOperations creates new instance of StatusOperations
 func NewStatusOperations() *StatusOperations {
-	//super();
-	so := StatusOperations{}
-	so.startTime = time.Now()
-	so.DependencyResolver.Put("context-info", crefer.NewDescriptor("pip-services", "context-info", "default", "*", "1.0"))
-	return &so
+	c := StatusOperations{}
+	c.startTime = time.Now()
+	c.DependencyResolver.Put("context-info", crefer.NewDescriptor("pip-services", "context-info", "default", "*", "1.0"))
+	return &c
 }
 
-/*
-	Sets references to dependent components.
-
-	@param references 	references to locate the component dependencies.
-*/
+// SetReferences  sets references to dependent components.
+// - references  crefer.IReferences	references to locate the component dependencies.
 func (c *StatusOperations) SetReferences(references crefer.IReferences) {
 	c.references2 = references
 	c.RestOperations.SetReferences(references)
@@ -39,18 +39,16 @@ func (c *StatusOperations) SetReferences(references crefer.IReferences) {
 	}
 }
 
+// GetStatusOperation return function for get status
 func (c *StatusOperations) GetStatusOperation() func(res http.ResponseWriter, req *http.Request) {
 	return func(res http.ResponseWriter, req *http.Request) {
 		c.Status(res, req)
 	}
 }
 
-/*
-   Handles status requests
-
-   @param req   an HTTP request
-   @param res   an HTTP response
-*/
+// Handles status requests
+//    - req *http.Request  an HTTP request
+//    - res  http.ResponseWriter  an HTTP response
 func (c *StatusOperations) Status(res http.ResponseWriter, req *http.Request) {
 
 	id := ""

@@ -12,74 +12,75 @@ import (
 )
 
 /*
-Abstract service that receives remove calls via HTTP/REST protocol
-to operations automatically generated for commands defined in [[https://rawgit.com/pip-services-node/pip-services3-commons-node/master/doc/api/interfaces/commands.icommandable.html ICommandable components]].
+CommandableHttpService abstract service that receives remove calls via HTTP/REST protocol
+to operations automatically generated for commands defined in ICommandable components.
 Each command is exposed as POST operation that receives all parameters in body object.
 
 Commandable services require only 3 lines of code to implement a robust external
 HTTP-based remote interface.
 
-### Configuration parameters ###
+Configuration parameters:
 
 - base_route:              base route for remote URI
 - dependencies:
   - endpoint:              override for HTTP Endpoint dependency
   - controller:            override for Controller dependency
 - connection(s):
-  - discovery_key:         (optional) a key to retrieve the connection from [[https://rawgit.com/pip-services-node/pip-services3-components-node/master/doc/api/interfaces/connect.idiscovery.html IDiscovery]]
+  - discovery_key:         (optional) a key to retrieve the connection from IDiscovery
   - protocol:              connection protocol: http or https
   - host:                  host name or IP address
   - port:                  port number
   - uri:                   resource URI or connection string with all parameters in it
 
-### References ###
+References:
 
-- <code>\*:logger:\*:\*:1.0</code>               (optional) [[https://rawgit.com/pip-services-node/pip-services3-components-node/master/doc/api/interfaces/log.ilogger.html ILogger]] components to pass log messages
-- <code>\*:counters:\*:\*:1.0</code>             (optional) [[https://rawgit.com/pip-services-node/pip-services3-components-node/master/doc/api/interfaces/count.icounters.html ICounters]] components to pass collected measurements
-- <code>\*:discovery:\*:\*:1.0</code>            (optional) [[https://rawgit.com/pip-services-node/pip-services3-components-node/master/doc/api/interfaces/connect.idiscovery.html IDiscovery]] services to resolve connection
-- <code>\*:endpoint:http:\*:1.0</code>          (optional) [[HttpEndpoint]] reference
+- *:logger:*:*:1.0               (optional) ILogger components to pass log messages
+- *:counters:*:*:1.0             (optional) ICounters components to pass collected measurements
+- *:discovery:*:*:1.0            (optional) IDiscovery services to resolve connection
+- *:endpoint:http:*:1.0          (optional) HttpEndpoint reference
 
-@see [[CommandableHttpClient]]
-@see [[RestService]]
+See CommandableHttpClient
+See RestService
 
-### Example ###
+Example:
 
-    class MyCommandableHttpService extends CommandableHttpService {
-       public constructor() {
-          base();
-          c._dependencyResolver.put(
-              "controller",
-              new Descriptor("mygroup","controller","*","*","1.0")
-          );
-       }
-    }
+	type MyCommandableHttpService struct {
+	 *CommandableHttpService
+	}
 
-    let service = new MyCommandableHttpService();
-    service.configure(ConfigParams.fromTuples(
+	func NewMyCommandableHttpService() *MyCommandableHttpService {
+		c := MyCommandableHttpService{
+			CommandableHttpService: services.NewCommandableHttpService("dummies"),
+		}
+		c.DependencyResolver.Put("controller", cref.NewDescriptor("pip-services-dummies", "controller", "default", "*", "*"))
+	return &c
+
+    service := NewMyCommandableHttpService();
+    service.Configure(cconf.NewConfigParamsFromTuples(
         "connection.protocol", "http",
         "connection.host", "localhost",
-        "connection.port", 8080
+        "connection.port", 8080,
     ));
-    service.setReferences(References.fromTuples(
-       new Descriptor("mygroup","controller","default","default","1.0"), controller
+    service.SetReferences(cref.NewReferencesFromTuples(
+       cref.NewDescriptor("mygroup","controller","default","default","1.0"), controller
     ));
 
-    service.open("123", (err) => {
-       console.log("The REST service is running on port 8080");
-    });
+	opnErr:=service.Open("123")
+	if opnErr == nil {
+       fmt.Println("The REST service is running on port 8080");
+	}
+
 */
-// extends RestService
-
 type CommandableHttpService struct {
 	*RestService
 	commandSet *ccomands.CommandSet
 }
 
-/*
-   Creates a new instance of the service.
-
-   @param baseRoute a service base route.
-*/
+// NewCommandableHttpService creates a new instance of the service.
+// Parameters:
+//   - baseRoute string a service base route.
+// Returns: *CommandableHttpService
+// pointer on new instance CommandableHttpService
 func NewCommandableHttpService(baseRoute string) *CommandableHttpService {
 	chs := CommandableHttpService{}
 	chs.RestService = NewRestService()
@@ -89,9 +90,7 @@ func NewCommandableHttpService(baseRoute string) *CommandableHttpService {
 	return &chs
 }
 
-/*
-   Registers all service routes in HTTP endpoint.
-*/
+// Register method are registers all service routes in HTTP endpoint.
 func (c *CommandableHttpService) Register() {
 
 	resCtrl, depErr := c.DependencyResolver.GetOneRequired("controller")
@@ -113,8 +112,6 @@ func (c *CommandableHttpService) Register() {
 		if route[0] != "/"[0] {
 			route = "/" + route
 		}
-
-		// Todo: Need wrote validate or geting validation schema from command
 
 		c.RegisterRoute("post", route, nil, func(res http.ResponseWriter, req *http.Request) {
 

@@ -5,24 +5,19 @@ import (
 	"regexp"
 )
 
-// /* @module services */
-
 /*
-Helper class that retrieves parameters from HTTP requests.
+HttpRequestDetector рelper class that retrieves parameters from HTTP requests.
 */
 var HttpRequestDetector = THttpRequestDetector{}
 
 type THttpRequestDetector struct {
 }
 
-/*
-   Detects the platform (using "user-agent") from which the given HTTP request was made.
-    *
-   @param req   an HTTP request to process.
-   @returns the detected platform and version. Detectable platforms: "mobile", "iphone",
-   "ipad",  "macosx", "android",  "webos", "mac", "windows". Otherwise - "unknown" will
-   be returned.
-*/
+// DetectPlatform method are detects the platform (using "user-agent") from which the given HTTP request was made.
+// -  req  *http.Request an HTTP request to process.
+// Returns the detected platform and version. Detectable platforms: "mobile", "iphone",
+// "ipad",  "macosx", "android",  "webos", "mac", "windows". Otherwise - "unknown" will
+// be returned.
 func (c *THttpRequestDetector) DetectPlatform(req *http.Request) string {
 	ua := req.Header.Get("user-agent")
 	var version string
@@ -97,13 +92,10 @@ func (c *THttpRequestDetector) DetectPlatform(req *http.Request) string {
 	return "unknown"
 }
 
-/*
-   Detects the browser (using "user-agent") from which the given HTTP request was made.
-    *
-   @param req   an HTTP request to process.
-   @returns the detected browser. Detectable browsers: "chrome", "msie", "firefox",
-            "safari". Otherwise - "unknown" will be returned.
-*/
+// Detects the browser (using "user-agent") from which the given HTTP request was made.
+// 	-  req  *http.Reques an HTTP request to process.
+// Returns the detected browser. Detectable browsers: "chrome", "msie", "firefox",
+// "safari". Otherwise - "unknown" will be returned.
 func (c *THttpRequestDetector) DetectBrowser(req *http.Request) string {
 
 	ua := req.Header.Get("user-agent")
@@ -139,15 +131,13 @@ func (c *THttpRequestDetector) DetectBrowser(req *http.Request) string {
 	return ua
 }
 
-/*
-   Detects the IP address from which the given HTTP request was received.
-    *
-   @param req   an HTTP request to process.
-   @returns the detected IP address (without a port). If no IP is detected -
-   <code>nil</code> will be returned.
-*/
+// DetectAddress method are detects the IP address from which the given HTTP request was received.
+//   -  req *http.Reques an HTTP request to process.
+// Returns the detected IP address (without a port). If no IP is detected -
+// nil will be returned.
 func (c *THttpRequestDetector) DetectAddress(req *http.Request) string {
 	var ip string
+	// TODO: need to write!!
 
 	// if req.headers["x-forwarded-for"] {
 	// 	ip = req.headers["x-forwarded-for"].split(",")[0]
@@ -180,22 +170,17 @@ func (c *THttpRequestDetector) DetectAddress(req *http.Request) string {
 	return ip
 }
 
-/*
-   Detects the host name of the request"s destination server.
-    *
-   @param req   an HTTP request to process.
-   @returns the destination server"s host name.
-*/
+// DetectServerHost method are detects the host name of the request"s destination server.
+//    -  req *http.Request  an HTTP request to process.
+// Returns the destination server"s host name.
 func (c *THttpRequestDetector) DetectServerHost(req *http.Request) string {
+	//TODO: Need fix this
 	return "" + req.URL.Hostname() // socket.localAddress
 }
 
-/*
-   Detects the request"s destination port number.
-    *
-   @param req   an HTTP request to process.
-   @returns the detected port number or <code>80</code> (if none are detected).
-*/
+// DetectServerPort method are detects the request"s destination port number.
+//    -  req  *http.Request an HTTP request to process.
+// Returns the detected port number or <code>80</code> (if none are detected).
 func (c *THttpRequestDetector) DetectServerPort(req *http.Request) string {
 	return req.URL.Port() //socket.localPort
 }

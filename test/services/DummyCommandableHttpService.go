@@ -10,9 +10,9 @@ type DummyCommandableHttpService struct {
 }
 
 func NewDummyCommandableHttpService() *DummyCommandableHttpService {
-	dchs := DummyCommandableHttpService{
+	c := DummyCommandableHttpService{
 		CommandableHttpService: services.NewCommandableHttpService("dummies"),
 	}
-	dchs.DependencyResolver.Put("controller", cref.NewDescriptor("pip-services-dummies", "controller", "default", "*", "*"))
-	return &dchs
+	c.DependencyResolver.Put("controller", cref.NewDescriptor("pip-services-dummies", "controller", "default", "*", "*"))
+	return &c
 }
