@@ -1,4 +1,4 @@
-# Development and Testing Guide <br/> Pip.Services Remote Procedure Calls for Node.js
+# Development and Testing Guide <br/> Pip.Services Remote Procedure Calls for Golang
 
 This document provides high-level instructions on how to build and test the microservice.
 
@@ -11,78 +11,42 @@ This document provides high-level instructions on how to build and test the micr
 
 ## <a name="setup"></a> Environment Setup
 
-This is a Node.js project and you have to install Node.js tools. 
-You can download them from official Node.js website: https://nodejs.org/en/download/ 
+This is a Golang project and you have to install Golang tools. 
+You can download them from official Golang website: https://golang.org/dl/ 
 
-After node is installed you can check it by running the following command:
+After go is installed you can check it by running the following command:
 ```bash
-node -version
-```
-
-Then you need to configure node tools:
-```bash
-# Install typescript compiler
-npm install typescript -g
- 
-# Install typescript definitions utility
-npm install tsd -g 
-
-# Install typescript api document generator
-npm install typedoc -g
-
-# Install mocha test runner
-npm install mocha -g
+go version
 ```
 
 To work with GitHub code repository you need to install Git from: https://git-scm.com/downloads
-
-If you are planning to develop and test using persistent storages other than flat files
-you may need to install database servers:
-- Download and install MongoDB database from https://www.mongodb.org/downloads
 
 ## <a name="install"></a> Installing
 
 After your environment is ready you can check out source code from the Github repository:
 ```bash
-git clone git@github.com:pip-services/pip-services-rpc-node.git
-```
-
-Then go to the project folder and install dependent modules:
-
-```bash
-# Install dependencies
-npm install
+git clone git@github.com:pip-services/pip-services-rpc-go.git
 ```
 
 If you worked with the microservice before you can check out latest changes and update the dependencies:
-```bash
 # Update source code updates from github
-git pull
 
-# Update dependencies
-npm update
+```bash
+go get -u
 ```
-
 ## <a name="build"></a> Building
 
-The commons is written in TypeScript language which is transcompiled into JavaScript.
+The commons is written in Golang language.
 So, if you make changes to the source code you need to compile it before running or committing to github.
-The process will output compiled javascript files into /bin folder.
+The process will output compiled executable files.
 
 ```bash
-tsc
-```
-
-When you do continuous edit-build-test cycle, you can run typescript compiler with --watch option
-to detect and compile changes you make automatically:
-
-```bash
-tsc --watch
+go buld
 ```
 
 ## <a name="test"></a> Testing
 
-Before you execute tests you need to set configuration options in config.json file.
+Before you execute tests you need to set configuration options in config.yaml file.
 As a starting point you can use example from config.example.json:
 
 ```bash
@@ -92,14 +56,9 @@ copy config/config.example.yaml config/config.yaml
 After that check all configuration options. Specifically, pay attention to connection options
 for database and dependent microservices. For more information check [Configuration Guide](Configuration.md) 
 
-Command to run unit tests:
+Command to run unit tests and benchmarks as:
 ```bash
-npm test
-```
-
-You can also execute benchmarks as:
-```bash
-npm run benchmark
+go test ./test/...
 ```
 
 ## <a name="release"></a> Release
@@ -108,17 +67,9 @@ Formal release process consistents of few steps.
 First of all it is required to tag guthub repository with a version number:
 
 ```bash
-git tag vx.y.y
-git push origin master --tags
-```
-
-Then the release can be pushed to the global NPM repository. 
-To be able to make the release contributor must have an account with proper
-permissions at npm site.
-
-```bash
-npm login
-npm publish
+git commit -m "Emphasize our friendliness" testmod.go
+git tag v1.0.1
+git push --tags origin v1
 ```
 
 Microservice releases additionally require generation and publishing 

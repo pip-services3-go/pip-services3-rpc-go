@@ -16,17 +16,17 @@ type DummyCommandSet struct {
 }
 
 func NewDummyCommandSet(controller IDummyController) *DummyCommandSet {
-	dcs := DummyCommandSet{}
-	dcs.CommandSet = *ccomand.NewCommandSet()
+	c := DummyCommandSet{}
+	c.CommandSet = *ccomand.NewCommandSet()
 
-	dcs.controller = controller
+	c.controller = controller
 
-	dcs.AddCommand(dcs.makeGetPageByFilterCommand())
-	dcs.AddCommand(dcs.makeGetOneByIdCommand())
-	dcs.AddCommand(dcs.makeCreateCommand())
-	dcs.AddCommand(dcs.makeUpdateCommand())
-	dcs.AddCommand(dcs.makeDeleteByIdCommand())
-	return &dcs
+	c.AddCommand(c.makeGetPageByFilterCommand())
+	c.AddCommand(c.makeGetOneByIdCommand())
+	c.AddCommand(c.makeCreateCommand())
+	c.AddCommand(c.makeUpdateCommand())
+	c.AddCommand(c.makeDeleteByIdCommand())
+	return &c
 }
 
 func (c *DummyCommandSet) makeGetPageByFilterCommand() ccomand.ICommand {

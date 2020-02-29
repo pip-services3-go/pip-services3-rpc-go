@@ -22,12 +22,12 @@ type DummyRestService struct {
 }
 
 func NewDummyRestService() *DummyRestService {
-	drs := DummyRestService{}
-	drs.RestService = services.NewRestService()
-	drs.RestService.IRegisterable = &drs
-	drs.numberOfCalls = 0
-	drs.DependencyResolver.Put("controller", crefer.NewDescriptor("pip-services-dummies", "controller", "default", "*", "*"))
-	return &drs
+	c := DummyRestService{}
+	c.RestService = services.NewRestService()
+	c.RestService.IRegisterable = &c
+	c.numberOfCalls = 0
+	c.DependencyResolver.Put("controller", crefer.NewDescriptor("pip-services-dummies", "controller", "default", "*", "*"))
+	return &c
 }
 
 func (c *DummyRestService) SetReferences(references crefer.IReferences) {

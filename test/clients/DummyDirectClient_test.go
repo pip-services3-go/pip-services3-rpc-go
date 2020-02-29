@@ -29,7 +29,6 @@ func TestDummyDirectClient(t *testing.T) {
 	_dummy2 = testrpc.Dummy{Id: "", Key: "Key 2", Content: "Content 2"}
 
 	var dummy1 testrpc.Dummy
-	//var dummy2 testrpc.Dummy
 
 	// Create one dummy
 	dummy, err := client.CreateDummy("", _dummy1)
@@ -45,7 +44,6 @@ func TestDummyDirectClient(t *testing.T) {
 	assert.NotNil(t, dummy)
 	assert.Equal(t, dummy.Content, _dummy2.Content)
 	assert.Equal(t, dummy.Key, _dummy2.Key)
-	//dummy2 = *dummy
 
 	// Get all dummies
 	dummies, err := client.GetDummies("", cdata.NewEmptyFilterParams(), cdata.NewPagingParams(0, 5, false))

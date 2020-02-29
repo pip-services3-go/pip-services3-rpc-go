@@ -25,7 +25,7 @@ func TestHeartbeatRestService(t *testing.T) {
 	service.Open("")
 	defer service.Close("")
 	url := "http://localhost:3000"
-	//     Test "Status"
+	// Test "Heartbeat"
 	getRes, getErr := http.Get(url + "/heartbeat")
 	assert.Nil(t, getErr)
 	assert.NotNil(t, getRes)

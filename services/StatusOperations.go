@@ -46,7 +46,7 @@ func (c *StatusOperations) GetStatusOperation() func(res http.ResponseWriter, re
 	}
 }
 
-// Handles status requests
+// Status method handles status requests
 //    - req *http.Request  an HTTP request
 //    - res  http.ResponseWriter  an HTTP response
 func (c *StatusOperations) Status(res http.ResponseWriter, req *http.Request) {

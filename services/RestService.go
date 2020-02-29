@@ -13,7 +13,7 @@ import (
 )
 
 /*
-Abstract service that receives remove calls via HTTP/REST protocol.
+RestService Abstract service that receives remove calls via HTTP/REST protocol.
 
 Configuration parameters:
 
@@ -22,7 +22,7 @@ Configuration parameters:
   - endpoint:              override for HTTP Endpoint dependency
   - controller:            override for Controller dependency
 - connection(s):
-  - discovery_key:         (optional) a key to retrieve the connection from connect.idiscovery.html IDiscovery
+  - discovery_key:         (optional) a key to retrieve the connection from IDiscovery
   - protocol:              connection protocol: http or https
   - host:                  host name or IP address
   - port:                  port number
@@ -41,49 +41,72 @@ References:
 
 See RestClient
 
- Example:
+Example:
 
-    class MyRestService extends RestService {
-       private _controller: IMyController;
-       ...
-       func (c * RestService) constructor() {
-          base();
-          c.DependencyResolver.put(
-              "controller",
-              new Descriptor("mygroup","controller","*","*","1.0")
-          );
-       }
+    type MyRestService struct {
+		*RestService
+		controller IMyController
+	}
 
-       func (c * RestService) setReferences(references: IReferences): void {
-          base.setReferences(references);
-          c._controller = c.DependencyResolver.getRequired<IMyController>("controller");
-       }
+	   ...
+	func NewMyRestService() *MyRestService {
+		c := MyRestService{}
+		c.RestService = services.NewRestService()
+		c.RestService.IRegisterable = &c
+		c.numberOfCalls = 0
+		c.DependencyResolver.Put("controller", crefer.NewDescriptor("mygroup", "controller", "*", "*", "1.0"))
+		return &c
+	}
 
-       func (c * RestService) register(): void {
-           registerRoute("get", "get_mydata", nil, (req, res) => {
-               let correlationId = req.param("correlation_id");
-               let id = req.param("id");
-               c._controller.getMyData(correlationId, id, c.sendResult(req, res));
-           });
-           ...
-       }
+    func (c * MyRestService) SetReferences(references IReferences) {
+        c.RestService.SetReferences(references);
+		resolv := c.DependencyResolver.GetRequired("controller");
+		if resolv != nil {
+			c.controller, _ = resolv.(IMyController)
+		}
     }
 
-    let service = new MyRestService();
-    service.configure(ConfigParams.fromTuples(
+	func (c *MyRestService) getOneById(res http.ResponseWriter, req *http.Request) {
+		params := req.URL.Query()
+		vars := mux.Vars(req)
+
+		mydataId := params.Get("mydata_id")
+		if mydataId == "" {
+			mydataId = vars["mydatay_id"]
+		}
+		result, err := c.controller.GetOneById(
+			params.Get("correlation_id"),
+			mydataId)
+		c.SendResult(res, req, result, err)
+
+	}
+    func (c * MyRestService) Register() {
+
+		c.RegisterRoute(
+		"get", "get_mydata/{mydata_id}",
+		 &cvalid.NewObjectSchema().
+			WithRequiredProperty("mydata_id", cconv.String).Schema,
+		c.getOneById)
+           ...
+    }
+
+
+    service := NewMyRestService();
+    service.Configure(cconf.NewConfigParamsFromTuples(
         "connection.protocol", "http",
         "connection.host", "localhost",
-        "connection.port", 8080
+        "connection.port", 8080,
     ));
-    service.setReferences(References.fromTuples(
-       new Descriptor("mygroup","controller","default","default","1.0"), controller
+    service.SetReferences(cref.NewReferencesFromTuples(
+       cref.NewDescriptor("mygroup","controller","default","default","1.0"), controller
     ));
 
-    service.open("123", (err) => {
-       console.log("The REST service is running on port 8080");
-    });
+	opnRes := service.Open("123")
+	if opnErr == nil {
+	   fmt.Println("The REST service is running on port 8080");
+	}
+
 */
-// implements IOpenable, IConfigurable, IReferenceable, IUnreferenceable, IRegisterable
 type RestService struct {
 	IRegisterable
 	defaultConfig *cconf.ConfigParams
@@ -103,7 +126,7 @@ type RestService struct {
 	Counters *ccount.CompositeCounters
 }
 
-// NewRestService is create new RestService
+// NewRestService is create new instance of RestService
 func NewRestService() *RestService {
 	rs := RestService{}
 	rs.defaultConfig = cconf.NewConfigParamsFromTuples(
@@ -117,21 +140,19 @@ func NewRestService() *RestService {
 	return &rs
 }
 
-//Configures component by passing configuration parameters.
-//- config    configuration parameters to be set.
+// Configure method are configures component by passing configuration parameters.
+// Parameters:
+//  - config  *cconf.ConfigParams  configuration parameters to be set.
 func (c *RestService) Configure(config *cconf.ConfigParams) {
 	config = config.SetDefaults(c.defaultConfig)
-
 	c.config = config
 	c.DependencyResolver.Configure(config)
-
 	c.BaseRoute = config.GetAsStringWithDefault("base_route", c.BaseRoute)
 }
 
-/*
-	Sets references to dependent components.
-	- references 	references to locate the component dependencies.
-*/
+// SetReferences method are sets references to dependent components.
+// Parameters:
+// 	- references crefer.IReferences	references to locate the component dependencies.
 func (c *RestService) SetReferences(references crefer.IReferences) {
 	c.references = references
 
@@ -156,9 +177,7 @@ func (c *RestService) SetReferences(references crefer.IReferences) {
 	c.Endpoint.Register(c)
 }
 
-/*
-	Unsets (clears) previously set references to dependent components.
-*/
+// UnsetReferences method are unsets (clears) previously set references to dependent components.
 func (c *RestService) UnsetReferences() {
 	// Remove registration callback from endpoint
 	if c.Endpoint != nil {
@@ -180,54 +199,46 @@ func (c *RestService) createEndpoint() *HttpEndpoint {
 	return endpoint
 }
 
-/*
-   Adds instrumentation to log calls and measure call time.
-   It returns a Timing object that is used to end the time measurement.
-
-   - correlationId     (optional) transaction id to trace execution through call chain.
-   - name              a method name.
-   @returns Timing object to end the time measurement.
-*/
+// Instrument method are adds instrumentation to log calls and measure call time.
+// It returns a Timing object that is used to end the time measurement.
+// Parameters:
+//    - correlationId     (optional) transaction id to trace execution through call chain.
+//    - name              a method name.
+// Returns Timing object to end the time measurement.
 func (c *RestService) Instrument(correlationId string, name string) *ccount.Timing {
 	c.Logger.Trace(correlationId, "Executing %s method", name)
 	c.Counters.IncrementOne(name + ".exec_count")
 	return c.Counters.BeginTiming(name + ".exec_time")
 }
 
-/*
-   Adds instrumentation to error handling.
-
-   - correlationId     (optional) transaction id to trace execution through call chain.
-   - name              a method name.
-   - err               an occured error
-   - result            (optional) an execution result
-   - callback          (optional) an execution callback
-*/
+// InstrumentError method are adds instrumentation to error handling.
+// Parameters:
+//    - correlationId  string  (optional) transaction id to trace execution through call chain.
+//    - name    string          a method name.
+//    - err     error          an occured error
+//    - result  interface{}    (optional) an execution result
+// Returns:  result interface{}, err error
+//        (optional) an execution callback
 func (c *RestService) InstrumentError(correlationId string, name string, errIn error,
 	resIn interface{}) (result interface{}, err error) {
 	if errIn != nil {
 		c.Logger.Error(correlationId, errIn, "Failed to execute %s method", name)
 		c.Counters.IncrementOne(name + ".exec_errors")
 	}
-
 	return resIn, errIn
 }
 
-/*
-	Checks if the component is opened.
-
-	@returns true if the component has been opened and false otherwise.
-*/
+// IsOpen method checks if the component is opened.
+// Returrns true if the component has been opened and false otherwise.
 func (c *RestService) IsOpen() bool {
 	return c.opened
 }
 
-/*
-	Opens the component.
-
-	- correlationId 	(optional) transaction id to trace execution through call chain.
-    - callback 			callback function that receives error or nil no errors occured.
-*/
+// Open method are opens the component.
+// Parameters:
+// 	- correlationId  string:	(optional) transaction id to trace execution through call chain.
+//  Returns: error
+// error or nil no errors occured.
 func (c *RestService) Open(correlationId string) error {
 	if c.opened {
 		return nil
@@ -250,12 +261,11 @@ func (c *RestService) Open(correlationId string) error {
 	return nil
 }
 
-/*
-	Closes component and frees used resources.
-
-	- correlationId 	(optional) transaction id to trace execution through call chain.
-    - callback 			callback function that receives error or nil no errors occured.
-*/
+// Close method are closes component and frees used resources.
+// Parameters:
+// 	- correlationId 	(optional) transaction id to trace execution through call chain.
+//  Returns: error
+// error or nil no errors occured.
 func (c *RestService) Close(correlationId string) error {
 	if !c.opened {
 		return nil
@@ -276,73 +286,63 @@ func (c *RestService) Close(correlationId string) error {
 	return nil
 }
 
-/*
-   Creates a callback function that sends result as JSON object.
-   That callack function call be called directly or passed
-   as a parameter to business logic components.
-
-   If object is not nil it returns 200 status code.
-   For nil results it returns 204 status code.
-   If error occur it sends ErrorDescription with approproate status code.
-
-   - req       a HTTP request object.
-   - res       a HTTP response object.
-   - callback function that receives execution result or error.
-*/
+// SendResult method method are sends result as JSON object.
+// That function call be called directly or passed
+// as a parameter to business logic components.
+// If object is not nil it returns 200 status code.
+// For nil results it returns 204 status code.
+// If error occur it sends ErrorDescription with approproate status code.
+// Parameters:
+//  - req       a HTTP request object.
+//  - res       a HTTP response object.
+//  - result    (optional) result object to send
+//  - err error (optional) error objrct to send
 func (c *RestService) SendResult(res http.ResponseWriter, req *http.Request, result interface{}, err error) {
 	HttpResponseSender.SendResult(res, req, result, err)
 }
 
-/*
-   Creates a callback function that sends newly created object as JSON.
-   That callack function call be called directly or passed
-   as a parameter to business logic components.
-
-   If object is not nil it returns 201 status code.
-   For nil results it returns 204 status code.
-   If error occur it sends ErrorDescription with approproate status code.
-
-   - req       a HTTP request object.
-   - res       a HTTP response object.
-   - callback function that receives execution result or error.
-*/
+// SendCreatedResult method are sends newly created object as JSON.
+// That callack function call be called directly or passed
+// as a parameter to business logic components.
+// If object is not nil it returns 201 status code.
+// For nil results it returns 204 status code.
+// If error occur it sends ErrorDescription with approproate status code.
+// Parameters:
+//  - req       a HTTP request object.
+//  - res       a HTTP response object.
+// 	- result    (optional) result object to send
+// 	- err error (optional) error objrct to send
 func (c *RestService) SendCreatedResult(res http.ResponseWriter, req *http.Request, result interface{}, err error) {
 	HttpResponseSender.SendCreatedResult(res, req, result, err)
 }
 
-/*
-   Creates a callback function that sends deleted object as JSON.
-   That callack function call be called directly or passed
-   as a parameter to business logic components.
-
-   If object is not nil it returns 200 status code.
-   For nil results it returns 204 status code.
-   If error occur it sends ErrorDescription with approproate status code.
-
-   - req       a HTTP request object.
-   - res       a HTTP response object.
-   - callback function that receives execution result or error.
-*/
+// SendDeletedResult method are sends deleted object as JSON.
+// That callack function call be called directly or passed
+// as a parameter to business logic components.
+// If object is not nil it returns 200 status code.
+// For nil results it returns 204 status code.
+// If error occur it sends ErrorDescription with approproate status code.
+// Parameters:
+//    - req       a HTTP request object.
+//    - res       a HTTP response object.
+// 	- result    (optional) result object to send
+// 	- err error (optional) error objrct to send
 func (c *RestService) SendDeletedResult(res http.ResponseWriter, req *http.Request, result interface{}, err error) {
 	HttpResponseSender.SendDeletedResult(res, req, result, err)
 }
 
-/*
-   Sends error serialized as ErrorDescription object
-   and appropriate HTTP status code.
-   If status code is not defined, it uses 500 status code.
-
-   - req       a HTTP request object.
-   - res       a HTTP response object.
-   - error     an error object to be sent.
-*/
+// SendError method are sends error serialized as ErrorDescription object
+// and appropriate HTTP status code.
+// If status code is not defined, it uses 500 status code.
+// Parameters:
+//    - req       a HTTP request object.
+//    - res       a HTTP response object.
+//    - error     an error object to be sent.
 func (c *RestService) SendError(res http.ResponseWriter, req *http.Request, err error) {
 	HttpResponseSender.SendError(res, req, err)
 }
 
 func (c *RestService) appendBaseRoute(route string) string {
-
-	//route = route || ""
 
 	if c.BaseRoute != "" && len(c.BaseRoute) > 0 {
 		baseRoute := c.BaseRoute
@@ -354,14 +354,12 @@ func (c *RestService) appendBaseRoute(route string) string {
 	return route
 }
 
-/*
-   Registers a route in HTTP endpoint.
-
-   - method        HTTP method: "get", "head", "post", "put", "delete"
-   - route         a command route. Base route will be added to this route
-   - schema        a validation schema to validate received parameters.
-   - action        an action function that is called when operation is invoked.
-*/
+// RegisterRoute method are registers a route in HTTP endpoint.
+// Parameters:
+//    - method        HTTP method: "get", "head", "post", "put", "delete"
+//    - route         a command route. Base route will be added to this route
+//    - schema        a validation schema to validate received parameters.
+//    - action        an action function that is called when operation is invoked.
 func (c *RestService) RegisterRoute(method string, route string, schema *cvalid.Schema,
 	action func(res http.ResponseWriter, req *http.Request)) {
 	if c.Endpoint == nil {
@@ -371,15 +369,13 @@ func (c *RestService) RegisterRoute(method string, route string, schema *cvalid.
 	c.Endpoint.RegisterRoute(method, route, schema, action)
 }
 
-/*
-   Registers a route with authorization in HTTP endpoint.
-
-   - method        HTTP method: "get", "head", "post", "put", "delete"
-   - route         a command route. Base route will be added to this route
-   - schema        a validation schema to validate received parameters.
-   - authorize     an authorization interceptor
-   - action        an action function that is called when operation is invoked.
-*/
+// RegisterRouteWithAuth method are registers a route with authorization in HTTP endpoint.
+// Parameters:
+//    - method        HTTP method: "get", "head", "post", "put", "delete"
+//    - route         a command route. Base route will be added to this route
+//    - schema        a validation schema to validate received parameters.
+//    - authorize     an authorization interceptor
+//    - action        an action function that is called when operation is invoked.
 func (c *RestService) RegisterRouteWithAuth(method string, route string, schema *cvalid.Schema,
 	authorize func(res http.ResponseWriter, req *http.Request, user *cdata.AnyValueMap, next http.HandlerFunc),
 	action func(res http.ResponseWriter, req *http.Request)) {
@@ -398,12 +394,10 @@ func (c *RestService) RegisterRouteWithAuth(method string, route string, schema 
 		}, action)
 }
 
-/*
-   Registers a middleware for a given route in HTTP endpoint.
-
-   - route         a command route. Base route will be added to this route
-   - action        an action function that is called when middleware is invoked.
-*/
+// RegisterInterceptor method are registers a middleware for a given route in HTTP endpoint.
+// Parameters:
+//    - route         a command route. Base route will be added to this route
+//    - action        an action function that is called when middleware is invoked.
 func (c *RestService) RegisterInterceptor(route string,
 	action func(res http.ResponseWriter, req *http.Request, next http.HandlerFunc)) {
 	if c.Endpoint == nil {
@@ -415,12 +409,3 @@ func (c *RestService) RegisterInterceptor(route string,
 	c.Endpoint.RegisterInterceptor(
 		route, action)
 }
-
-/*
-   Registers all service routes in HTTP endpoint.
-
-   This method is called by the service and must be overriden
-   in child classes.
-*/
-// func (c *RestService) Register() {
-// }

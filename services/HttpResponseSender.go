@@ -11,10 +11,10 @@ import (
 /*
 HttpResponseSender helper class that handles HTTP-based responses.
 */
+var HttpResponseSender THttpResponseSender = THttpResponseSender{}
+
 type THttpResponseSender struct {
 }
-
-var HttpResponseSender THttpResponseSender = THttpResponseSender{}
 
 // SendError sends error serialized as ErrorDescription object
 // and appropriate HTTP status code.

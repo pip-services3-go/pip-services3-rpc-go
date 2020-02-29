@@ -11,7 +11,7 @@ import (
 )
 
 /*
-Service that returns microservice status information via HTTP/REST protocol.
+StatusRestService is a service that returns microservice status information via HTTP/REST protocol.
 
 The service responds on /status route (can be changed) with a JSON object:
 {
@@ -25,7 +25,7 @@ The service responds on /status route (can be changed) with a JSON object:
     - "components":    descriptors of components registered in the container
 }
 
-### Configuration parameters ###
+Configuration parameters:
 
 - baseroute:              base route for remote URI
 - route:                   status route (default: "status")
@@ -33,34 +33,35 @@ The service responds on /status route (can be changed) with a JSON object:
   - endpoint:              override for HTTP Endpoint dependency
   - controller:            override for Controller dependency
 - connection(s):
-  - discovery_key:         (optional) a key to retrieve the connection from [[https://rawgit.com/pip-services-node/pip-services3-components-node/master/doc/api/interfaces/connect.idiscovery.html IDiscovery]]
+  - discovery_key:         (optional) a key to retrieve the connection from IDiscovery
   - protocol:              connection protocol: http or https
   - host:                  host name or IP address
   - port:                  port number
   - uri:                   resource URI or connection string with all parameters in it
 
-### References ###
+References:
 
-- <code>\*:logger:\*:\*:1.0</code>               (optional) [[https://rawgit.com/pip-services-node/pip-services3-components-node/master/doc/api/interfaces/log.ilogger.html ILogger]] components to pass log messages
-- <code>\*:counters:\*:\*:1.0</code>             (optional) [[https://rawgit.com/pip-services-node/pip-services3-components-node/master/doc/api/interfaces/count.icounters.html ICounters]] components to pass collected measurements
-- <code>\*:discovery:\*:\*:1.0</code>            (optional) [[https://rawgit.com/pip-services-node/pip-services3-components-node/master/doc/api/interfaces/connect.idiscovery.html IDiscovery]] services to resolve connection
-- <code>\*:endpoint:http:\*:1.0</code>          (optional) [[HttpEndpoint]] reference
+- *:logger:*:*:1.0               (optional) ILogger components to pass log messages
+- *:counters:*:*:1.0             (optional) ICounters components to pass collected measurements
+- *:discovery:*:*:1.0            (optional) IDiscovery services to resolve connection
+- *:endpoint:http:*:1.0          (optional) HttpEndpoint reference
 
-@see [[RestService]]
-@see [[RestClient]]
+See: RestService
+See: RestClient
 
-### Example ###
+Example:
 
-    let service = new StatusService();
-    service.configure(ConfigParams.fromTuples(
+    service = NewStatusService();
+    service.Configure(cref.NewConfigParamsFromTuples(
         "connection.protocol", "http",
         "connection.host", "localhost",
-        "connection.port", 8080
+        "connection.port", 8080,
     ));
 
-    service.open("123", (err) => {
-       console.log("The Status service is accessible at http://+:8080/status");
-    });
+	opnErr:= service.Open("123")
+	if opnErr == nil {
+       fmt.Println("The Status service is accessible at http://localhost:8080/status");
+    }
 */
 type StatusRestService struct {
 	*RestService
@@ -70,35 +71,28 @@ type StatusRestService struct {
 	route       string
 }
 
-/*
-   Creates a new instance of c service.
-*/
+// NewStatusRestService method are creates a new instance of this service.
 func NewStatusRestService() *StatusRestService {
-	//super();
-	srs := StatusRestService{}
-	srs.RestService = NewRestService()
-	srs.RestService.IRegisterable = &srs
-	srs.startTime = time.Now()
-	srs.route = "status"
-	srs.DependencyResolver.Put("context-info", crefer.NewDescriptor("pip-services", "context-info", "default", "*", "1.0"))
-	return &srs
+	c := StatusRestService{}
+	c.RestService = NewRestService()
+	c.RestService.IRegisterable = &c
+	c.startTime = time.Now()
+	c.route = "status"
+	c.DependencyResolver.Put("context-info", crefer.NewDescriptor("pip-services", "context-info", "default", "*", "1.0"))
+	return &c
 }
 
-/*
-   Configures component by passing configuration parameters.
-
-   @param config    configuration parameters to be set.
-*/
+// Configure method are configures component by passing configuration parameters.
+// Parameters:
+//    - config  *cconf.ConfigParams  configuration parameters to be set.
 func (c *StatusRestService) Configure(config *cconf.ConfigParams) {
 	c.RestService.Configure(config)
 	c.route = config.GetAsStringWithDefault("route", c.route)
 }
 
-/*
-	Sets references to dependent components.
-
-	@param references 	references to locate the component dependencies.
-*/
+// SetReferences method are sets references to dependent components.
+// Parameters:
+// 	- references crefer.IReferences	references to locate the component dependencies.
 func (c *StatusRestService) SetReferences(references crefer.IReferences) {
 	c.references2 = references
 	c.RestService.SetReferences(references)
@@ -107,22 +101,16 @@ func (c *StatusRestService) SetReferences(references crefer.IReferences) {
 	if depRes != nil {
 		c.contextInfo = depRes.(*cinfo.ContextInfo)
 	}
-
 }
 
-/*
-   Registers all service routes in HTTP endpoint.
-*/
+// Register method are registers all service routes in HTTP endpoint.
 func (c *StatusRestService) Register() {
 	c.RegisterRoute("get", c.route, nil, c.status)
 }
 
-/*
-   Handles status requests
-
-   @param req   an HTTP request
-   @param res   an HTTP response
-*/
+// Handles status requests
+//    - req  *http.Request an HTTP request
+//    - res  http.ResponseWriter  an HTTP response
 func (c *StatusRestService) status(res http.ResponseWriter, req *http.Request) {
 
 	id := ""

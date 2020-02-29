@@ -36,7 +36,7 @@ func TestStatusRestService(t *testing.T) {
 	service.Open("")
 	defer service.Close("")
 	url := "http://localhost:3000"
-	//     Test "Status"
+	// Test "Status"
 	getRes, getErr := http.Get(url + "/status")
 	assert.Nil(t, getErr)
 	assert.NotNil(t, getRes)
