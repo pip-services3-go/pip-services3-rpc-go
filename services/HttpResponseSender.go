@@ -8,9 +8,8 @@ import (
 	cerr "github.com/pip-services3-go/pip-services3-commons-go/errors"
 )
 
-/*
-HttpResponseSender helper class that handles HTTP-based responses.
-*/
+//HttpResponseSender helper class that handles HTTP-based responses.
+
 var HttpResponseSender THttpResponseSender = THttpResponseSender{}
 
 type THttpResponseSender struct {
@@ -26,18 +25,8 @@ type THttpResponseSender struct {
 func (c *THttpResponseSender) SendError(res http.ResponseWriter, req *http.Request, err error) {
 
 	appErr := cerr.ApplicationError{}
-	err = appErr.Wrap(err)
-	result := make(map[string]string, 8)
-	result["code"] = "Undefined"
-	result["status"] = "500"
-	result["name"] = ""
-	result["details"] = ""
-	result["component"] = ""
-	result["message"] = "Unknown error"
-	result["stack"] = ""
-	result["cause"] = ""
 	res.WriteHeader(500)
-	jsonObj, jsonErr := json.Marshal(result)
+	jsonObj, jsonErr := json.Marshal(appErr.Wrap(err))
 	if jsonErr == nil {
 		io.WriteString(res, (string)(jsonObj))
 	}
