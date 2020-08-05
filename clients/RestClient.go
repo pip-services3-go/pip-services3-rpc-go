@@ -389,10 +389,16 @@ func (c *RestClient) Call(prototype reflect.Type, method string, route string, c
 			Message:       rErr.Error(),
 			CorrelationId: correlationId,
 		}
-		err = cerr.ApplicationErrorFactory.Create(&eDesct).WithCause(rErr)
+		return nil, cerr.ApplicationErrorFactory.Create(&eDesct).WithCause(rErr)
 	}
 
-	if prototype != nil && rErr == nil {
+	if resp.StatusCode >= 400 {
+		appErr := cerr.ApplicationError{}
+		json.Unmarshal(r, &appErr)
+		return nil, &appErr
+	}
+
+	if prototype != nil {
 		return ConvertComandResult(r, prototype)
 	}
 
