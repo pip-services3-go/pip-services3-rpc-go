@@ -92,10 +92,9 @@ func NewCommandableHttpClient(baseRoute string) *CommandableHttpClient {
 // - params     cdata.StringValueMap       command parameters.
 // Returns: result interface{}, err error
 // result or error.
-func (c *CommandableHttpClient) CallCommand(prototype reflect.Type, name string, correlationId string, params *cdata.StringValueMap,
-	data interface{}) (result interface{}, err error) {
+func (c *CommandableHttpClient) CallCommand(prototype reflect.Type, name string, correlationId string, params *cdata.AnyValueMap) (result interface{}, err error) {
 	timing := c.Instrument(correlationId, c.BaseRoute+"."+name)
-	cRes, cErr := c.Call(prototype, "post", name, correlationId, params, data)
+	cRes, cErr := c.Call(prototype, "post", name, correlationId, nil, params.Value())
 	timing.EndTiming()
 	return c.InstrumentError(correlationId, c.BaseRoute+"."+name, cErr, cRes)
 }
