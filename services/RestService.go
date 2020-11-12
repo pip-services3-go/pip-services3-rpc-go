@@ -1,8 +1,11 @@
 package services
 
 import (
+	"encoding/json"
+	"io/ioutil"
 	"net/http"
 
+	"github.com/gorilla/mux"
 	cconf "github.com/pip-services3-go/pip-services3-commons-go/config"
 	cdata "github.com/pip-services3-go/pip-services3-commons-go/data"
 	cerr "github.com/pip-services3-go/pip-services3-commons-go/errors"
@@ -408,4 +411,26 @@ func (c *RestService) RegisterInterceptor(route string,
 
 	c.Endpoint.RegisterInterceptor(
 		route, action)
+}
+
+func (c *RestService) GetParam(req *http.Request, name string) string {
+	param := req.URL.Query().Get(name)
+	if param == "" {
+		param = mux.Vars(req)[name]
+	}
+	return param
+}
+
+func (c *RestService) DecodeBody(req *http.Request, target interface{}) error {
+
+	bytes, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		return err
+	}
+	defer req.Body.Close()
+	err = json.Unmarshal(bytes, target)
+	if err != nil {
+		return err
+	}
+	return nil
 }
