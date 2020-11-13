@@ -434,3 +434,25 @@ func (c *RestService) DecodeBody(req *http.Request, target interface{}) error {
 	}
 	return nil
 }
+
+func (c *RestService) GetPagingParams(req *http.Request) *cdata.PagingParams {
+
+	pagingParams := make(map[string]string, 0)
+	pagingParams["skip"] = c.GetParam(req, "skip")
+	pagingParams["take"] = c.GetParam(req, "take")
+	pagingParams["total"] = c.GetParam(req, "total")
+
+	return cdata.NewPagingParamsFromValue(pagingParams)
+}
+
+func (c *RestService) GetFilterParams(req *http.Request) *cdata.FilterParams {
+
+	params := req.URL.Query()
+
+	delete(params, "skip")
+	delete(params, "take")
+	delete(params, "total")
+	delete(params, "correlation_id")
+
+	return cdata.NewFilterParamsFromValue(params)
+}
