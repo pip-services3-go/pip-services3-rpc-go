@@ -14,6 +14,8 @@ github.com/pip-services3-go/pip-services3-commons-go v1.0.0 h1:hAX42NwjY6k9KGDfs
 github.com/pip-services3-go/pip-services3-commons-go v1.0.0/go.mod h1:a2fIaCl4TUShJhgMMHmO+7773pf+Nkyrq1JDmJVYjd0=
 github.com/pip-services3-go/pip-services3-components-go v1.0.3 h1:JYsf/ZT2963MS96q98LQUcvQhc8xG+K3OwtQ4WiWlU0=
 github.com/pip-services3-go/pip-services3-components-go v1.0.3/go.mod h1:Me/KFWw/xeMML89twlGdFKqnvprgt2qyi8xAV1+XKGs=
+github.com/pip-services3-go/pip-services3-components-go v1.0.4 h1:uPLfxiQyc0bs9fwNwJGLI8k71kgVQzF1iyBCaFp7RIk=
+github.com/pip-services3-go/pip-services3-components-go v1.0.4/go.mod h1:Me/KFWw/xeMML89twlGdFKqnvprgt2qyi8xAV1+XKGs=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/satori/go.uuid v1.2.0 h1:0uYX9dsZ2yD7q2RtLRtPSdGDWzjeM3TbMJP9utgA0ww=
