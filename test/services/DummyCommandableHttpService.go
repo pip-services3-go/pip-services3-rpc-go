@@ -14,5 +14,13 @@ func NewDummyCommandableHttpService() *DummyCommandableHttpService {
 		CommandableHttpService: services.NewCommandableHttpService("dummies"),
 	}
 	c.DependencyResolver.Put("controller", cref.NewDescriptor("pip-services-dummies", "controller", "default", "*", "*"))
+	c.CommandableHttpService.IRegisterable = &c
 	return &c
+}
+
+func (c *DummyCommandableHttpService) Register() {
+	if !c.SwaggerAuto && c.SwaggerEnable {
+		c.RegisterOpenApiSpec("swagger yaml content")
+	}
+	c.CommandableHttpService.Register()
 }

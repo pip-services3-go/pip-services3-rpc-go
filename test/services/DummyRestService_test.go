@@ -5,9 +5,11 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"testing"
 
 	cconf "github.com/pip-services3-go/pip-services3-commons-go/config"
+	cdata "github.com/pip-services3-go/pip-services3-commons-go/data"
 	cref "github.com/pip-services3-go/pip-services3-commons-go/refer"
 	testrpc "github.com/pip-services3-go/pip-services3-rpc-go/test"
 	"github.com/stretchr/testify/assert"
@@ -18,6 +20,8 @@ func TestDummyRestService(t *testing.T) {
 		"connection.protocol", "http",
 		"connection.host", "localhost",
 		"connection.port", "3000",
+		"openapi_content", "swagger yaml or json content",
+		"swagger.enable", "true",
 	)
 
 	var _dummy1 testrpc.Dummy
@@ -129,4 +133,51 @@ func TestDummyRestService(t *testing.T) {
 	assert.Nil(t, jsonErr)
 	assert.NotNil(t, dummies)
 	assert.Len(t, dummies.Data, 0)
+
+	// Get OpenApi Spec From String
+	// -----------------------------------------------------------------
+	getResponse, getErr = http.Get(url + "/swagger")
+	assert.Nil(t, getErr)
+	resBody, bodyErr = ioutil.ReadAll(getResponse.Body)
+	assert.Nil(t, bodyErr)
+
+	var openApiContent = restConfig.GetAsString("openapi_content")
+	assert.Equal(t, openApiContent, (string)(resBody))
+
+	//Get OpenApi Spec From File
+	// -----------------------------------------------------------------
+	openApiContent = "swagger yaml content from file"
+	filename := "dummy_" + cdata.IdGenerator.NextLong() + ".tmp"
+
+	err := service.Close("")
+	assert.Nil(t, err)
+	// create temp file
+
+	file, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE, 0755)
+	assert.Nil(t, err)
+	_, err = file.Write(([]byte)(openApiContent))
+	assert.Nil(t, err)
+
+	// recreate service with new configuration
+	serviceConfig := cconf.NewConfigParamsFromTuples(
+		"connection.protocol", "http",
+		"connection.host", "localhost",
+		"connection.port", 3000,
+		"openapi_file", filename, // for test only
+		"swagger.enable", "true",
+	)
+
+	service.Configure(serviceConfig)
+	service.Open("")
+
+	getResponse, getErr = http.Get(url + "/swagger")
+	assert.Nil(t, getErr)
+	resBody, bodyErr = ioutil.ReadAll(getResponse.Body)
+	assert.Nil(t, bodyErr)
+	assert.Equal(t, openApiContent, (string)(resBody))
+
+	// delete temp file
+	err = os.Remove(filename)
+	assert.Nil(t, err)
+
 }

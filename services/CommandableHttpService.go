@@ -8,6 +8,7 @@ import (
 
 	"github.com/gorilla/mux"
 	ccomands "github.com/pip-services3-go/pip-services3-commons-go/commands"
+	cconf "github.com/pip-services3-go/pip-services3-commons-go/config"
 	crun "github.com/pip-services3-go/pip-services3-commons-go/run"
 )
 
@@ -73,7 +74,8 @@ Example:
 */
 type CommandableHttpService struct {
 	*RestService
-	commandSet *ccomands.CommandSet
+	commandSet  *ccomands.CommandSet
+	SwaggerAuto bool
 }
 
 // NewCommandableHttpService creates a new instance of the service.
@@ -86,8 +88,17 @@ func NewCommandableHttpService(baseRoute string) *CommandableHttpService {
 	chs.RestService = NewRestService()
 	chs.RestService.IRegisterable = &chs
 	chs.BaseRoute = baseRoute
+	chs.SwaggerAuto = true
 	chs.DependencyResolver.Put("controller", "none")
 	return &chs
+}
+
+//  Configure method configures component by passing configuration parameters.
+//   - config    configuration parameters to be set.
+func (c *CommandableHttpService) Configure(config *cconf.ConfigParams) {
+	c.RestService.Configure(config)
+
+	c.SwaggerAuto = config.GetAsBooleanWithDefault("swagger.auto", c.SwaggerAuto)
 }
 
 // Register method are registers all service routes in HTTP endpoint.
@@ -147,5 +158,12 @@ func (c *CommandableHttpService) Register() {
 			c.SendResult(res, req, instrRes, instrErr)
 
 		})
+	}
+
+	if c.SwaggerAuto {
+		var swaggerConfig = c.config.GetSection("swagger")
+
+		var doc = NewCommandableSwaggerDocument(c.BaseRoute, swaggerConfig, commands)
+		c.RegisterOpenApiSpec(doc.ToString())
 	}
 }

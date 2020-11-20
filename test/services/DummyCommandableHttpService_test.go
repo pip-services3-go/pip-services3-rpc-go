@@ -3,8 +3,10 @@ package test_rpc_services
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 	"testing"
 
 	cconf "github.com/pip-services3-go/pip-services3-commons-go/config"
@@ -19,6 +21,7 @@ func TestDummyCommandableHttpService(t *testing.T) {
 		"connection.protocol", "http",
 		"connection.host", "localhost",
 		"connection.port", "3000",
+		"swagger.enable", "true",
 	)
 	var _dummy1 testrpc.Dummy
 	var _dummy2 testrpc.Dummy
@@ -140,4 +143,33 @@ func TestDummyCommandableHttpService(t *testing.T) {
 	jsonErr = json.Unmarshal(resBody, &dummy)
 	assert.Nil(t, jsonErr)
 	assert.Empty(t, dummy)
+
+	// Get OpenApi Spec From String
+	// -----------------------------------------------------------------
+	getResponse, getErr := http.Get(url + "/dummies/swagger")
+	assert.Nil(t, getErr)
+	resBody, bodyErr = ioutil.ReadAll(getResponse.Body)
+	assert.Nil(t, bodyErr)
+	fmt.Println((string)(resBody))
+	assert.True(t, strings.Index((string)(resBody), "openapi:") >= 0)
+
+	//Get OpenApi Spec From File
+	// -----------------------------------------------------------------
+	var openApiContent = "swagger yaml content"
+
+	err := service.Close("")
+	assert.Nil(t, err)
+	// create temp file
+
+	var config = restConfig.SetDefaults(cconf.NewConfigParamsFromTuples("swagger.auto", false))
+
+	service.Configure(config)
+	service.Open("")
+
+	getResponse, getErr = http.Get(url + "/dummies/swagger")
+	assert.Nil(t, getErr)
+	resBody, bodyErr = ioutil.ReadAll(getResponse.Body)
+	assert.Nil(t, bodyErr)
+	assert.Equal(t, openApiContent, (string)(resBody))
+
 }

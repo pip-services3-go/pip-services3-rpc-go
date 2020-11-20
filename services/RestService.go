@@ -2,11 +2,13 @@ package services
 
 import (
 	"encoding/json"
+	"io"
 	"io/ioutil"
 	"net/http"
 
 	"github.com/gorilla/mux"
 	cconf "github.com/pip-services3-go/pip-services3-commons-go/config"
+	cconv "github.com/pip-services3-go/pip-services3-commons-go/convert"
 	cdata "github.com/pip-services3-go/pip-services3-commons-go/data"
 	cerr "github.com/pip-services3-go/pip-services3-commons-go/errors"
 	crefer "github.com/pip-services3-go/pip-services3-commons-go/refer"
@@ -127,6 +129,9 @@ type RestService struct {
 	Logger *clog.CompositeLogger
 	//The performance counters.
 	Counters *ccount.CompositeCounters
+
+	SwaggerEnable bool
+	SwaggerRoute  string
 }
 
 // NewRestService is create new instance of RestService
@@ -140,6 +145,8 @@ func NewRestService() *RestService {
 	rs.DependencyResolver.Configure(rs.defaultConfig)
 	rs.Logger = clog.NewCompositeLogger()
 	rs.Counters = ccount.NewCompositeCounters()
+	rs.SwaggerEnable = false
+	rs.SwaggerRoute = "swagger"
 	return &rs
 }
 
@@ -151,6 +158,8 @@ func (c *RestService) Configure(config *cconf.ConfigParams) {
 	c.config = config
 	c.DependencyResolver.Configure(config)
 	c.BaseRoute = config.GetAsStringWithDefault("base_route", c.BaseRoute)
+	c.SwaggerEnable = config.GetAsBooleanWithDefault("swagger.enable", c.SwaggerEnable)
+	c.SwaggerRoute = config.GetAsStringWithDefault("swagger.route", c.SwaggerRoute)
 }
 
 // SetReferences method are sets references to dependent components.
@@ -347,14 +356,25 @@ func (c *RestService) SendError(res http.ResponseWriter, req *http.Request, err 
 
 func (c *RestService) appendBaseRoute(route string) string {
 
+	if route == "" {
+		route = "/"
+	}
+
 	if c.BaseRoute != "" && len(c.BaseRoute) > 0 {
 		baseRoute := c.BaseRoute
-		if baseRoute[0] != "/"[0] {
+		if len(route) == 0 {
+			route = "/"
+		}
+		if route[0] != '/' {
+			route = "/" + route
+		}
+		if baseRoute[0] != '/' {
 			baseRoute = "/" + baseRoute
 		}
 		route = baseRoute + route
 	}
 	return route
+
 }
 
 // RegisterRoute method are registers a route in HTTP endpoint.
@@ -413,6 +433,10 @@ func (c *RestService) RegisterInterceptor(route string,
 		route, action)
 }
 
+// GetParam methods helps get all params from query
+// 	- req   - incoming request
+// 	- name  - parameter name
+// Returns value or empty string if param not exists
 func (c *RestService) GetParam(req *http.Request, name string) string {
 	param := req.URL.Query().Get(name)
 	if param == "" {
@@ -421,6 +445,10 @@ func (c *RestService) GetParam(req *http.Request, name string) string {
 	return param
 }
 
+// DecodeBody methods helps decode body
+// 	- req   	- incoming request
+// 	- target  	- pointer on target variable for decode
+// Returns error
 func (c *RestService) DecodeBody(req *http.Request, target interface{}) error {
 
 	bytes, err := ioutil.ReadAll(req.Body)
@@ -435,6 +463,9 @@ func (c *RestService) DecodeBody(req *http.Request, target interface{}) error {
 	return nil
 }
 
+// GetPagingParams methods helps decode paging params
+// 	- req   	- incoming request
+// Returns paging params
 func (c *RestService) GetPagingParams(req *http.Request) *cdata.PagingParams {
 
 	pagingParams := make(map[string]string, 0)
@@ -445,6 +476,9 @@ func (c *RestService) GetPagingParams(req *http.Request) *cdata.PagingParams {
 	return cdata.NewPagingParamsFromValue(pagingParams)
 }
 
+// GetFilterParams methods helps decode filter params
+// 	- req   	- incoming request
+// Returns filter params
 func (c *RestService) GetFilterParams(req *http.Request) *cdata.FilterParams {
 
 	params := req.URL.Query()
@@ -455,4 +489,26 @@ func (c *RestService) GetFilterParams(req *http.Request) *cdata.FilterParams {
 	delete(params, "correlation_id")
 
 	return cdata.NewFilterParamsFromValue(params)
+}
+
+func (c *RestService) RegisterOpenApiSpecFromFile(path string) {
+
+	content, err := ioutil.ReadFile(path)
+	if err != nil {
+		c.Logger.Error("RestService", err, "Can't read swagger file by path %s", path)
+		return
+	}
+	c.RegisterOpenApiSpec((string)(content))
+}
+
+func (c *RestService) RegisterOpenApiSpec(content string) {
+	if c.SwaggerEnable {
+		c.RegisterRoute("get", c.SwaggerRoute, nil, func(res http.ResponseWriter, req *http.Request) {
+
+			res.Header().Add("Content-Length", cconv.StringConverter.ToString(len(content)))
+			res.Header().Add("Content-Type", "application/x-yaml")
+			io.WriteString(res, content)
+
+		})
+	}
 }

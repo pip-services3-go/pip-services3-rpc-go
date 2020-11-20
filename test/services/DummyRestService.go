@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	cconf "github.com/pip-services3-go/pip-services3-commons-go/config"
 	cconv "github.com/pip-services3-go/pip-services3-commons-go/convert"
 	cdata "github.com/pip-services3-go/pip-services3-commons-go/data"
 	cerr "github.com/pip-services3-go/pip-services3-commons-go/errors"
@@ -17,8 +18,10 @@ import (
 
 type DummyRestService struct {
 	*services.RestService
-	controller    testrpc.IDummyController
-	numberOfCalls int
+	controller     testrpc.IDummyController
+	numberOfCalls  int
+	openApiContent string
+	openApiFile    string
 }
 
 func NewDummyRestService() *DummyRestService {
@@ -28,6 +31,12 @@ func NewDummyRestService() *DummyRestService {
 	c.numberOfCalls = 0
 	c.DependencyResolver.Put("controller", crefer.NewDescriptor("pip-services-dummies", "controller", "default", "*", "*"))
 	return &c
+}
+
+func (c *DummyRestService) Configure(config *cconf.ConfigParams) {
+	c.openApiContent = *config.GetAsNullableString("openapi_content")
+	c.openApiFile = *config.GetAsNullableString("openapi_file")
+	c.RestService.Configure(config)
 }
 
 func (c *DummyRestService) SetReferences(references crefer.IReferences) {
@@ -190,4 +199,12 @@ func (c *DummyRestService) Register() {
 			WithRequiredProperty("dummy_id", cconv.String).Schema,
 		c.deleteById,
 	)
+
+	if c.openApiContent != "" {
+		c.RegisterOpenApiSpec(c.openApiContent)
+	}
+
+	if c.openApiFile != "" {
+		c.RegisterOpenApiSpecFromFile(c.openApiFile)
+	}
 }
