@@ -400,7 +400,7 @@ func (c *RestService) RegisterRoute(method string, route string, schema *cvalid.
 //    - authorize     an authorization interceptor
 //    - action        an action function that is called when operation is invoked.
 func (c *RestService) RegisterRouteWithAuth(method string, route string, schema *cvalid.Schema,
-	authorize func(res http.ResponseWriter, req *http.Request, user *cdata.AnyValueMap, next http.HandlerFunc),
+	authorize func(res http.ResponseWriter, req *http.Request, next http.HandlerFunc),
 	action func(res http.ResponseWriter, req *http.Request)) {
 	if c.Endpoint == nil {
 		return
@@ -408,9 +408,9 @@ func (c *RestService) RegisterRouteWithAuth(method string, route string, schema 
 	route = c.appendBaseRoute(route)
 	c.Endpoint.RegisterRouteWithAuth(
 		method, route, schema,
-		func(res http.ResponseWriter, req *http.Request, user *cdata.AnyValueMap, next http.HandlerFunc) {
+		func(res http.ResponseWriter, req *http.Request, next http.HandlerFunc) {
 			if authorize != nil {
-				authorize(res, req, user, next)
+				authorize(res, req, next)
 			} else {
 				next.ServeHTTP(res, req)
 			}

@@ -12,7 +12,6 @@ import (
 
 	"github.com/gorilla/mux"
 	cconf "github.com/pip-services3-go/pip-services3-commons-go/config"
-	cdata "github.com/pip-services3-go/pip-services3-commons-go/data"
 	crefer "github.com/pip-services3-go/pip-services3-commons-go/refer"
 	cvalid "github.com/pip-services3-go/pip-services3-commons-go/validate"
 	ccount "github.com/pip-services3-go/pip-services3-components-go/count"
@@ -378,13 +377,13 @@ func (c *HttpEndpoint) RegisterRoute(method string, route string, schema *cvalid
 // - authorize     the authorization interceptor
 // - action        the action to perform at the given route.
 func (c *HttpEndpoint) RegisterRouteWithAuth(method string, route string, schema *cvalid.Schema,
-	authorize func(w http.ResponseWriter, r *http.Request, user *cdata.AnyValueMap, next http.HandlerFunc),
+	authorize func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc),
 	action http.HandlerFunc) {
 
 	if authorize != nil {
 		nextAction := action
 		action = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			authorize(w, r, nil, nextAction)
+			authorize(w, r, nextAction)
 		})
 	}
 
