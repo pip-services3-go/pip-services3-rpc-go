@@ -1,8 +1,11 @@
 package services
 
 import (
+	"encoding/json"
+	"io/ioutil"
 	"net/http"
 
+	"github.com/gorilla/mux"
 	cconf "github.com/pip-services3-go/pip-services3-commons-go/config"
 	cdata "github.com/pip-services3-go/pip-services3-commons-go/data"
 	cerr "github.com/pip-services3-go/pip-services3-commons-go/errors"
@@ -91,6 +94,36 @@ func (c *RestOperations) GetPagingParams(req *http.Request) *cdata.PagingParams 
 		paginParams,
 	)
 	return paging
+}
+
+// GetParam methods helps get all params from query
+// 	- req   - incoming request
+// 	- name  - parameter name
+// Returns value or empty string if param not exists
+func (c *RestOperations) GetParam(req *http.Request, name string) string {
+	param := req.URL.Query().Get(name)
+	if param == "" {
+		param = mux.Vars(req)[name]
+	}
+	return param
+}
+
+// DecodeBody methods helps decode body
+// 	- req   	- incoming request
+// 	- target  	- pointer on target variable for decode
+// Returns error
+func (c *RestOperations) DecodeBody(req *http.Request, target interface{}) error {
+
+	bytes, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		return err
+	}
+	defer req.Body.Close()
+	err = json.Unmarshal(bytes, target)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (c *RestOperations) SendResult(res http.ResponseWriter, req *http.Request, result interface{}, err error) {
