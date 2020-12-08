@@ -34,15 +34,15 @@ func NewRestOperations() *RestOperations {
 
 // Configure method are configures this RestOperations using the given configuration parameters.
 // Parameters:
-// - config *cconf.ConfigParams confif parameters
+//   - config *cconf.ConfigParams confif parameters
 func (c *RestOperations) Configure(config *cconf.ConfigParams) {
 	c.DependencyResolver.Configure(config)
 }
 
 // SetReferences method are sets references to this RestOperations logger, counters, and connection resolver.
 // Parameters:
-//    - references    an IReferences object, containing references to a logger, counters,
-//     and a dependency resolver.
+//   - references    an IReferences object, containing references to a logger, counters,
+//   and a dependency resolver.
 func (c *RestOperations) SetReferences(references crefer.IReferences) {
 	c.Logger.SetReferences(references)
 	c.Counters.SetReferences(references)
@@ -51,7 +51,7 @@ func (c *RestOperations) SetReferences(references crefer.IReferences) {
 
 // GetCorrelationId method returns CorrelationId from request
 // Parameters:
-// req *http.Request  request
+//   req *http.Request  request
 // Returns: string
 // retrun correlation_id or empty string
 func (c *RestOperations) GetCorrelationId(req *http.Request) string {
@@ -61,7 +61,7 @@ func (c *RestOperations) GetCorrelationId(req *http.Request) string {
 
 // GetFilterParams method retruns filter params object from request
 // Parameters:
-// req *http.Request  request
+//   req *http.Request  request
 // Returns: *cdata.FilterParams
 // filter params object
 func (c *RestOperations) GetFilterParams(req *http.Request) *cdata.FilterParams {
@@ -78,7 +78,7 @@ func (c *RestOperations) GetFilterParams(req *http.Request) *cdata.FilterParams 
 
 // GetPagingParams method retruns paging params object from request
 // Parameters:
-// req *http.Request  request
+//   req *http.Request  request
 // Returns: *cdata.PagingParams
 // pagings params object
 func (c *RestOperations) GetPagingParams(req *http.Request) *cdata.PagingParams {
@@ -97,8 +97,8 @@ func (c *RestOperations) GetPagingParams(req *http.Request) *cdata.PagingParams 
 }
 
 // GetParam methods helps get all params from query
-// 	- req   - incoming request
-// 	- name  - parameter name
+//   - req   - incoming request
+//   - name  - parameter name
 // Returns value or empty string if param not exists
 func (c *RestOperations) GetParam(req *http.Request, name string) string {
 	param := req.URL.Query().Get(name)
@@ -109,8 +109,8 @@ func (c *RestOperations) GetParam(req *http.Request, name string) string {
 }
 
 // DecodeBody methods helps decode body
-// 	- req   	- incoming request
-// 	- target  	- pointer on target variable for decode
+//   - req   	- incoming request
+//   - target  	- pointer on target variable for decode
 // Returns error
 func (c *RestOperations) DecodeBody(req *http.Request, target interface{}) error {
 

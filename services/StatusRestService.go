@@ -14,7 +14,7 @@ import (
 StatusRestService is a service that returns microservice status information via HTTP/REST protocol.
 
 The service responds on /status route (can be changed) with a JSON object:
-{
+  {
     - "id":            unique container id (usually hostname)
     - "name":          container name (from ContextInfo)
     - "description":   container description (from ContextInfo)
@@ -23,21 +23,21 @@ The service responds on /status route (can be changed) with a JSON object:
     - "uptime":        duration since container start time in milliseconds
     - "properties":    additional container properties (from ContextInfo)
     - "components":    descriptors of components registered in the container
-}
+  }
 
 Configuration parameters:
 
-- baseroute:              base route for remote URI
-- route:                   status route (default: "status")
-- dependencies:
-  - endpoint:              override for HTTP Endpoint dependency
-  - controller:            override for Controller dependency
-- connection(s):
-  - discovery_key:         (optional) a key to retrieve the connection from IDiscovery
-  - protocol:              connection protocol: http or https
-  - host:                  host name or IP address
-  - port:                  port number
-  - uri:                   resource URI or connection string with all parameters in it
+  - baseroute:              base route for remote URI
+  - route:                   status route (default: "status")
+  - dependencies:
+    - endpoint:              override for HTTP Endpoint dependency
+    - controller:            override for Controller dependency
+  - connection(s):
+    - discovery_key:         (optional) a key to retrieve the connection from IDiscovery
+    - protocol:              connection protocol: http or https
+    - host:                  host name or IP address
+    - port:                  port number
+    - uri:                   resource URI or connection string with all parameters in it
 
 References:
 
@@ -84,7 +84,7 @@ func NewStatusRestService() *StatusRestService {
 
 // Configure method are configures component by passing configuration parameters.
 // Parameters:
-//    - config  *cconf.ConfigParams  configuration parameters to be set.
+//   - config  *cconf.ConfigParams  configuration parameters to be set.
 func (c *StatusRestService) Configure(config *cconf.ConfigParams) {
 	c.RestService.Configure(config)
 	c.route = config.GetAsStringWithDefault("route", c.route)
@@ -92,7 +92,7 @@ func (c *StatusRestService) Configure(config *cconf.ConfigParams) {
 
 // SetReferences method are sets references to dependent components.
 // Parameters:
-// 	- references crefer.IReferences	references to locate the component dependencies.
+//  - references crefer.IReferences	references to locate the component dependencies.
 func (c *StatusRestService) SetReferences(references crefer.IReferences) {
 	c.references2 = references
 	c.RestService.SetReferences(references)
@@ -109,8 +109,8 @@ func (c *StatusRestService) Register() {
 }
 
 // Handles status requests
-//    - req  *http.Request an HTTP request
-//    - res  http.ResponseWriter  an HTTP response
+//   - req  *http.Request an HTTP request
+//   - res  http.ResponseWriter  an HTTP response
 func (c *StatusRestService) status(res http.ResponseWriter, req *http.Request) {
 
 	id := ""

@@ -28,7 +28,7 @@ func NewStatusOperations() *StatusOperations {
 }
 
 // SetReferences  sets references to dependent components.
-// - references  crefer.IReferences	references to locate the component dependencies.
+//  - references  crefer.IReferences	references to locate the component dependencies.
 func (c *StatusOperations) SetReferences(references crefer.IReferences) {
 	c.references2 = references
 	c.RestOperations.SetReferences(references)
@@ -47,8 +47,8 @@ func (c *StatusOperations) GetStatusOperation() func(res http.ResponseWriter, re
 }
 
 // Status method handles status requests
-//    - req *http.Request  an HTTP request
-//    - res  http.ResponseWriter  an HTTP response
+//   - req *http.Request  an HTTP request
+//   - res  http.ResponseWriter  an HTTP response
 func (c *StatusOperations) Status(res http.ResponseWriter, req *http.Request) {
 
 	id := ""

@@ -18,16 +18,16 @@ container orchestrators.
 
 Configuration parameters:
 
-- baseroute:              base route for remote URI (default: "")
-- route:                   route to heartbeat operation (default: "heartbeat")
-- dependencies:
-  - endpoint:              override for HTTP Endpoint dependency
-- connection(s):
-  - discovery_key:         (optional) a key to retrieve the connection from IDiscovery
-  - protocol:              connection protocol: http or https
-  - host:                  host name or IP address
-  - port:                  port number
-  - uri:                   resource URI or connection string with all parameters in it
+  - baseroute:              base route for remote URI (default: "")
+  - route:                   route to heartbeat operation (default: "heartbeat")
+  - dependencies:
+    - endpoint:              override for HTTP Endpoint dependency
+  - connection(s):
+    - discovery_key:         (optional) a key to retrieve the connection from IDiscovery
+    - protocol:              connection protocol: http or https
+    - host:                  host name or IP address
+    - port:                  port number
+    - uri:                   resource URI or connection string with all parameters in it
 
 References:
 
