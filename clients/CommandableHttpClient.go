@@ -15,17 +15,17 @@ in body object.
 
 Configuration parameters:
 
-base_route:              base route for remote URI
-- connection(s):
-  - discovery_key:         (optional) a key to retrieve the connection from connect.idiscovery.html IDiscovery]]
-  - protocol:              connection protocol: http or https
-  - host:                  host name or IP address
-  - port:                  port number
-  - uri:                   resource URI or connection string with all parameters in it
-- options:
-  - retries:               number of retries (default: 3)
-  - connect_timeout:       connection timeout in milliseconds (default: 10 sec)
-  - timeout:               invocation timeout in milliseconds (default: 10 sec)
+  base_route:              base route for remote URI
+  - connection(s):
+    - discovery_key:         (optional) a key to retrieve the connection from connect.idiscovery.html IDiscovery]]
+    - protocol:              connection protocol: http or https
+    - host:                  host name or IP address
+    - port:                  port number
+    - uri:                   resource URI or connection string with all parameters in it
+  - options:
+    - retries:               number of retries (default: 3)
+    - connect_timeout:       connection timeout in milliseconds (default: 10 sec)
+    - timeout:               invocation timeout in milliseconds (default: 10 sec)
 
 References:
 
@@ -72,7 +72,7 @@ type CommandableHttpClient struct {
 
 // NewCommandableHttpClient is creates a new instance of the client.
 // Parameters:
-// - baseRoute string a base route for remote service.
+//   - baseRoute string a base route for remote service.
 // Returns: *CommandableHttpClient
 // pointer on new instance
 func NewCommandableHttpClient(baseRoute string) *CommandableHttpClient {
@@ -86,10 +86,10 @@ func NewCommandableHttpClient(baseRoute string) *CommandableHttpClient {
 // The call is made via POST operation and all parameters are sent in body object.
 // The complete route to remote method is defined as baseRoute + "/" + name.
 // Parameters:
-// - prototype reflect.Type type of returned data
-// - name        string      a name of the command to call.
-// - correlationId  string   (optional) transaction id to trace execution through call chain.
-// - params     cdata.StringValueMap       command parameters.
+//   - prototype reflect.Type type of returned data
+//   - name        string      a name of the command to call.
+//   - correlationId  string   (optional) transaction id to trace execution through call chain.
+//   - params     cdata.StringValueMap       command parameters.
 // Returns: result interface{}, err error
 // result or error.
 func (c *CommandableHttpClient) CallCommand(prototype reflect.Type, name string, correlationId string, params *cdata.AnyValueMap) (result interface{}, err error) {

@@ -19,9 +19,9 @@ type THttpResponseSender struct {
 // and appropriate HTTP status code.
 // If status code is not defined, it uses 500 status code.
 // Parameters:
-//    - req  *http.Request     a HTTP request object.
-//    - res  http.ResponseWriter     a HTTP response object.
-//    - err  error     an error object to be sent.
+//   - req  *http.Request     a HTTP request object.
+//   - res  http.ResponseWriter     a HTTP response object.
+//   - err  error     an error object to be sent.
 func (c *THttpResponseSender) SendError(res http.ResponseWriter, req *http.Request, err error) {
 
 	appErr := cerr.ApplicationError{}
@@ -39,10 +39,10 @@ func (c *THttpResponseSender) SendError(res http.ResponseWriter, req *http.Reque
 // For nil results it returns 204 status code.
 // If error occur it sends ErrorDescription with approproate status code.
 // Parameters:
-//    - req  *http.Request     a HTTP request object.
-//    - res  http.ResponseWriter     a HTTP response object.
-//    - result interface{}  result object to be send
-//    - err  error     an error object to be sent.
+//   - req  *http.Request     a HTTP request object.
+//   - res  http.ResponseWriter     a HTTP response object.
+//   - result interface{}  result object to be send
+//   - err  error     an error object to be sent.
 func (c *THttpResponseSender) SendResult(res http.ResponseWriter, req *http.Request, result interface{}, err error) {
 	if err != nil {
 		HttpResponseSender.SendError(res, req, err)
@@ -60,8 +60,8 @@ func (c *THttpResponseSender) SendResult(res http.ResponseWriter, req *http.Requ
 
 // SendEmptyResult are sends an empty result with 204 status code.
 // If error occur it sends ErrorDescription with approproate status code.
-//    - req  *http.Request     a HTTP request object.
-//    - res  http.ResponseWriter     a HTTP response object.
+//   - req  *http.Request     a HTTP request object.
+//   - res  http.ResponseWriter     a HTTP response object.
 func (c *THttpResponseSender) SendEmptyResult(res http.ResponseWriter, req *http.Request, err error) {
 	if err != nil {
 		HttpResponseSender.SendError(res, req, err)
@@ -77,8 +77,8 @@ func (c *THttpResponseSender) SendEmptyResult(res http.ResponseWriter, req *http
 // For nil results it returns 204 status code.
 // If error occur it sends ErrorDescription with approproate status code.
 // Parameters:
-//    - req  *http.Request     a HTTP request object.
-//    - res  http.ResponseWriter     a HTTP response object.
+//   - req  *http.Request     a HTTP request object.
+//   - res  http.ResponseWriter     a HTTP response object.
 func (c *THttpResponseSender) SendCreatedResult(res http.ResponseWriter, req *http.Request, result interface{}, err error) {
 	if err != nil {
 		HttpResponseSender.SendError(res, req, err)
@@ -102,8 +102,8 @@ func (c *THttpResponseSender) SendCreatedResult(res http.ResponseWriter, req *ht
 // For nil results it returns 204 status code.
 // If error occur it sends ErrorDescription with approproate status code.
 // Parameters:
-//    - req  *http.Request     a HTTP request object.
-//    - res  http.ResponseWriter     a HTTP response object.
+//   - req  *http.Request     a HTTP request object.
+//   - res  http.ResponseWriter     a HTTP response object.
 func (c *THttpResponseSender) SendDeletedResult(res http.ResponseWriter, req *http.Request, result interface{}, err error) {
 	if err != nil {
 		HttpResponseSender.SendError(res, req, err)

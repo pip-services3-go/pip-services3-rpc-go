@@ -26,13 +26,13 @@ Configuration parameters:
 
 Parameters to pass to the configure method for component configuration:
 
-- connection(s) - the connection resolver"s connections:
+  - connection(s) - the connection resolver"s connections:
     - "connection.discovery_key" - the key to use for connection resolving in a discovery service;
     - "connection.protocol" - the connection"s protocol;
     - "connection.host" - the target host;
     - "connection.port" - the target port;
     - "connection.uri" - the target URI.
-- credential - the HTTPS credentials:
+  - credential - the HTTPS credentials:
     - "credential.ssl_key_file" - the SSL func (c *HttpEndpoint )key in PEM
     - "credential.ssl_crt_file" - the SSL certificate in PEM
     - "credential.ssl_ca_file" - the certificate authorities (root cerfiticates) in PEM
@@ -42,9 +42,9 @@ References:
 A logger, counters, and a connection resolver can be referenced by passing the
 following references to the object"s setReferences method:
 
-- logger: "*:logger:*:*:1.0";
-- counters: "*:counters:*:*:1.0";
-- discovery: "*:discovery:*:*:1.0" (for the connection resolver).
+  - logger: "*:logger:*:*:1.0";
+  - counters: "*:counters:*:*:1.0";
+  - discovery: "*:discovery:*:*:1.0" (for the connection resolver).
 
 Examples:
 
@@ -53,7 +53,6 @@ Examples:
     endpoint.SetReferences(references);
     ...
 	endpoint.Open(correlationId)
-
 */
 type HttpEndpoint struct {
 	defaultConfig          *cconf.ConfigParams
@@ -257,7 +256,7 @@ func (c *HttpEndpoint) doMaintenance(next http.Handler) http.Handler {
 
 // Close method are closes this endpoint and the REST server (service) that was opened earlier.
 // Parameters:
-// - correlationId  string   (optional) transaction id to trace execution through call chain.
+//   - correlationId  string   (optional) transaction id to trace execution through call chain.
 // Returns: error
 // an error if one is raised.
 func (c *HttpEndpoint) Close(correlationId string) error {
@@ -279,7 +278,7 @@ func (c *HttpEndpoint) Close(correlationId string) error {
 
 // Registers a registerable object for dynamic endpoint discovery.
 // Parameters:
-// - registration  IRegisterable   implements of IRegisterable interface.
+//   - registration  IRegisterable   implements of IRegisterable interface.
 // See IRegisterable
 func (c *HttpEndpoint) Register(registration IRegisterable) {
 	c.registrations = append(c.registrations, registration)
@@ -288,7 +287,7 @@ func (c *HttpEndpoint) Register(registration IRegisterable) {
 // Unregisters a registerable object, so that it is no longer used in dynamic
 // endpoint discovery.
 // Parameters:
-// - registration  IRegisterable  the registration to remove.
+//   - registration  IRegisterable  the registration to remove.
 // See IRegisterable
 func (c *HttpEndpoint) Unregister(registration IRegisterable) {
 	for i := 0; i < len(c.registrations); {
@@ -318,10 +317,10 @@ func (c *HttpEndpoint) fixRoute(route string) string {
 }
 
 // RegisterRoute method are registers an action in this objects REST server (service) by the given method and route.
-// - method   string     the HTTP method of the route.
-// - route    string     the route to register in this object"s REST server (service).
-// - schema   *cvalid.Schema     the schema to use for parameter validation.
-// - action   http.HandlerFunc     the action to perform at the given route.
+//   - method   string     the HTTP method of the route.
+//   - route    string     the route to register in this object"s REST server (service).
+//   - schema   *cvalid.Schema     the schema to use for parameter validation.
+//   - action   http.HandlerFunc     the action to perform at the given route.
 func (c *HttpEndpoint) RegisterRoute(method string, route string, schema *cvalid.Schema,
 	action http.HandlerFunc) {
 
@@ -371,11 +370,11 @@ func (c *HttpEndpoint) RegisterRoute(method string, route string, schema *cvalid
 // RegisterRouteWithAuth method are registers an action with authorization in this objects REST server (service)
 // by the given method and route.
 // Parameters:
-// - method    string    the HTTP method of the route.
-// - route     string    the route to register in this object"s REST server (service).
-// - schema    *cvalid.Schema    the schema to use for parameter validation.
-// - authorize     the authorization interceptor
-// - action        the action to perform at the given route.
+//   - method    string    the HTTP method of the route.
+//   - route     string    the route to register in this object"s REST server (service).
+//   - schema    *cvalid.Schema    the schema to use for parameter validation.
+//   - authorize     the authorization interceptor
+//   - action        the action to perform at the given route.
 func (c *HttpEndpoint) RegisterRouteWithAuth(method string, route string, schema *cvalid.Schema,
 	authorize func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc),
 	action http.HandlerFunc) {
@@ -391,8 +390,8 @@ func (c *HttpEndpoint) RegisterRouteWithAuth(method string, route string, schema
 }
 
 // RegisterInterceptor method are registers a middleware action for the given route.
-// - route         the route to register in this object"s REST server (service).
-// - action        the middleware action to perform at the given route.
+//   - route         the route to register in this object"s REST server (service).
+//   - action        the middleware action to perform at the given route.
 func (c *HttpEndpoint) RegisterInterceptor(route string, action func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc)) {
 
 	route = c.fixRoute(route)

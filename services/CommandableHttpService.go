@@ -22,16 +22,16 @@ HTTP-based remote interface.
 
 Configuration parameters:
 
-- base_route:              base route for remote URI
-- dependencies:
-  - endpoint:              override for HTTP Endpoint dependency
-  - controller:            override for Controller dependency
-- connection(s):
-  - discovery_key:         (optional) a key to retrieve the connection from IDiscovery
-  - protocol:              connection protocol: http or https
-  - host:                  host name or IP address
-  - port:                  port number
-  - uri:                   resource URI or connection string with all parameters in it
+  - base_route:              base route for remote URI
+  - dependencies:
+    - endpoint:              override for HTTP Endpoint dependency
+    - controller:            override for Controller dependency
+  - connection(s):
+    - discovery_key:         (optional) a key to retrieve the connection from IDiscovery
+    - protocol:              connection protocol: http or https
+    - host:                  host name or IP address
+    - port:                  port number
+    - uri:                   resource URI or connection string with all parameters in it
 
 References:
 
