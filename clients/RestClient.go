@@ -345,7 +345,7 @@ func (c *RestClient) Call(prototype reflect.Type, method string, route string, c
 		return nil, err
 	}
 	// Set headers
-	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Content-Type", "application/json")
 	//req.Header.Set("User-Agent", c.UserAgent)
 	for k, v := range c.Headers.Value() {
 		req.Header.Set(k, v)
