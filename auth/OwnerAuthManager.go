@@ -72,7 +72,7 @@ func (c *OwnerAuthManager) OwnerOrAdmin(idParam string) func(res http.ResponseWr
 			if userId == "" {
 				userId = mux.Vars(req)[idParam]
 			}
-			roles := user.GetAsArray("Roles")
+			roles := user.GetAsArray("roles")
 			admin := false
 			for _, role := range roles.Value() {
 				r, ok := role.(string)
