@@ -332,7 +332,6 @@ func (c *HttpEndpoint) RegisterRoute(method string, route string, schema *cvalid
 	actionCurl := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		//  Perform validation
 		if schema != nil {
-			//params = _.extend({}, req.params, { body: req.body })
 			var params map[string]interface{} = make(map[string]interface{}, 0)
 			for k, v := range r.URL.Query() {
 				params[k] = v[0]
@@ -355,7 +354,7 @@ func (c *HttpEndpoint) RegisterRoute(method string, route string, schema *cvalid
 			json.Unmarshal(bodyBuf, &body)
 			params["body"] = body
 
-			correlationId := r.URL.Query().Get("correlaton_id")
+			correlationId := r.URL.Query().Get("correlation_id")
 			err := schema.ValidateAndReturnError(correlationId, params, false)
 			if err != nil {
 				HttpResponseSender.SendError(w, r, err)

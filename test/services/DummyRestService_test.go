@@ -56,7 +56,7 @@ func TestDummyRestService(t *testing.T) {
 	assert.Nil(t, postErr)
 	resBody, bodyErr := ioutil.ReadAll(postResponse.Body)
 	assert.Nil(t, bodyErr)
-
+	postResponse.Body.Close()
 	var dummy testrpc.Dummy
 	jsonErr := json.Unmarshal(resBody, &dummy)
 
@@ -75,6 +75,7 @@ func TestDummyRestService(t *testing.T) {
 	assert.Nil(t, postErr)
 	resBody, bodyErr = ioutil.ReadAll(postResponse.Body)
 	assert.Nil(t, bodyErr)
+	postResponse.Body.Close()
 
 	jsonErr = json.Unmarshal(resBody, &dummy)
 
@@ -89,6 +90,7 @@ func TestDummyRestService(t *testing.T) {
 	assert.Nil(t, getErr)
 	resBody, bodyErr = ioutil.ReadAll(getResponse.Body)
 	assert.Nil(t, bodyErr)
+	getResponse.Body.Close()
 
 	var dummies testrpc.DummyDataPage
 	jsonErr = json.Unmarshal(resBody, &dummies)
@@ -108,6 +110,7 @@ func TestDummyRestService(t *testing.T) {
 	putRes, putErr := client.Do(putReq)
 	assert.Nil(t, putErr)
 	resBody, bodyErr = ioutil.ReadAll(putRes.Body)
+	putRes.Body.Close()
 	jsonErr = json.Unmarshal(resBody, &dummy)
 	assert.Nil(t, putErr)
 	assert.NotNil(t, dummy)
@@ -129,6 +132,7 @@ func TestDummyRestService(t *testing.T) {
 	assert.Nil(t, getErr)
 	resBody, bodyErr = ioutil.ReadAll(getResponse.Body)
 	assert.Nil(t, bodyErr)
+	getResponse.Body.Close()
 	jsonErr = json.Unmarshal(resBody, &dummies)
 	assert.Nil(t, jsonErr)
 	assert.NotNil(t, dummies)
@@ -140,6 +144,7 @@ func TestDummyRestService(t *testing.T) {
 	assert.Nil(t, getErr)
 	resBody, bodyErr = ioutil.ReadAll(getResponse.Body)
 	assert.Nil(t, bodyErr)
+	getResponse.Body.Close()
 
 	var openApiContent = restConfig.GetAsString("openapi_content")
 	assert.Equal(t, openApiContent, (string)(resBody))

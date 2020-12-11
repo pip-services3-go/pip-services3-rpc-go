@@ -60,6 +60,7 @@ func TestDummyCommandableHttpService(t *testing.T) {
 	assert.Nil(t, postErr)
 	resBody, bodyErr := ioutil.ReadAll(postResponse.Body)
 	assert.Nil(t, bodyErr)
+	postResponse.Body.Close()
 
 	var dummy testrpc.Dummy
 	jsonErr := json.Unmarshal(resBody, &dummy)
@@ -82,6 +83,7 @@ func TestDummyCommandableHttpService(t *testing.T) {
 	assert.Nil(t, postErr)
 	resBody, bodyErr = ioutil.ReadAll(postResponse.Body)
 	assert.Nil(t, bodyErr)
+	postResponse.Body.Close()
 
 	jsonErr = json.Unmarshal(resBody, &dummy)
 
@@ -96,6 +98,7 @@ func TestDummyCommandableHttpService(t *testing.T) {
 	assert.Nil(t, postErr)
 	resBody, bodyErr = ioutil.ReadAll(postResponse.Body)
 	assert.Nil(t, bodyErr)
+	postResponse.Body.Close()
 	var dummies testrpc.DummyDataPage
 	jsonErr = json.Unmarshal(resBody, &dummies)
 	assert.Nil(t, jsonErr)
@@ -114,6 +117,7 @@ func TestDummyCommandableHttpService(t *testing.T) {
 	assert.Nil(t, postErr)
 	resBody, bodyErr = ioutil.ReadAll(postResponse.Body)
 	assert.Nil(t, bodyErr)
+	postResponse.Body.Close()
 	jsonErr = json.Unmarshal(resBody, &dummy)
 	assert.Nil(t, jsonErr)
 	assert.NotNil(t, dummy)
@@ -128,6 +132,7 @@ func TestDummyCommandableHttpService(t *testing.T) {
 	postResponse, postErr = http.Post(url+"/dummies/delete_dummy", "application/json", bodyReader)
 	assert.Nil(t, postErr)
 	resBody, bodyErr = ioutil.ReadAll(postResponse.Body)
+	postResponse.Body.Close()
 	assert.Nil(t, bodyErr)
 
 	// Try to get delete dummy
@@ -139,6 +144,7 @@ func TestDummyCommandableHttpService(t *testing.T) {
 	assert.Nil(t, postErr)
 	resBody, bodyErr = ioutil.ReadAll(postResponse.Body)
 	assert.Nil(t, bodyErr)
+	postResponse.Body.Close()
 	dummy = testrpc.Dummy{}
 	jsonErr = json.Unmarshal(resBody, &dummy)
 	assert.Nil(t, jsonErr)
