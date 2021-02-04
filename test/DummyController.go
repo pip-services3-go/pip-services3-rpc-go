@@ -107,3 +107,8 @@ func (c *DummyController) DeleteById(correlationId string, id string) (result *D
 	}
 	return nil, nil
 }
+
+func (c *DummyController) CheckCorrelationId(correlationId string) (result map[string]string, err error) {
+	result = map[string]string{"correlationId": correlationId}
+	return result, nil
+}

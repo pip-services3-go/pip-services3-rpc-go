@@ -55,8 +55,11 @@ func (c *RestOperations) SetReferences(references crefer.IReferences) {
 // Returns: string
 // retrun correlation_id or empty string
 func (c *RestOperations) GetCorrelationId(req *http.Request) string {
-	params := req.URL.Query()
-	return params.Get("correlation_id")
+	correlationId := req.URL.Query().Get("correlation_id")
+	if correlationId == "" {
+		correlationId = req.Header.Get("correlation_id")
+	}
+	return correlationId
 }
 
 // GetFilterParams method retruns filter params object from request

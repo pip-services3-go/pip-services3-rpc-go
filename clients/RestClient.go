@@ -31,8 +31,9 @@ Configuration parameters:
     - uri:                   resource URI or connection string with all parameters in it
   - options:
     - retries:               number of retries (default: 3)
-    - connectTimeout:       connection timeout in milliseconds (default: 10 sec)
-    - timeout:               invocation timeout in milliseconds (default: 10 sec)
+    - connectTimeout:        connection timeout in milliseconds (default: 10 sec)
+	- timeout:               invocation timeout in milliseconds (default: 10 sec)
+	- correlation_id_place 	 place for adding correalationId, query - in query string, headers - in headers, both - in query and headers (default: query)
 
 References:
 - *:logger:*:*:1.0         (optional) ILogger components to pass log messages
@@ -97,6 +98,8 @@ type RestClient struct {
 	Timeout int
 	//The remote service uri which is calculated on open.
 	Uri string
+	// add correlation id to headers
+	correlationIdPlace string
 }
 
 // NewRestClient creates new instance of RestClient
@@ -113,13 +116,16 @@ func NewRestClient() *RestClient {
 		"options.timeout", 10000,
 		"options.retries", 3,
 		"options.debug", true,
+		"options.correlation_id_place", "query",
 	)
 	rc.ConnectionResolver = *rpccon.NewHttpConnectionResolver()
 	rc.Logger = *clog.NewCompositeLogger()
 	rc.Counters = *ccount.NewCompositeCounters()
 	rc.Options = *cconf.NewEmptyConfigParams()
 	rc.Retries = 1
+	rc.Headers = *cdata.NewEmptyStringValueMap()
 	rc.ConnectTimeout = 10000
+	rc.correlationIdPlace = "query"
 	return &rc
 }
 
@@ -134,6 +140,7 @@ func (c *RestClient) Configure(config *cconf.ConfigParams) {
 	c.ConnectTimeout = config.GetAsIntegerWithDefault("options.connectTimeout", c.ConnectTimeout)
 	c.Timeout = config.GetAsIntegerWithDefault("options.timeout", c.Timeout)
 	c.BaseRoute = config.GetAsStringWithDefault("base_route", c.BaseRoute)
+	c.correlationIdPlace = config.GetAsStringWithDefault("correlation_id_place", c.correlationIdPlace)
 }
 
 // Sets references to dependent components.
@@ -290,7 +297,7 @@ func (c *RestClient) createRequestRoute(route string) string {
 		builder += c.BaseRoute
 	}
 
-	if route[0] != "/"[0] {
+	if route != "" && route[0] != "/"[0] {
 		builder += "/"
 	}
 	builder += route
@@ -316,7 +323,9 @@ func (c *RestClient) Call(prototype reflect.Type, method string, route string, c
 		params = cdata.NewEmptyStringValueMap()
 	}
 	route = c.createRequestRoute(route)
-	params = c.AddCorrelationId(params, correlationId)
+	if c.correlationIdPlace == "query" || c.correlationIdPlace == "both" {
+		params = c.AddCorrelationId(params, correlationId)
+	}
 	if params.Len() > 0 {
 		route += "?"
 		for k, v := range params.Value() {
@@ -346,6 +355,9 @@ func (c *RestClient) Call(prototype reflect.Type, method string, route string, c
 	}
 	// Set headers
 	req.Header.Set("Content-Type", "application/json")
+	if c.correlationIdPlace == "headers" || c.correlationIdPlace == "both" {
+		req.Header.Set("correlation_id", correlationId)
+	}
 	//req.Header.Set("User-Agent", c.UserAgent)
 	for k, v := range c.Headers.Value() {
 		req.Header.Set(k, v)

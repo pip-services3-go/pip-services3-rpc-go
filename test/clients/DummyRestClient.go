@@ -84,3 +84,15 @@ func (c *DummyRestClient) DeleteDummy(correlationId string, dummyId string) (res
 	c.Instrument(correlationId, "dummy.delete_by_id")
 	return result, nil
 }
+
+func (c *DummyRestClient) CheckCorrelationId(correlationId string) (result map[string]string, err error) {
+
+	calValue, calErr := c.Call(reflect.TypeOf(make(map[string]string)), "get", "/dummies/check/correlation_id", correlationId, nil, nil)
+	if calErr != nil {
+		return nil, calErr
+	}
+
+	val, _ := calValue.(*(map[string]string))
+	c.Instrument(correlationId, "dummy.check_correlation_id")
+	return *val, nil
+}

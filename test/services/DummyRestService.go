@@ -69,7 +69,7 @@ func (c *DummyRestService) getPageByFilter(res http.ResponseWriter, req *http.Re
 	delete(params, "total")
 
 	result, err := c.controller.GetPageByFilter(
-		params.Get("correlation_id"),
+		c.GetCorrelationId(req),
 		cdata.NewFilterParamsFromValue(params), // W! need test
 		cdata.NewPagingParamsFromTuples(paginParams),
 	)
@@ -85,14 +85,13 @@ func (c *DummyRestService) getOneById(res http.ResponseWriter, req *http.Request
 		dummyId = vars["dummy_id"]
 	}
 	result, err := c.controller.GetOneById(
-		params.Get("correlation_id"),
+		c.GetCorrelationId(req),
 		dummyId)
 	c.SendResult(res, req, result, err)
 }
 
 func (c *DummyRestService) create(res http.ResponseWriter, req *http.Request) {
-	params := req.URL.Query()
-	correlationId := params.Get("correlation_id")
+	correlationId := c.GetCorrelationId(req)
 	var dummy testrpc.Dummy
 
 	body, bodyErr := ioutil.ReadAll(req.Body)
@@ -118,8 +117,7 @@ func (c *DummyRestService) create(res http.ResponseWriter, req *http.Request) {
 }
 
 func (c *DummyRestService) update(res http.ResponseWriter, req *http.Request) {
-	params := req.URL.Query()
-	correlationId := params.Get("correlation_id")
+	correlationId := c.GetCorrelationId(req)
 
 	var dummy testrpc.Dummy
 
@@ -154,10 +152,15 @@ func (c *DummyRestService) deleteById(res http.ResponseWriter, req *http.Request
 	}
 
 	result, err := c.controller.DeleteById(
-		params.Get("correlation_id"),
+		c.GetCorrelationId(req),
 		dummyId,
 	)
 	c.SendDeletedResult(res, req, result, err)
+}
+
+func (c *DummyRestService) checkCorrelationId(res http.ResponseWriter, req *http.Request) {
+	result, err := c.controller.CheckCorrelationId(c.GetCorrelationId(req))
+	c.SendResult(res, req, result, err)
 }
 
 func (c *DummyRestService) Register() {
@@ -170,6 +173,12 @@ func (c *DummyRestService) Register() {
 			WithOptionalProperty("total", cconv.String).
 			WithOptionalProperty("body", cvalid.NewFilterParamsSchema()).Schema,
 		c.getPageByFilter,
+	)
+
+	c.RegisterRoute(
+		"get", "/dummies/check/correlation_id",
+		&cvalid.NewObjectSchema().Schema,
+		c.checkCorrelationId,
 	)
 
 	c.RegisterRoute(

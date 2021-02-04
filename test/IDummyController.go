@@ -10,4 +10,6 @@ type IDummyController interface {
 	Create(correlationId string, entity Dummy) (result *Dummy, err error)
 	Update(correlationId string, entity Dummy) (result *Dummy, err error)
 	DeleteById(correlationId string, id string) (result *Dummy, err error)
+
+	CheckCorrelationId(correlationId string) (result map[string]string, err error)
 }

@@ -70,3 +70,11 @@ func (c *DummyDirectClient) DeleteDummy(correlationId string, dummyId string) (r
 	timing.EndTiming()
 	return result, err
 }
+
+func (c *DummyDirectClient) CheckCorrelationId(correlationId string) (result map[string]string, err error) {
+
+	timing := c.Instrument(correlationId, "dummy.delete_by_id")
+	result, err = c.specificController.CheckCorrelationId(correlationId)
+	timing.EndTiming()
+	return result, err
+}

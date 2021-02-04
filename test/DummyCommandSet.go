@@ -26,6 +26,7 @@ func NewDummyCommandSet(controller IDummyController) *DummyCommandSet {
 	c.AddCommand(c.makeCreateCommand())
 	c.AddCommand(c.makeUpdateCommand())
 	c.AddCommand(c.makeDeleteByIdCommand())
+	c.AddCommand(c.makeCheckCorrelationIdCommand())
 	return &c
 }
 
@@ -86,6 +87,16 @@ func (c *DummyCommandSet) makeDeleteByIdCommand() ccomand.ICommand {
 		func(correlationId string, args *crun.Parameters) (result interface{}, err error) {
 			id := args.GetAsString("dummy_id")
 			return c.controller.DeleteById(correlationId, id)
+		},
+	)
+}
+
+func (c *DummyCommandSet) makeCheckCorrelationIdCommand() ccomand.ICommand {
+	return ccomand.NewCommand(
+		"check_correlation_id",
+		cvalid.NewObjectSchema(),
+		func(correlationId string, args *crun.Parameters) (result interface{}, err error) {
+			return c.controller.CheckCorrelationId(correlationId)
 		},
 	)
 }

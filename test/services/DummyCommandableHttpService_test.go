@@ -150,16 +150,47 @@ func TestDummyCommandableHttpService(t *testing.T) {
 	assert.Nil(t, jsonErr)
 	assert.Empty(t, dummy)
 
+	// Testing transmit correlationId
+	bodyMap = make(map[string]interface{})
+	bodyMap["dummy_id"] = dummy1.Id
+	jsonBody, _ = json.Marshal(bodyMap)
+	bodyReader = bytes.NewReader(jsonBody)
+	getResponse, getErr := http.Post(url+"/dummies/check_correlation_id?correlation_id=test_cor_id", "application/json", bodyReader)
+	assert.Nil(t, getErr)
+	resBody, bodyErr = ioutil.ReadAll(getResponse.Body)
+	assert.Nil(t, bodyErr)
+	getResponse.Body.Close()
+	values := make(map[string]string, 0)
+	jsonErr = json.Unmarshal(resBody, &values)
+	assert.Nil(t, jsonErr)
+	assert.NotNil(t, values)
+	assert.Equal(t, values["correlationId"], "test_cor_id")
+
+	req, reqErr := http.NewRequest("POST", url+"/dummies/check_correlation_id", bytes.NewBuffer(make([]byte, 0, 0)))
+	assert.Nil(t, reqErr)
+	req.Header.Set("correlation_id", "test_cor_id")
+	localClient := http.Client{}
+	getResponse, getErr = localClient.Do(req)
+	assert.Nil(t, getErr)
+	resBody, bodyErr = ioutil.ReadAll(getResponse.Body)
+	assert.Nil(t, bodyErr)
+	getResponse.Body.Close()
+	values = make(map[string]string, 0)
+	jsonErr = json.Unmarshal(resBody, &values)
+	assert.Nil(t, jsonErr)
+	assert.NotNil(t, values)
+	assert.Equal(t, values["correlationId"], "test_cor_id")
+
 	// Get OpenApi Spec From String
 	// -----------------------------------------------------------------
-	getResponse, getErr := http.Get(url + "/dummies/swagger")
+	getResponse, getErr = http.Get(url + "/dummies/swagger")
 	assert.Nil(t, getErr)
 	resBody, bodyErr = ioutil.ReadAll(getResponse.Body)
 	assert.Nil(t, bodyErr)
 	fmt.Println((string)(resBody))
 	assert.True(t, strings.Index((string)(resBody), "openapi:") >= 0)
 
-	//Get OpenApi Spec From File
+	// Get OpenApi Spec From File
 	// -----------------------------------------------------------------
 	var openApiContent = "swagger yaml content"
 
@@ -177,5 +208,4 @@ func TestDummyCommandableHttpService(t *testing.T) {
 	resBody, bodyErr = ioutil.ReadAll(getResponse.Body)
 	assert.Nil(t, bodyErr)
 	assert.Equal(t, openApiContent, (string)(resBody))
-
 }

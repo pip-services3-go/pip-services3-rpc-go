@@ -11,4 +11,6 @@ type IDummyClient interface {
 	CreateDummy(correlationId string, dummy testrpc.Dummy) (result *testrpc.Dummy, err error)
 	UpdateDummy(correlationId string, dummy testrpc.Dummy) (result *testrpc.Dummy, err error)
 	DeleteDummy(correlationId string, dummyId string) (result *testrpc.Dummy, err error)
+
+	CheckCorrelationId(correlationId string) (result map[string]string, err error)
 }

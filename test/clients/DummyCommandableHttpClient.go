@@ -1,6 +1,8 @@
 package test_rpc_clients
 
 import (
+	"reflect"
+
 	cdata "github.com/pip-services3-go/pip-services3-commons-go/data"
 	"github.com/pip-services3-go/pip-services3-rpc-go/clients"
 	testrpc "github.com/pip-services3-go/pip-services3-rpc-go/test"
@@ -80,4 +82,16 @@ func (c *DummyCommandableHttpClient) DeleteDummy(correlationId string, dummyId s
 	}
 	result, _ = calValue.(*testrpc.Dummy)
 	return result, err
+}
+
+func (c *DummyCommandableHttpClient) CheckCorrelationId(correlationId string) (result map[string]string, err error) {
+
+	params := cdata.NewEmptyAnyValueMap()
+
+	calValue, calErr := c.CallCommand(reflect.TypeOf(make(map[string]string)), "check_correlation_id", correlationId, params)
+	if calErr != nil {
+		return nil, calErr
+	}
+	val, _ := calValue.(*(map[string]string))
+	return *val, err
 }

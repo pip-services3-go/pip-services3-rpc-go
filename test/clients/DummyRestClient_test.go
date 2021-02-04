@@ -15,6 +15,7 @@ func TestDummyRestClient(t *testing.T) {
 		"connection.protocol", "http",
 		"connection.host", "localhost",
 		"connection.port", "3000",
+		"options.correlation_id_place", "headers",
 	)
 
 	var service *testservices.DummyRestService

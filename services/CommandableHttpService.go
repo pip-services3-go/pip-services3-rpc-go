@@ -146,7 +146,7 @@ func (c *CommandableHttpService) Register() {
 				params[k] = v
 			}
 
-			correlationId := urlParams.Get("correlation_id")
+			correlationId := c.GetCorrelationId(req)
 			args := crun.NewParametersFromValue(params)
 			timing := c.Instrument(correlationId, c.BaseRoute+"."+command.Name())
 

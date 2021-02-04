@@ -316,6 +316,19 @@ func (c *HttpEndpoint) fixRoute(route string) string {
 	return route
 }
 
+// GetCorrelationId method returns CorrelationId from request
+// Parameters:
+//   req *http.Request  request
+// Returns: string
+// retrun correlation_id or empty string
+func (c *HttpEndpoint) GetCorrelationId(req *http.Request) string {
+	correlationId := req.URL.Query().Get("correlation_id")
+	if correlationId == "" {
+		correlationId = req.Header.Get("correlation_id")
+	}
+	return correlationId
+}
+
 // RegisterRoute method are registers an action in this objects REST server (service) by the given method and route.
 //   - method   string     the HTTP method of the route.
 //   - route    string     the route to register in this object"s REST server (service).
@@ -354,7 +367,7 @@ func (c *HttpEndpoint) RegisterRoute(method string, route string, schema *cvalid
 			json.Unmarshal(bodyBuf, &body)
 			params["body"] = body
 
-			correlationId := r.URL.Query().Get("correlation_id")
+			correlationId := c.GetCorrelationId(r)
 			err := schema.ValidateAndReturnError(correlationId, params, false)
 			if err != nil {
 				HttpResponseSender.SendError(w, r, err)

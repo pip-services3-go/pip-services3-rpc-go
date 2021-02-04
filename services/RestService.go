@@ -491,6 +491,19 @@ func (c *RestService) GetFilterParams(req *http.Request) *cdata.FilterParams {
 	return cdata.NewFilterParamsFromValue(params)
 }
 
+// GetCorrelationId method returns CorrelationId from request
+// Parameters:
+//   req *http.Request  request
+// Returns: string
+// retrun correlation_id or empty string
+func (c *RestService) GetCorrelationId(req *http.Request) string {
+	correlationId := req.URL.Query().Get("correlation_id")
+	if correlationId == "" {
+		correlationId = req.Header.Get("correlation_id")
+	}
+	return correlationId
+}
+
 func (c *RestService) RegisterOpenApiSpecFromFile(path string) {
 
 	content, err := ioutil.ReadFile(path)

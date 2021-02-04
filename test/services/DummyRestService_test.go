@@ -138,6 +138,33 @@ func TestDummyRestService(t *testing.T) {
 	assert.NotNil(t, dummies)
 	assert.Len(t, dummies.Data, 0)
 
+	// Testing transmit correlationId
+	getResponse, getErr = http.Get(url + "/dummies/check/correlation_id?correlation_id=test_cor_id")
+	assert.Nil(t, getErr)
+	resBody, bodyErr = ioutil.ReadAll(getResponse.Body)
+	assert.Nil(t, bodyErr)
+	getResponse.Body.Close()
+	values := make(map[string]string, 0)
+	jsonErr = json.Unmarshal(resBody, &values)
+	assert.Nil(t, jsonErr)
+	assert.NotNil(t, values)
+	assert.Equal(t, values["correlationId"], "test_cor_id")
+
+	req, reqErr := http.NewRequest("GET", url+"/dummies/check/correlation_id", bytes.NewBuffer(make([]byte, 0, 0)))
+	assert.Nil(t, reqErr)
+	req.Header.Set("correlation_id", "test_cor_id")
+	localClient := http.Client{}
+	getResponse, getErr = localClient.Do(req)
+	assert.Nil(t, getErr)
+	resBody, bodyErr = ioutil.ReadAll(getResponse.Body)
+	assert.Nil(t, bodyErr)
+	getResponse.Body.Close()
+	values = make(map[string]string, 0)
+	jsonErr = json.Unmarshal(resBody, &values)
+	assert.Nil(t, jsonErr)
+	assert.NotNil(t, values)
+	assert.Equal(t, values["correlationId"], "test_cor_id")
+
 	// Get OpenApi Spec From String
 	// -----------------------------------------------------------------
 	getResponse, getErr = http.Get(url + "/swagger")
