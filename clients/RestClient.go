@@ -140,7 +140,7 @@ func (c *RestClient) Configure(config *cconf.ConfigParams) {
 	c.ConnectTimeout = config.GetAsIntegerWithDefault("options.connectTimeout", c.ConnectTimeout)
 	c.Timeout = config.GetAsIntegerWithDefault("options.timeout", c.Timeout)
 	c.BaseRoute = config.GetAsStringWithDefault("base_route", c.BaseRoute)
-	c.correlationIdPlace = config.GetAsStringWithDefault("correlation_id_place", c.correlationIdPlace)
+	c.correlationIdPlace = config.GetAsStringWithDefault("options.correlation_id_place", c.correlationIdPlace)
 }
 
 // Sets references to dependent components.
