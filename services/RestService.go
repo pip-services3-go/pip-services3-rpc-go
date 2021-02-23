@@ -130,6 +130,7 @@ type RestService struct {
 	//The performance counters.
 	Counters *ccount.CompositeCounters
 
+	SwaggerService ISwaggerService
 	SwaggerEnable bool
 	SwaggerRoute  string
 }
@@ -140,6 +141,7 @@ func NewRestService() *RestService {
 	rs.defaultConfig = cconf.NewConfigParamsFromTuples(
 		"base_route", "",
 		"dependencies.endpoint", "*:endpoint:http:*:1.0",
+        "dependencies.swagger", "*:swagger-service:*:*:1.0"
 	)
 	rs.DependencyResolver = crefer.NewDependencyResolver()
 	rs.DependencyResolver.Configure(rs.defaultConfig)
@@ -187,6 +189,11 @@ func (c *RestService) SetReferences(references crefer.IReferences) {
 	}
 	// Add registration callback to the endpoint
 	c.Endpoint.Register(c)
+
+	depRes = c.DependencyResolver.GetOneOptional("swagger")
+	if depRes != nil {
+		c.SwaggerService = depRes.(ISwaggerService)		
+	}
 }
 
 // UnsetReferences method are unsets (clears) previously set references to dependent components.
@@ -196,6 +203,7 @@ func (c *RestService) UnsetReferences() {
 		c.Endpoint.Unregister(c)
 		c.Endpoint = nil
 	}
+	c.SwaggerService = nil
 }
 
 func (c *RestService) createEndpoint() *HttpEndpoint {
@@ -505,7 +513,6 @@ func (c *RestService) GetCorrelationId(req *http.Request) string {
 }
 
 func (c *RestService) RegisterOpenApiSpecFromFile(path string) {
-
 	content, err := ioutil.ReadFile(path)
 	if err != nil {
 		c.Logger.Error("RestService", err, "Can't read swagger file by path %s", path)
@@ -517,11 +524,14 @@ func (c *RestService) RegisterOpenApiSpecFromFile(path string) {
 func (c *RestService) RegisterOpenApiSpec(content string) {
 	if c.SwaggerEnable {
 		c.RegisterRoute("get", c.SwaggerRoute, nil, func(res http.ResponseWriter, req *http.Request) {
-
 			res.Header().Add("Content-Length", cconv.StringConverter.ToString(len(content)))
 			res.Header().Add("Content-Type", "application/x-yaml")
+			res.WriteHeader(200)
 			io.WriteString(res, content)
-
 		})
+
+		if c.SwaggerService != nil {
+			c.SwaggerService.RegisterOpenApiSpec(c.BaseRoute, c.SwaggerRoute)
+		}
 	}
 }

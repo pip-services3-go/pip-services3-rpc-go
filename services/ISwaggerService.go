@@ -4,5 +4,5 @@ package services
 type ISwaggerService interface {
 
 	//  Perform required Swagger registration steps.
-	RegisterOpenApiSpec(baseRoute string, content string)
+	RegisterOpenApiSpec(baseRoute string, swaggerRoute string)
 }

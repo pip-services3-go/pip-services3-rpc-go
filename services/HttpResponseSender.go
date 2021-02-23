@@ -25,6 +25,7 @@ type THttpResponseSender struct {
 func (c *THttpResponseSender) SendError(res http.ResponseWriter, req *http.Request, err error) {
 
 	appErr := cerr.ApplicationError{}
+	res.Header().Add("Content-Type", "application/json")
 	res.WriteHeader(500)
 	jsonObj, jsonErr := json.Marshal(appErr.Wrap(err))
 	if jsonErr == nil {
@@ -49,8 +50,10 @@ func (c *THttpResponseSender) SendResult(res http.ResponseWriter, req *http.Requ
 		return
 	}
 	if result == nil {
+		res.Header().Add("Content-Type", "application/json")
 		res.WriteHeader(204)
 	} else {
+		res.Header().Add("Content-Type", "application/json")
 		jsonObj, jsonErr := json.Marshal(result)
 		if jsonErr == nil {
 			io.WriteString(res, (string)(jsonObj))
@@ -67,6 +70,7 @@ func (c *THttpResponseSender) SendEmptyResult(res http.ResponseWriter, req *http
 		HttpResponseSender.SendError(res, req, err)
 		return
 	}
+	res.Header().Add("Content-Type", "application/json")
 	res.WriteHeader(204)
 }
 
@@ -85,8 +89,10 @@ func (c *THttpResponseSender) SendCreatedResult(res http.ResponseWriter, req *ht
 		return
 	}
 	if result == nil {
+		res.Header().Add("Content-Type", "application/json")
 		res.WriteHeader(204)
 	} else {
+		res.Header().Add("Content-Type", "application/json")
 		res.WriteHeader(201)
 		jsonObj, jsonErr := json.Marshal(result)
 		if jsonErr == nil {
@@ -110,8 +116,10 @@ func (c *THttpResponseSender) SendDeletedResult(res http.ResponseWriter, req *ht
 		return
 	}
 	if result == nil {
+		res.Header().Add("Content-Type", "application/json")
 		res.WriteHeader(204)
 	} else {
+		res.Header().Add("Content-Type", "application/json")
 		res.WriteHeader(200)
 		jsonObj, jsonErr := json.Marshal(result)
 		if jsonErr == nil {
