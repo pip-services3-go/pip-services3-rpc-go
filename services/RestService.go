@@ -131,8 +131,8 @@ type RestService struct {
 	Counters *ccount.CompositeCounters
 
 	SwaggerService ISwaggerService
-	SwaggerEnable bool
-	SwaggerRoute  string
+	SwaggerEnable  bool
+	SwaggerRoute   string
 }
 
 // NewRestService is create new instance of RestService
@@ -141,7 +141,7 @@ func NewRestService() *RestService {
 	rs.defaultConfig = cconf.NewConfigParamsFromTuples(
 		"base_route", "",
 		"dependencies.endpoint", "*:endpoint:http:*:1.0",
-        "dependencies.swagger", "*:swagger-service:*:*:1.0"
+		"dependencies.swagger", "*:swagger-service:*:*:1.0",
 	)
 	rs.DependencyResolver = crefer.NewDependencyResolver()
 	rs.DependencyResolver.Configure(rs.defaultConfig)
@@ -192,7 +192,7 @@ func (c *RestService) SetReferences(references crefer.IReferences) {
 
 	depRes = c.DependencyResolver.GetOneOptional("swagger")
 	if depRes != nil {
-		c.SwaggerService = depRes.(ISwaggerService)		
+		c.SwaggerService = depRes.(ISwaggerService)
 	}
 }
 
