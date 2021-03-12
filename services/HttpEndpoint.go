@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	cconf "github.com/pip-services3-go/pip-services3-commons-go/config"
 	crefer "github.com/pip-services3-go/pip-services3-commons-go/refer"
@@ -156,12 +157,28 @@ func (c *HttpEndpoint) Open(correlationId string) error {
 	c.server = &http.Server{Addr: url}
 	c.router = mux.NewRouter()
 
-	c.router.Use(c.addCors)
-	c.router.Use(c.addCompatibility)
+	// possible fix:
+	allowedOrigins := handlers.AllowedOrigins([]string{"*"})
+	allowedMethods := handlers.AllowedMethods([]string{
+		"POST",
+		"GET",
+		"OPTIONS",
+		"PUT",
+		"DELETE",
+		"PATCH",
+	})
+	allowedHeaders := handlers.AllowedHeaders([]string{
+		"Accept",
+		"Content-Type",
+		"Content-Length",
+		"Accept-Encoding",
+		"X-CSRF-Token",
+		"Authorization",
+	})
+	c.server.Handler = handlers.CORS(allowedOrigins, allowedMethods, allowedHeaders)(c.router)
+
 	c.router.Use(c.noCache)
 	c.router.Use(c.doMaintenance)
-
-	c.server.Handler = c.router
 
 	c.performRegistrations()
 
@@ -191,42 +208,6 @@ func (c *HttpEndpoint) Open(correlationId string) error {
 	}
 	c.logger.Debug(correlationId, "Opened REST service at %s", c.uri)
 	return regErr
-}
-
-func (c *HttpEndpoint) addCors(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
-		w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
-		next.ServeHTTP(w, r)
-	})
-}
-
-func (c *HttpEndpoint) addCompatibility(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
-		//TODO: Write code
-
-		// req.param = (name) => {
-		//     if (req.query) {
-		//         let param = req.query[name];
-		//         if (param) return param;
-		//     }
-		//     if (req.body) {
-		//         let param = req.body[name];
-		//         if (param) return param;
-		//     }
-		//     if (req.params) {
-		//         let param = req.params[name];
-		//         if (param) return param;
-		//     }
-		//     return nil;
-
-		// }
-		// req.route.params = req.params;
-
-		next.ServeHTTP(w, r)
-	})
 }
 
 // Prevents IE from caching REST requests
