@@ -174,6 +174,8 @@ func (c *HttpEndpoint) Open(correlationId string) error {
 		"Accept-Encoding",
 		"X-CSRF-Token",
 		"Authorization",
+		"correlation_id",
+		"access_token",
 	})
 	c.server.Handler = handlers.CORS(allowedOrigins, allowedMethods, allowedHeaders)(c.router)
 
