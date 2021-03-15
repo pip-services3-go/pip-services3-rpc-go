@@ -1,6 +1,12 @@
 # <img src="https://uploads-ssl.webflow.com/5ea5d3315186cf5ec60c3ee4/5edf1c94ce4c859f2b188094_logo.svg" alt="Pip.Services Logo" width="200"> <br/> Remote Procedure Calls Golang Changelog
 
-## <a name="3.1.0"></a> 3.1.0 (2021-02-21)
+## <a name="1.1.3"></a> 1.1.3 (2021-03-15)
+
+### Features
+* **services**
+Add **correlation_id** and **access_token** to CORS headers
+
+## <a name="1.1.0"></a> 1.1.0 (2021-02-21)
 
 ### Features
 * **services** Added integration with Swagger UI
