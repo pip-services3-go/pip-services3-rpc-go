@@ -25,12 +25,11 @@ type DummyRestService struct {
 }
 
 func NewDummyRestService() *DummyRestService {
-	c := DummyRestService{}
-	c.RestService = services.NewRestService()
-	c.RestService.IRegisterable = &c
+	c := &DummyRestService{}
+	c.RestService = services.InheritRestService(c)
 	c.numberOfCalls = 0
 	c.DependencyResolver.Put("controller", crefer.NewDescriptor("pip-services-dummies", "controller", "default", "*", "*"))
-	return &c
+	return c
 }
 
 func (c *DummyRestService) Configure(config *cconf.ConfigParams) {

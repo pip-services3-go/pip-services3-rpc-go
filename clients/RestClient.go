@@ -99,7 +99,7 @@ type RestClient struct {
 	//The remote service uri which is calculated on open.
 	Uri string
 	// add correlation id to headers
-	correlationIdPlace string
+	passCorrelationId string
 }
 
 // NewRestClient creates new instance of RestClient
@@ -116,7 +116,7 @@ func NewRestClient() *RestClient {
 		"options.timeout", 10000,
 		"options.retries", 3,
 		"options.debug", true,
-		"options.correlation_id_place", "query",
+		"options.correlation_id", "query",
 	)
 	rc.ConnectionResolver = *rpccon.NewHttpConnectionResolver()
 	rc.Logger = *clog.NewCompositeLogger()
@@ -125,7 +125,7 @@ func NewRestClient() *RestClient {
 	rc.Retries = 1
 	rc.Headers = *cdata.NewEmptyStringValueMap()
 	rc.ConnectTimeout = 10000
-	rc.correlationIdPlace = "query"
+	rc.passCorrelationId = "query"
 	return &rc
 }
 
@@ -140,7 +140,7 @@ func (c *RestClient) Configure(config *cconf.ConfigParams) {
 	c.ConnectTimeout = config.GetAsIntegerWithDefault("options.connectTimeout", c.ConnectTimeout)
 	c.Timeout = config.GetAsIntegerWithDefault("options.timeout", c.Timeout)
 	c.BaseRoute = config.GetAsStringWithDefault("base_route", c.BaseRoute)
-	c.correlationIdPlace = config.GetAsStringWithDefault("options.correlation_id_place", c.correlationIdPlace)
+	c.passCorrelationId = config.GetAsStringWithDefault("options.correlation_id", c.passCorrelationId)
 }
 
 // Sets references to dependent components.
@@ -323,7 +323,7 @@ func (c *RestClient) Call(prototype reflect.Type, method string, route string, c
 		params = cdata.NewEmptyStringValueMap()
 	}
 	route = c.createRequestRoute(route)
-	if c.correlationIdPlace == "query" || c.correlationIdPlace == "both" {
+	if c.passCorrelationId == "query" || c.passCorrelationId == "both" {
 		params = c.AddCorrelationId(params, correlationId)
 	}
 	if params.Len() > 0 {
@@ -355,7 +355,7 @@ func (c *RestClient) Call(prototype reflect.Type, method string, route string, c
 	}
 	// Set headers
 	req.Header.Set("Content-Type", "application/json")
-	if c.correlationIdPlace == "headers" || c.correlationIdPlace == "both" {
+	if c.passCorrelationId == "headers" || c.passCorrelationId == "both" {
 		req.Header.Set("correlation_id", correlationId)
 	}
 	//req.Header.Set("User-Agent", c.UserAgent)
