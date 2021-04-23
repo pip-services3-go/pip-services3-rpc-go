@@ -9,7 +9,8 @@ import (
 	cconf "github.com/pip-services3-go/pip-services3-commons-go/config"
 	crefer "github.com/pip-services3-go/pip-services3-commons-go/refer"
 	"github.com/pip-services3-go/pip-services3-rpc-go/services"
-	testrpc "github.com/pip-services3-go/pip-services3-rpc-go/test"
+	tdata "github.com/pip-services3-go/pip-services3-rpc-go/test/data"
+	tlogic "github.com/pip-services3-go/pip-services3-rpc-go/test/logic"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -24,7 +25,7 @@ func TestHttpEndpoint(t *testing.T) {
 	var endpoint *services.HttpEndpoint
 	var service *DummyRestService
 
-	ctrl := testrpc.NewDummyController()
+	ctrl := tlogic.NewDummyController()
 	service = NewDummyRestService()
 	service.Configure(cconf.NewConfigParamsFromTuples(
 		"base_route",
@@ -61,7 +62,7 @@ func TestHttpEndpoint(t *testing.T) {
 	assert.Nil(t, getErr)
 	resBody, bodyErr := ioutil.ReadAll(getResponse.Body)
 	assert.Nil(t, bodyErr)
-	var dummies testrpc.DummyDataPage
+	var dummies tdata.DummyDataPage
 	jsonErr := json.Unmarshal(resBody, &dummies)
 	assert.Nil(t, jsonErr)
 	assert.NotNil(t, dummies)

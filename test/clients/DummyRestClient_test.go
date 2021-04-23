@@ -5,7 +5,7 @@ import (
 
 	cconf "github.com/pip-services3-go/pip-services3-commons-go/config"
 	cref "github.com/pip-services3-go/pip-services3-commons-go/refer"
-	testrpc "github.com/pip-services3-go/pip-services3-rpc-go/test"
+	tlogic "github.com/pip-services3-go/pip-services3-rpc-go/test/logic"
 	testservices "github.com/pip-services3-go/pip-services3-rpc-go/test/services"
 )
 
@@ -23,7 +23,7 @@ func TestDummyRestClient(t *testing.T) {
 
 	var fixture *DummyClientFixture
 
-	ctrl := testrpc.NewDummyController()
+	ctrl := tlogic.NewDummyController()
 
 	service = testservices.NewDummyRestService()
 	service.Configure(restConfig)

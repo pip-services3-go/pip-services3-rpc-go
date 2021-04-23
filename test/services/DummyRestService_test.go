@@ -11,7 +11,8 @@ import (
 	cconf "github.com/pip-services3-go/pip-services3-commons-go/config"
 	cdata "github.com/pip-services3-go/pip-services3-commons-go/data"
 	cref "github.com/pip-services3-go/pip-services3-commons-go/refer"
-	testrpc "github.com/pip-services3-go/pip-services3-rpc-go/test"
+	tdata "github.com/pip-services3-go/pip-services3-rpc-go/test/data"
+	tlogic "github.com/pip-services3-go/pip-services3-rpc-go/test/logic"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -24,10 +25,10 @@ func TestDummyRestService(t *testing.T) {
 		"swagger.enable", "true",
 	)
 
-	var _dummy1 testrpc.Dummy
-	var _dummy2 testrpc.Dummy
+	var _dummy1 tdata.Dummy
+	var _dummy2 tdata.Dummy
 	var service *DummyRestService
-	ctrl := testrpc.NewDummyController()
+	ctrl := tlogic.NewDummyController()
 
 	service = NewDummyRestService()
 	service.Configure(restConfig)
@@ -43,10 +44,10 @@ func TestDummyRestService(t *testing.T) {
 
 	url := "http://localhost:3000"
 
-	_dummy1 = testrpc.Dummy{Id: "", Key: "Key 1", Content: "Content 1"}
-	_dummy2 = testrpc.Dummy{Id: "", Key: "Key 2", Content: "Content 2"}
+	_dummy1 = tdata.Dummy{Id: "", Key: "Key 1", Content: "Content 1"}
+	_dummy2 = tdata.Dummy{Id: "", Key: "Key 2", Content: "Content 2"}
 
-	var dummy1 testrpc.Dummy
+	var dummy1 tdata.Dummy
 
 	// Create one dummy
 	jsonBody, _ := json.Marshal(_dummy1)
@@ -57,7 +58,7 @@ func TestDummyRestService(t *testing.T) {
 	resBody, bodyErr := ioutil.ReadAll(postResponse.Body)
 	assert.Nil(t, bodyErr)
 	postResponse.Body.Close()
-	var dummy testrpc.Dummy
+	var dummy tdata.Dummy
 	jsonErr := json.Unmarshal(resBody, &dummy)
 
 	assert.Nil(t, jsonErr)
@@ -92,7 +93,7 @@ func TestDummyRestService(t *testing.T) {
 	assert.Nil(t, bodyErr)
 	getResponse.Body.Close()
 
-	var dummies testrpc.DummyDataPage
+	var dummies tdata.DummyDataPage
 	jsonErr = json.Unmarshal(resBody, &dummies)
 	assert.Nil(t, jsonErr)
 	assert.NotNil(t, dummies)

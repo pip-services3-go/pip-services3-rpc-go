@@ -48,7 +48,7 @@ See CommandableHttpService
 		*RestClient
 	}
     ...
-    func (c *MyRestClient) GetData(correlationId string, id string) (result *testrpc.MyDataPage, err error) {
+    func (c *MyRestClient) GetData(correlationId string, id string) (result *tdata.MyDataPage, err error) {
 
 		params := cdata.NewEmptyStringValueMap()
 		params.Set("id", id)
@@ -58,7 +58,7 @@ See CommandableHttpService
 			return nil, calErr
 		}
 
-		result, _ = calValue.(*testrpc.MyDataPage)
+		result, _ = calValue.(*tdata.MyDataPage)
 		c.Instrument(correlationId, "myData.get_page_by_filter")
 		return result, nil
 	}
@@ -158,7 +158,7 @@ func (c *RestClient) SetReferences(references crefer.IReferences) {
 // - correlationId  string   (optional) transaction id to trace execution through call chain.
 // - name    string          a method name.
 // Return Timing object to end the time measurement.
-func (c *RestClient) Instrument(correlationId string, name string) *ccount.Timing {
+func (c *RestClient) Instrument(correlationId string, name string) *ccount.CounterTiming {
 	c.Logger.Trace(correlationId, "Calling %s method", name)
 	c.Counters.IncrementOne(name + ".call_count")
 	return c.Counters.BeginTiming(name + ".call_time")

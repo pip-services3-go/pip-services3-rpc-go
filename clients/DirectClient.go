@@ -40,7 +40,7 @@ Example:
 
 		func (c *MyDirectClient) SetReferences(references cref.IReferences) {
 			c.DirectClient.SetReferences(references)
-			specificController, ok := c.Controller.(testrpc.IMyDataController)
+			specificController, ok := c.Controller.(tdata.IMyDataController)
 			if !ok {
 				panic("MyDirectClient: Cant't resolv dependency 'controller' to IMyDataController")
 			}
@@ -115,7 +115,7 @@ func (c *DirectClient) SetReferences(references crefer.IReferences) {
 //    - correlationId  string    (optional) transaction id to trace execution through call chain.
 //    - name   string           a method name.
 // Returns Timing object to end the time measurement.
-func (c *DirectClient) Instrument(correlationId string, name string) *ccount.Timing {
+func (c *DirectClient) Instrument(correlationId string, name string) *ccount.CounterTiming {
 	c.Logger.Trace(correlationId, "Calling %s method", name)
 	c.Counters.IncrementOne(name + ".call_count")
 	return c.Counters.BeginTiming(name + ".call_time")
