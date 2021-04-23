@@ -1,4 +1,4 @@
-package test_rpc_services
+package test_services
 
 import (
 	"encoding/json"
@@ -13,12 +13,13 @@ import (
 	crefer "github.com/pip-services3-go/pip-services3-commons-go/refer"
 	cvalid "github.com/pip-services3-go/pip-services3-commons-go/validate"
 	"github.com/pip-services3-go/pip-services3-rpc-go/services"
-	testrpc "github.com/pip-services3-go/pip-services3-rpc-go/test"
+	tdata "github.com/pip-services3-go/pip-services3-rpc-go/test/data"
+	tlogic "github.com/pip-services3-go/pip-services3-rpc-go/test/logic"
 )
 
 type DummyRestService struct {
 	*services.RestService
-	controller     testrpc.IDummyController
+	controller     tlogic.IDummyController
 	numberOfCalls  int
 	openApiContent string
 	openApiFile    string
@@ -42,7 +43,7 @@ func (c *DummyRestService) SetReferences(references crefer.IReferences) {
 	c.RestService.SetReferences(references)
 	depRes, depErr := c.DependencyResolver.GetOneRequired("controller")
 	if depErr == nil && depRes != nil {
-		c.controller = depRes.(testrpc.IDummyController)
+		c.controller = depRes.(tlogic.IDummyController)
 	}
 }
 
@@ -91,7 +92,7 @@ func (c *DummyRestService) getOneById(res http.ResponseWriter, req *http.Request
 
 func (c *DummyRestService) create(res http.ResponseWriter, req *http.Request) {
 	correlationId := c.GetCorrelationId(req)
-	var dummy testrpc.Dummy
+	var dummy tdata.Dummy
 
 	body, bodyErr := ioutil.ReadAll(req.Body)
 	if bodyErr != nil {
@@ -118,7 +119,7 @@ func (c *DummyRestService) create(res http.ResponseWriter, req *http.Request) {
 func (c *DummyRestService) update(res http.ResponseWriter, req *http.Request) {
 	correlationId := c.GetCorrelationId(req)
 
-	var dummy testrpc.Dummy
+	var dummy tdata.Dummy
 
 	body, bodyErr := ioutil.ReadAll(req.Body)
 	if bodyErr != nil {
@@ -190,14 +191,14 @@ func (c *DummyRestService) Register() {
 	c.RegisterRoute(
 		"post", "/dummies",
 		&cvalid.NewObjectSchema().
-			WithRequiredProperty("body", testrpc.NewDummySchema()).Schema,
+			WithRequiredProperty("body", tdata.NewDummySchema()).Schema,
 		c.create,
 	)
 
 	c.RegisterRoute(
 		"put", "/dummies",
 		&cvalid.NewObjectSchema().
-			WithRequiredProperty("body", testrpc.NewDummySchema()).Schema,
+			WithRequiredProperty("body", tdata.NewDummySchema()).Schema,
 		c.update,
 	)
 

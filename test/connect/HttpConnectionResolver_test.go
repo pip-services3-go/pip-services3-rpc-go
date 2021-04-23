@@ -1,4 +1,4 @@
-package test_connect_rpc
+package test_connect
 
 import (
 	"testing"

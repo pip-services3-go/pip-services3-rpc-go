@@ -1,4 +1,4 @@
-package test_rpc_services
+package test_services
 
 import (
 	cref "github.com/pip-services3-go/pip-services3-commons-go/refer"

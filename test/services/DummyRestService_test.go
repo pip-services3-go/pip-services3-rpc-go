@@ -1,4 +1,4 @@
-package test_rpc_services
+package test_services
 
 import (
 	"bytes"

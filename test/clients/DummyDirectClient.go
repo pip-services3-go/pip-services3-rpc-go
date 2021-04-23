@@ -1,15 +1,16 @@
-package test_rpc_clients
+package test_clients
 
 import (
 	cdata "github.com/pip-services3-go/pip-services3-commons-go/data"
 	cref "github.com/pip-services3-go/pip-services3-commons-go/refer"
 	"github.com/pip-services3-go/pip-services3-rpc-go/clients"
-	testrpc "github.com/pip-services3-go/pip-services3-rpc-go/test"
+	tdata "github.com/pip-services3-go/pip-services3-rpc-go/test/data"
+	tlogic "github.com/pip-services3-go/pip-services3-rpc-go/test/logic"
 )
 
 type DummyDirectClient struct {
 	clients.DirectClient
-	specificController testrpc.IDummyController
+	specificController tlogic.IDummyController
 }
 
 func NewDummyDirectClient() *DummyDirectClient {
@@ -22,7 +23,7 @@ func NewDummyDirectClient() *DummyDirectClient {
 func (c *DummyDirectClient) SetReferences(references cref.IReferences) {
 	c.DirectClient.SetReferences(references)
 
-	specificController, ok := c.Controller.(testrpc.IDummyController)
+	specificController, ok := c.Controller.(tlogic.IDummyController)
 	if !ok {
 		panic("DummyDirectClient: Cant't resolv dependency 'controller' to IDummyController")
 	}
@@ -30,7 +31,7 @@ func (c *DummyDirectClient) SetReferences(references cref.IReferences) {
 
 }
 
-func (c *DummyDirectClient) GetDummies(correlationId string, filter *cdata.FilterParams, paging *cdata.PagingParams) (result *testrpc.DummyDataPage, err error) {
+func (c *DummyDirectClient) GetDummies(correlationId string, filter *cdata.FilterParams, paging *cdata.PagingParams) (result *tdata.DummyDataPage, err error) {
 
 	timing := c.Instrument(correlationId, "dummy.get_page_by_filter")
 	result, err = c.specificController.GetPageByFilter(correlationId, filter, paging)
@@ -39,7 +40,7 @@ func (c *DummyDirectClient) GetDummies(correlationId string, filter *cdata.Filte
 
 }
 
-func (c *DummyDirectClient) GetDummyById(correlationId string, dummyId string) (result *testrpc.Dummy, err error) {
+func (c *DummyDirectClient) GetDummyById(correlationId string, dummyId string) (result *tdata.Dummy, err error) {
 
 	timing := c.Instrument(correlationId, "dummy.get_one_by_id")
 	result, err = c.specificController.GetOneById(correlationId, dummyId)
@@ -47,7 +48,7 @@ func (c *DummyDirectClient) GetDummyById(correlationId string, dummyId string) (
 	return result, err
 }
 
-func (c *DummyDirectClient) CreateDummy(correlationId string, dummy testrpc.Dummy) (result *testrpc.Dummy, err error) {
+func (c *DummyDirectClient) CreateDummy(correlationId string, dummy tdata.Dummy) (result *tdata.Dummy, err error) {
 
 	timing := c.Instrument(correlationId, "dummy.create")
 	result, err = c.specificController.Create(correlationId, dummy)
@@ -55,7 +56,7 @@ func (c *DummyDirectClient) CreateDummy(correlationId string, dummy testrpc.Dumm
 	return result, err
 }
 
-func (c *DummyDirectClient) UpdateDummy(correlationId string, dummy testrpc.Dummy) (result *testrpc.Dummy, err error) {
+func (c *DummyDirectClient) UpdateDummy(correlationId string, dummy tdata.Dummy) (result *tdata.Dummy, err error) {
 
 	timing := c.Instrument(correlationId, "dummy.update")
 	result, err = c.specificController.Update(correlationId, dummy)
@@ -63,7 +64,7 @@ func (c *DummyDirectClient) UpdateDummy(correlationId string, dummy testrpc.Dumm
 	return result, err
 }
 
-func (c *DummyDirectClient) DeleteDummy(correlationId string, dummyId string) (result *testrpc.Dummy, err error) {
+func (c *DummyDirectClient) DeleteDummy(correlationId string, dummyId string) (result *tdata.Dummy, err error) {
 
 	timing := c.Instrument(correlationId, "dummy.delete_by_id")
 	result, err = c.specificController.DeleteById(correlationId, dummyId)
