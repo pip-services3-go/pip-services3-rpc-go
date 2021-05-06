@@ -64,4 +64,8 @@ func (c *DummyClientFixture) TestCrudOperations(t *testing.T) {
 	values, err := c.client.CheckCorrelationId("test_cor_id")
 	assert.Nil(t, err)
 	assert.Equal(t, values["correlationId"], "test_cor_id")
+
+	values, err = c.client.CheckCorrelationId("test cor id")
+	assert.Nil(t, err)
+	assert.Equal(t, values["correlationId"], "test cor id")
 }
