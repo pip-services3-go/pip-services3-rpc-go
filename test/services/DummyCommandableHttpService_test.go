@@ -9,45 +9,16 @@ import (
 	"strings"
 	"testing"
 
-	cconf "github.com/pip-services3-go/pip-services3-commons-go/config"
-	cref "github.com/pip-services3-go/pip-services3-commons-go/refer"
 	tdata "github.com/pip-services3-go/pip-services3-rpc-go/test/data"
-	tlogic "github.com/pip-services3-go/pip-services3-rpc-go/test/logic"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestDummyCommandableHttpService(t *testing.T) {
 
-	restConfig := cconf.NewConfigParamsFromTuples(
-		"connection.protocol", "http",
-		"connection.host", "localhost",
-		"connection.port", "3000",
-		"swagger.enable", "true",
-	)
-	var _dummy1 tdata.Dummy
-	var _dummy2 tdata.Dummy
+	url := fmt.Sprintf("http://localhost:%d", DummyCommandableHttpServicePort)
 
-	var service *DummyCommandableHttpService
-
-	ctrl := tlogic.NewDummyController()
-
-	service = NewDummyCommandableHttpService()
-
-	service.Configure(restConfig)
-
-	references := cref.NewReferencesFromTuples(
-		cref.NewDescriptor("pip-services-dummies", "controller", "default", "default", "1.0"), ctrl,
-		cref.NewDescriptor("pip-services-dummies", "service", "http", "default", "1.0"), service,
-	)
-	service.SetReferences(references)
-
-	service.Open("")
-	defer service.Close("")
-
-	url := "http://localhost:3000"
-
-	_dummy1 = tdata.Dummy{Id: "", Key: "Key 1", Content: "Content 1"}
-	_dummy2 = tdata.Dummy{Id: "", Key: "Key 2", Content: "Content 2"}
+	_dummy1 := tdata.Dummy{Id: "", Key: "Key 1", Content: "Content 1"}
+	_dummy2 := tdata.Dummy{Id: "", Key: "Key 2", Content: "Content 2"}
 
 	// Create one dummy
 
@@ -193,20 +164,10 @@ func TestDummyCommandableHttpService(t *testing.T) {
 
 	// Get OpenApi Spec From File
 	// -----------------------------------------------------------------
-	var openApiContent = "swagger yaml content"
-
-	err := service.Close("")
-	assert.Nil(t, err)
-	// create temp file
-
-	var config = restConfig.SetDefaults(cconf.NewConfigParamsFromTuples("swagger.auto", false))
-
-	service.Configure(config)
-	service.Open("")
-
+	url = fmt.Sprintf("http://localhost:%d", DummyCommandableSwaggerHttpServicePort)
 	getResponse, getErr = http.Get(url + "/dummies/swagger")
 	assert.Nil(t, getErr)
 	resBody, bodyErr = ioutil.ReadAll(getResponse.Body)
 	assert.Nil(t, bodyErr)
-	assert.Equal(t, openApiContent, (string)(resBody))
+	assert.Equal(t, "swagger yaml content", (string)(resBody))
 }

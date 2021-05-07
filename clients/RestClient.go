@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+	neturl "net/url"
 	"reflect"
 	"strings"
 	"time"
@@ -329,7 +330,8 @@ func (c *RestClient) Call(prototype reflect.Type, method string, route string, c
 	if params.Len() > 0 {
 		route += "?"
 		for k, v := range params.Value() {
-			route += (k + "=" + v + "&")
+			//route += neturl.QueryEscape(k) + "=" + neturl.QueryEscape(v) + "&"
+			route += neturl.QueryEscape(k) + "=" + neturl.QueryEscape(v) + "&"
 		}
 		if strings.HasSuffix(route, "&") {
 			route = strings.TrimRight(route, "&")
