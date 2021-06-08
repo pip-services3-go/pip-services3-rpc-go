@@ -14,6 +14,7 @@ import (
 	crefer "github.com/pip-services3-go/pip-services3-commons-go/refer"
 	cvalid "github.com/pip-services3-go/pip-services3-commons-go/validate"
 	ccount "github.com/pip-services3-go/pip-services3-components-go/count"
+	ctrace "github.com/pip-services3-go/pip-services3-components-go/trace"
 	clog "github.com/pip-services3-go/pip-services3-components-go/log"
 )
 
@@ -134,6 +135,8 @@ type RestService struct {
 	Logger *clog.CompositeLogger
 	//The performance counters.
 	Counters *ccount.CompositeCounters
+	// The tracer.
+    Tracer *ctrace.CompositeTracer
 
 	SwaggerService ISwaggerService
 	SwaggerEnabled bool
@@ -154,6 +157,7 @@ func InheritRestService(overrides IRestServiceOverrides) *RestService {
 	rs.DependencyResolver.Configure(rs.defaultConfig)
 	rs.Logger = clog.NewCompositeLogger()
 	rs.Counters = ccount.NewCompositeCounters()
+	rs.Tracer = ctrace.NewCompositeTracer(nil)
 	rs.SwaggerEnabled = false
 	rs.SwaggerRoute = "swagger"
 	return &rs
@@ -180,6 +184,7 @@ func (c *RestService) SetReferences(references crefer.IReferences) {
 
 	c.Logger.SetReferences(references)
 	c.Counters.SetReferences(references)
+	c.Tracer.SetReferences(references)
 	c.DependencyResolver.SetReferences(references)
 
 	// Get endpoint
@@ -233,10 +238,13 @@ func (c *RestService) createEndpoint() *HttpEndpoint {
 //   - correlationId     (optional) transaction id to trace execution through call chain.
 //   - name              a method name.
 // Returns Timing object to end the time measurement.
-func (c *RestService) Instrument(correlationId string, name string) *ccount.CounterTiming {
+func (c *RestService) Instrument(correlationId string, name string) *InstrumentTiming {
 	c.Logger.Trace(correlationId, "Executing %s method", name)
 	c.Counters.IncrementOne(name + ".exec_count")
-	return c.Counters.BeginTiming(name + ".exec_time")
+	counterTiming := c.Counters.BeginTiming(name + ".exec_time")
+	traceTiming := c.Tracer.BeginTrace(correlationId, name, "")
+    return NewInstrumentTiming(correlationId, name, "exec",
+            c.Logger, c.Counters, counterTiming, traceTiming)
 }
 
 // InstrumentError method are adds instrumentation to error handling.

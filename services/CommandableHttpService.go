@@ -163,11 +163,8 @@ func (c *CommandableHttpService) Register() {
 			timing := c.Instrument(correlationId, c.BaseRoute+"."+command.Name())
 
 			execRes, execErr := command.Execute(correlationId, args)
-			timing.EndTiming()
-			instrRes, instrErr := c.InstrumentError(correlationId,
-				c.BaseRoute+"."+command.Name(),
-				execErr, execRes)
-			c.SendResult(res, req, instrRes, instrErr)
+			timing.EndTiming(execErr)
+			c.SendResult(res, req, execRes, execErr)
 
 		})
 	}

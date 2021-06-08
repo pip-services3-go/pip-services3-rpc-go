@@ -35,7 +35,7 @@ func (c *DummyDirectClient) GetDummies(correlationId string, filter *cdata.Filte
 
 	timing := c.Instrument(correlationId, "dummy.get_page_by_filter")
 	result, err = c.specificController.GetPageByFilter(correlationId, filter, paging)
-	timing.EndTiming()
+	timing.EndTiming(err)
 	return result, err
 
 }
@@ -44,7 +44,7 @@ func (c *DummyDirectClient) GetDummyById(correlationId string, dummyId string) (
 
 	timing := c.Instrument(correlationId, "dummy.get_one_by_id")
 	result, err = c.specificController.GetOneById(correlationId, dummyId)
-	timing.EndTiming()
+	timing.EndTiming(err)
 	return result, err
 }
 
@@ -52,7 +52,7 @@ func (c *DummyDirectClient) CreateDummy(correlationId string, dummy tdata.Dummy)
 
 	timing := c.Instrument(correlationId, "dummy.create")
 	result, err = c.specificController.Create(correlationId, dummy)
-	timing.EndTiming()
+	timing.EndTiming(err)
 	return result, err
 }
 
@@ -60,7 +60,7 @@ func (c *DummyDirectClient) UpdateDummy(correlationId string, dummy tdata.Dummy)
 
 	timing := c.Instrument(correlationId, "dummy.update")
 	result, err = c.specificController.Update(correlationId, dummy)
-	timing.EndTiming()
+	timing.EndTiming(err)
 	return result, err
 }
 
@@ -68,7 +68,7 @@ func (c *DummyDirectClient) DeleteDummy(correlationId string, dummyId string) (r
 
 	timing := c.Instrument(correlationId, "dummy.delete_by_id")
 	result, err = c.specificController.DeleteById(correlationId, dummyId)
-	timing.EndTiming()
+	timing.EndTiming(err)
 	return result, err
 }
 
@@ -76,6 +76,6 @@ func (c *DummyDirectClient) CheckCorrelationId(correlationId string) (result map
 
 	timing := c.Instrument(correlationId, "dummy.delete_by_id")
 	result, err = c.specificController.CheckCorrelationId(correlationId)
-	timing.EndTiming()
+	timing.EndTiming(err)
 	return result, err
 }

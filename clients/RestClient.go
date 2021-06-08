@@ -15,8 +15,10 @@ import (
 	cerr "github.com/pip-services3-go/pip-services3-commons-go/errors"
 	crefer "github.com/pip-services3-go/pip-services3-commons-go/refer"
 	ccount "github.com/pip-services3-go/pip-services3-components-go/count"
+	ctrace "github.com/pip-services3-go/pip-services3-components-go/trace"
 	clog "github.com/pip-services3-go/pip-services3-components-go/log"
 	rpccon "github.com/pip-services3-go/pip-services3-rpc-go/connect"
+	service "github.com/pip-services3-go/pip-services3-rpc-go/services"
 )
 
 /*
@@ -82,9 +84,11 @@ type RestClient struct {
 	//The connection resolver.
 	ConnectionResolver rpccon.HttpConnectionResolver
 	//The logger.
-	Logger clog.CompositeLogger
+	Logger *clog.CompositeLogger
 	//The performance counters.
-	Counters ccount.CompositeCounters
+	Counters *ccount.CompositeCounters
+	// The tracer.
+    Tracer *ctrace.CompositeTracer
 	//The configuration options.
 	Options cconf.ConfigParams
 	//The base route.
@@ -120,8 +124,9 @@ func NewRestClient() *RestClient {
 		"options.correlation_id", "query",
 	)
 	rc.ConnectionResolver = *rpccon.NewHttpConnectionResolver()
-	rc.Logger = *clog.NewCompositeLogger()
-	rc.Counters = *ccount.NewCompositeCounters()
+	rc.Logger = clog.NewCompositeLogger()
+	rc.Counters = ccount.NewCompositeCounters()
+	rc.Tracer = ctrace.NewCompositeTracer(nil)
 	rc.Options = *cconf.NewEmptyConfigParams()
 	rc.Retries = 1
 	rc.Headers = *cdata.NewEmptyStringValueMap()
@@ -150,6 +155,7 @@ func (c *RestClient) Configure(config *cconf.ConfigParams) {
 func (c *RestClient) SetReferences(references crefer.IReferences) {
 	c.Logger.SetReferences(references)
 	c.Counters.SetReferences(references)
+	c.Tracer.SetReferences(references)
 	c.ConnectionResolver.SetReferences(references)
 }
 
@@ -159,10 +165,13 @@ func (c *RestClient) SetReferences(references crefer.IReferences) {
 // - correlationId  string   (optional) transaction id to trace execution through call chain.
 // - name    string          a method name.
 // Return Timing object to end the time measurement.
-func (c *RestClient) Instrument(correlationId string, name string) *ccount.CounterTiming {
+func (c *RestClient) Instrument(correlationId string, name string) *service.InstrumentTiming {
 	c.Logger.Trace(correlationId, "Calling %s method", name)
 	c.Counters.IncrementOne(name + ".call_count")
-	return c.Counters.BeginTiming(name + ".call_time")
+	counterTiming := c.Counters.BeginTiming(name + ".call_time")
+    traceTiming := c.Tracer.BeginTrace(correlationId, name, "")
+    return service.NewInstrumentTiming(correlationId, name, "call",
+            c.Logger, c.Counters, counterTiming, traceTiming)
 }
 
 // InstrumentError method are dds instrumentation to error handling.
