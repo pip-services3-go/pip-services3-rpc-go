@@ -67,7 +67,7 @@ Example:
     ...
 */
 type CommandableHttpClient struct {
-	RestClient
+	*RestClient
 }
 
 // NewCommandableHttpClient is creates a new instance of the client.
@@ -77,7 +77,7 @@ type CommandableHttpClient struct {
 // pointer on new instance
 func NewCommandableHttpClient(baseRoute string) *CommandableHttpClient {
 	c := CommandableHttpClient{}
-	c.RestClient = *NewRestClient()
+	c.RestClient = NewRestClient()
 	c.BaseRoute = baseRoute
 	return &c
 }

@@ -3,6 +3,7 @@
 ## <a name="1.3.2"></a> 1.3.3 (2021-06-08)
 ### Features
 * Update Instruments and added tracers
+* Fix loggers
 ## <a name="1.3.2"></a> 1.3.2 (2021-05-06)
 ### Features
 * **test** Refactor test services running
