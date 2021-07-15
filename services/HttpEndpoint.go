@@ -39,6 +39,8 @@ Parameters to pass to the configure method for component configuration:
     - "credential.ssl_crt_file" - the SSL certificate in PEM
     - "credential.ssl_ca_file" - the certificate authorities (root cerfiticates) in PEM
 
+  - cors-headers - pair CORS headers: origin. Example: MyHeader1: \*.\*
+
 References:
 
 A logger, counters, and a connection resolver can be referenced by passing the
