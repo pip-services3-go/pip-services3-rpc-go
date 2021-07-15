@@ -2,16 +2,17 @@ package test_services
 
 import (
 	"fmt"
+	"os"
+	"path"
+	"testing"
+	"time"
+
 	cconf "github.com/pip-services3-go/pip-services3-commons-go/config"
 	cdata "github.com/pip-services3-go/pip-services3-commons-go/data"
 	cref "github.com/pip-services3-go/pip-services3-commons-go/refer"
 	cinfo "github.com/pip-services3-go/pip-services3-components-go/info"
 	"github.com/pip-services3-go/pip-services3-rpc-go/services"
 	tlogic "github.com/pip-services3-go/pip-services3-rpc-go/test/logic"
-	"os"
-	"path"
-	"testing"
-	"time"
 )
 
 const (
@@ -124,6 +125,7 @@ func BuildTestHttpEndpointService() (*DummyRestService, *services.HttpEndpoint) 
 		"connection.protocol", "http",
 		"connection.host", "localhost",
 		"connection.port", HttpEndpointServicePort,
+		"cors-headers.MyHeader", "*",
 	)
 
 	ctrl := tlogic.NewDummyController()

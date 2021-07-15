@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/forestgiant/sliceutil"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	cconf "github.com/pip-services3-go/pip-services3-commons-go/config"
@@ -67,6 +68,8 @@ type HttpEndpoint struct {
 	protocolUpgradeEnabled bool
 	uri                    string
 	registrations          []IRegisterable
+	allowedHeaders         []string
+	allowedOrigins         []string
 }
 
 // NewHttpEndpoint creates new HttpEndpoint
@@ -94,6 +97,17 @@ func NewHttpEndpoint() *HttpEndpoint {
 	c.fileMaxSize = 200 * 1024 * 1024
 	c.protocolUpgradeEnabled = false
 	c.registrations = make([]IRegisterable, 0, 0)
+	c.allowedHeaders = []string{
+		"Accept",
+		"Content-Type",
+		"Content-Length",
+		"Accept-Encoding",
+		"X-CSRF-Token",
+		"Authorization",
+		"correlation_id",
+		"access_token",
+	}
+	c.allowedOrigins = make([]string, 0)
 	return &c
 }
 
@@ -116,6 +130,18 @@ func (c *HttpEndpoint) Configure(config *cconf.ConfigParams) {
 	c.maintenanceEnabled = config.GetAsBooleanWithDefault("options.maintenance_enabled", c.maintenanceEnabled)
 	c.fileMaxSize = config.GetAsLongWithDefault("options.file_max_size", c.fileMaxSize)
 	c.protocolUpgradeEnabled = config.GetAsBooleanWithDefault("options.protocol_upgrade_enabled", c.protocolUpgradeEnabled)
+
+	corsParams := config.GetSection("cors-headers")
+	headers := corsParams.GetSectionNames()
+	if headers != nil && len(headers) > 0 {
+		// Add origins
+		for _, key := range headers {
+			origin := corsParams.GetAsString(key)
+			if len(origin) > 0 {
+				c.AddCORSHeader(key, origin)
+			}
+		}
+	}
 }
 
 // SetReferences method are sets references to this endpoint"s logger, counters, and connection resolver.
@@ -157,8 +183,11 @@ func (c *HttpEndpoint) Open(correlationId string) error {
 	c.server = &http.Server{Addr: url}
 	c.router = mux.NewRouter()
 
-	// possible fix:
-	allowedOrigins := handlers.AllowedOrigins([]string{"*"})
+	// Add default origins
+	if len(c.allowedOrigins) == 0 {
+		c.allowedOrigins = []string{"*"}
+	}
+	allowedOrigins := handlers.AllowedOrigins(c.allowedOrigins)
 	allowedMethods := handlers.AllowedMethods([]string{
 		"POST",
 		"GET",
@@ -167,16 +196,7 @@ func (c *HttpEndpoint) Open(correlationId string) error {
 		"DELETE",
 		"PATCH",
 	})
-	allowedHeaders := handlers.AllowedHeaders([]string{
-		"Accept",
-		"Content-Type",
-		"Content-Length",
-		"Accept-Encoding",
-		"X-CSRF-Token",
-		"Authorization",
-		"correlation_id",
-		"access_token",
-	})
+	allowedHeaders := handlers.AllowedHeaders(c.allowedHeaders)
 	c.server.Handler = handlers.CORS(allowedOrigins, allowedMethods, allowedHeaders)(c.router)
 
 	c.router.Use(c.noCache)
@@ -401,4 +421,16 @@ func (c *HttpEndpoint) RegisterInterceptor(route string, action func(w http.Resp
 		})
 	}
 	c.router.Use(interceptorFunc)
+}
+
+// AddCORSHeader method adds allowed header, ignore if it already exist
+// must be call before to opening endpoint
+func (c *HttpEndpoint) AddCORSHeader(header string, origin string) {
+	if !sliceutil.Contains(c.allowedHeaders, header) {
+		c.allowedHeaders = append(c.allowedHeaders, header)
+	}
+
+	if !sliceutil.Contains(c.allowedOrigins, origin) {
+		c.allowedOrigins = append(c.allowedOrigins, origin)
+	}
 }
