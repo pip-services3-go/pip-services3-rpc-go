@@ -136,7 +136,6 @@ func (c *HttpEndpoint) Configure(config *cconf.ConfigParams) {
 	corsParams := config.GetSection("cors-headers")
 	headers := corsParams.GetSectionNames()
 	if headers != nil && len(headers) > 0 {
-		// Add origins
 		for _, key := range headers {
 			origin := corsParams.GetAsString(key)
 			if len(origin) > 0 {

@@ -125,7 +125,6 @@ func BuildTestHttpEndpointService() (*DummyRestService, *services.HttpEndpoint) 
 		"connection.protocol", "http",
 		"connection.host", "localhost",
 		"connection.port", HttpEndpointServicePort,
-		"cors-headers.MyHeader", "*",
 	)
 
 	ctrl := tlogic.NewDummyController()
