@@ -140,7 +140,7 @@ func (c *HttpEndpoint) Configure(config *cconf.ConfigParams) {
 		for _, key := range headers {
 			origin := corsParams.GetAsString(key)
 			if len(origin) > 0 {
-				c.AddCORSHeader(key, origin)
+				c.AddCorsHeader(key, origin)
 			}
 		}
 	}
@@ -427,7 +427,7 @@ func (c *HttpEndpoint) RegisterInterceptor(route string, action func(w http.Resp
 
 // AddCORSHeader method adds allowed header, ignore if it already exist
 // must be call before to opening endpoint
-func (c *HttpEndpoint) AddCORSHeader(header string, origin string) {
+func (c *HttpEndpoint) AddCorsHeader(header string, origin string) {
 	if !sliceutil.Contains(c.allowedHeaders, header) {
 		c.allowedHeaders = append(c.allowedHeaders, header)
 	}
