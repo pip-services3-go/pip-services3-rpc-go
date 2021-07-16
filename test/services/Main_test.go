@@ -103,6 +103,7 @@ func BuildTestStatusRestService() *services.StatusRestService {
 		"connection.protocol", "http",
 		"connection.host", "localhost",
 		"connection.port", StatusRestServicePort,
+		"cors-headers.Accept", "*",
 	)
 
 	service := services.NewStatusRestService()
@@ -125,6 +126,7 @@ func BuildTestHttpEndpointService() (*DummyRestService, *services.HttpEndpoint) 
 		"connection.protocol", "http",
 		"connection.host", "localhost",
 		"connection.port", HttpEndpointServicePort,
+		"cors-headers.Accept", "*",
 	)
 
 	ctrl := tlogic.NewDummyController()
@@ -154,6 +156,7 @@ func BuildTestDummyRestService() *DummyRestService {
 		"connection.port", DummyRestServicePort,
 		"openapi_content", "swagger yaml or json content",
 		"swagger.enable", "true",
+		"cors-headers.Accept", "*",
 	)
 
 	var service *DummyRestService
@@ -194,6 +197,7 @@ func BuildTestDummyOpenAPIFileRestService() (*DummyRestService, string) {
 		"connection.port", DummyOpenAPIFileRestServicePort,
 		"openapi_file", filename, // for test only
 		"swagger.enable", "true",
+		"cors-headers.Accept", "*",
 	)
 
 	var service *DummyRestService
@@ -217,6 +221,7 @@ func BuildTestDummyCommandableHttpService() *DummyCommandableHttpService {
 		"connection.host", "localhost",
 		"connection.port", DummyCommandableHttpServicePort,
 		"swagger.enable", "true",
+		"cors-headers.Accept", "*",
 	)
 
 	ctrl := tlogic.NewDummyController()
@@ -241,6 +246,7 @@ func BuildTestDummyCommandableSwaggerHttpService() *DummyCommandableHttpService 
 		"connection.port", DummyCommandableSwaggerHttpServicePort,
 		"swagger.enable", "true",
 		"swagger.auto", false,
+		"cors-headers.Accept", "*",
 	)
 
 	ctrl := tlogic.NewDummyController()
@@ -262,6 +268,7 @@ func BuildTestHeartbeatRestService() *services.HeartbeatRestService {
 		"connection.protocol", "http",
 		"connection.host", "localhost",
 		"connection.port", HeartbeatRestServicePort,
+		"cors-headers.Accept", "*",
 	)
 
 	service := services.NewHeartbeatRestService()

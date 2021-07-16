@@ -10,7 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/forestgiant/sliceutil"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	cconf "github.com/pip-services3-go/pip-services3-commons-go/config"
@@ -100,14 +99,14 @@ func NewHttpEndpoint() *HttpEndpoint {
 	c.protocolUpgradeEnabled = false
 	c.registrations = make([]IRegisterable, 0, 0)
 	c.allowedHeaders = []string{
-		"Accept",
-		"Content-Type",
-		"Content-Length",
-		"Accept-Encoding",
-		"X-CSRF-Token",
-		"Authorization",
+		//"Accept",
+		//"Content-Type",
+		//"Content-Length",
+		//"Accept-Encoding",
+		//"X-CSRF-Token",
+		//"Authorization",
 		"correlation_id",
-		"access_token",
+		//"access_token",
 	}
 	c.allowedOrigins = make([]string, 0)
 	return &c
@@ -185,9 +184,10 @@ func (c *HttpEndpoint) Open(correlationId string) error {
 	c.router = mux.NewRouter()
 
 	// Add default origins
-	if len(c.allowedOrigins) == 0 {
-		c.allowedOrigins = []string{"*"}
-	}
+	// if len(c.allowedOrigins) == 0 {
+	// 	c.allowedOrigins = []string{"*"}
+	// }
+
 	allowedOrigins := handlers.AllowedOrigins(c.allowedOrigins)
 	allowedMethods := handlers.AllowedMethods([]string{
 		"POST",
@@ -427,11 +427,29 @@ func (c *HttpEndpoint) RegisterInterceptor(route string, action func(w http.Resp
 // AddCORSHeader method adds allowed header, ignore if it already exist
 // must be call before to opening endpoint
 func (c *HttpEndpoint) AddCorsHeader(header string, origin string) {
-	if !sliceutil.Contains(c.allowedHeaders, header) {
-		c.allowedHeaders = append(c.allowedHeaders, header)
-	}
 
-	if !sliceutil.Contains(c.allowedOrigins, origin) {
-		c.allowedOrigins = append(c.allowedOrigins, origin)
+	if len(header) > 0 {
+		contain := false
+		for _, allowedHeader := range c.allowedHeaders {
+			if allowedHeader == header {
+				contain = true
+				break
+			}
+		}
+		if !contain {
+			c.allowedHeaders = append(c.allowedHeaders, header)
+		}
+	}
+	if len(origin) > 0 {
+		contain := false
+		for _, allowedOrigin := range c.allowedOrigins {
+			if allowedOrigin == origin {
+				contain = true
+				break
+			}
+		}
+		if !contain {
+			c.allowedOrigins = append(c.allowedOrigins, origin)
+		}
 	}
 }
