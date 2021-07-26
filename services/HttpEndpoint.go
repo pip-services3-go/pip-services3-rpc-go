@@ -414,7 +414,7 @@ func (c *HttpEndpoint) RegisterInterceptor(route string, action func(w http.Resp
 	interceptorFunc := func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-			if route != "" && !strings.HasPrefix(r.URL.String(), route) {
+			if route != "" && r.URL.Path != route {
 				next.ServeHTTP(w, r)
 			} else {
 				action(w, r, next.ServeHTTP)
