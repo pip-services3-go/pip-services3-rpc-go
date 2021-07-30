@@ -110,7 +110,8 @@ func BuildTestStatusRestService() *services.StatusRestService {
 		"connection.protocol", "http",
 		"connection.host", "localhost",
 		"connection.port", StatusRestServicePort,
-		"cors-headerscorrelation_id", "*",
+		"cors_headers", "correlation_id, access_token, Accept, Content-Type, Content-Length, X-CSRF-Token",
+		"cors_origins", "*",
 	)
 
 	service := services.NewStatusRestService()
@@ -133,7 +134,8 @@ func BuildTestHttpEndpointService() (*DummyRestService, *services.HttpEndpoint) 
 		"connection.protocol", "http",
 		"connection.host", "localhost",
 		"connection.port", HttpEndpointServicePort,
-		"cors-headerscorrelation_id", "*",
+		"cors_headers", "correlation_id, access_token, Accept, Content-Type, Content-Length, X-CSRF-Token",
+		"cors_origins", "*",
 	)
 
 	ctrl := tlogic.NewDummyController()
@@ -163,7 +165,8 @@ func BuildTestDummyRestService() *DummyRestService {
 		"connection.port", DummyRestServicePort,
 		"openapi_content", "swagger yaml or json content",
 		"swagger.enable", "true",
-		"cors-headerscorrelation_id", "*",
+		"cors_headers", "correlation_id, access_token, Accept, Content-Type, Content-Length, X-CSRF-Token",
+		"cors_origins", "*",
 	)
 
 	var service *DummyRestService
@@ -204,7 +207,8 @@ func BuildTestDummyOpenAPIFileRestService() (*DummyRestService, string) {
 		"connection.port", DummyOpenAPIFileRestServicePort,
 		"openapi_file", filename, // for test only
 		"swagger.enable", "true",
-		"cors-headerscorrelation_id", "*",
+		"cors_headers", "correlation_id, access_token, Accept, Content-Type, Content-Length, X-CSRF-Token",
+		"cors_origins", "*",
 	)
 
 	var service *DummyRestService
@@ -228,7 +232,8 @@ func BuildTestDummyCommandableHttpService() *DummyCommandableHttpService {
 		"connection.host", "localhost",
 		"connection.port", DummyCommandableHttpServicePort,
 		"swagger.enable", "true",
-		"cors-headerscorrelation_id", "*",
+		"cors_headers", "correlation_id, access_token, Accept, Content-Type, Content-Length, X-CSRF-Token",
+		"cors_origins", "*",
 	)
 
 	ctrl := tlogic.NewDummyController()
@@ -253,7 +258,8 @@ func BuildTestDummyCommandableSwaggerHttpService() *DummyCommandableHttpService 
 		"connection.port", DummyCommandableSwaggerHttpServicePort,
 		"swagger.enable", "true",
 		"swagger.auto", false,
-		"cors-headerscorrelation_id", "*",
+		"cors_headers", "correlation_id, access_token, Accept, Content-Type, Content-Length, X-CSRF-Token",
+		"cors_origins", "*",
 	)
 
 	ctrl := tlogic.NewDummyController()
@@ -275,7 +281,8 @@ func BuildTestHeartbeatRestService() *services.HeartbeatRestService {
 		"connection.protocol", "http",
 		"connection.host", "localhost",
 		"connection.port", HeartbeatRestServicePort,
-		"cors-headerscorrelation_id", "*",
+		"cors_headers", "correlation_id, access_token, Accept, Content-Type, Content-Length, X-CSRF-Token",
+		"cors_origins", "*",
 	)
 
 	service := services.NewHeartbeatRestService()

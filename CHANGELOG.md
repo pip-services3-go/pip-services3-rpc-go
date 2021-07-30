@@ -1,5 +1,14 @@
 # <img src="https://uploads-ssl.webflow.com/5ea5d3315186cf5ec60c3ee4/5edf1c94ce4c859f2b188094_logo.svg" alt="Pip.Services Logo" width="200"> <br/> Remote Procedure Calls for Pip.Services in Go Changelog
 
+
+## <a name="1.4.2"></a> 1.4.2 (2021-07-30)
+### Features
+* Add configuration parameters for CORS Headers in HttpEndpoint. Use *cors_headers* and *cors_origins*.
+  Example:
+  ```yml
+  -cors_headers: "correlation_id, access_token, Accept, Content-Type, Content-Length, X-CSRF-Token"
+  -cors_origins:  "*"
+  ```
 ## <a name="1.4.1"></a> 1.4.1 (2021-07-26)
 ### Bug fixing
 - Fix route checks in interceptors

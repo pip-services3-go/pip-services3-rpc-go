@@ -132,14 +132,17 @@ func (c *HttpEndpoint) Configure(config *cconf.ConfigParams) {
 	c.fileMaxSize = config.GetAsLongWithDefault("options.file_max_size", c.fileMaxSize)
 	c.protocolUpgradeEnabled = config.GetAsBooleanWithDefault("options.protocol_upgrade_enabled", c.protocolUpgradeEnabled)
 
-	corsParams := config.GetSection("cors-headers")
-	headers := corsParams.GetSectionNames()
+	headers := strings.Split(config.GetAsStringWithDefault("cors_headers", ""), ",")
 	if headers != nil && len(headers) > 0 {
-		for _, key := range headers {
-			origin := corsParams.GetAsString(key)
-			if len(origin) > 0 {
-				c.AddCorsHeader(key, origin)
-			}
+		for _, header := range headers {
+			c.AddCorsHeader(strings.TrimSpace(header), "")
+		}
+	}
+
+	origins := strings.Split(config.GetAsStringWithDefault("cors_origins", ""), ",")
+	if origins != nil && len(origins) > 0 {
+		for _, origin := range origins {
+			c.AddCorsHeader("", strings.TrimSpace(origin))
 		}
 	}
 }
