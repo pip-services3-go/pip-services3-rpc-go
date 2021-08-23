@@ -1,6 +1,6 @@
 {
     "name": "pip-services3-rpc-go",
     "registry": "github.com/pip-services3-go",
-    "version": "1.4.0",
+    "version": "1.4.3",
     "build": 0
 }

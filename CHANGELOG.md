@@ -1,6 +1,10 @@
 # <img src="https://uploads-ssl.webflow.com/5ea5d3315186cf5ec60c3ee4/5edf1c94ce4c859f2b188094_logo.svg" alt="Pip.Services Logo" width="200"> <br/> Remote Procedure Calls for Pip.Services in Go Changelog
 
 
+## <a name="1.4.3"></a> 1.4.3 (2021-08-23)
+### Bug fixing
+* Updated error propagation mechanism between client and services
+
 ## <a name="1.4.2"></a> 1.4.2 (2021-07-30)
 ### Features
 * Add configuration parameters for CORS Headers in HttpEndpoint. Use *cors_headers* and *cors_origins*.
