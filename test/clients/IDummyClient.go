@@ -13,4 +13,6 @@ type IDummyClient interface {
 	DeleteDummy(correlationId string, dummyId string) (result *tdata.Dummy, err error)
 
 	CheckCorrelationId(correlationId string) (result map[string]string, err error)
+
+	CheckErrorPropagation(correlationId string) error
 }

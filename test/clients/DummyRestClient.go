@@ -96,3 +96,10 @@ func (c *DummyRestClient) CheckCorrelationId(correlationId string) (result map[s
 	c.Instrument(correlationId, "dummy.check_correlation_id")
 	return *val, nil
 }
+
+func (c *DummyRestClient) CheckErrorPropagation(correlationId string) error {
+
+	_, calErr := c.Call(nil, "get", "/dummies/check/error_propagation", correlationId, nil, nil)
+	c.Instrument(correlationId, "dummy.check_error_propagation")
+	return calErr
+}

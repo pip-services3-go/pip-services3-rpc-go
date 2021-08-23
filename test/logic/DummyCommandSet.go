@@ -28,6 +28,7 @@ func NewDummyCommandSet(controller IDummyController) *DummyCommandSet {
 	c.AddCommand(c.makeUpdateCommand())
 	c.AddCommand(c.makeDeleteByIdCommand())
 	c.AddCommand(c.makeCheckCorrelationIdCommand())
+	c.AddCommand(c.makeCheckErrorPropagationCommand())
 	return &c
 }
 
@@ -98,6 +99,16 @@ func (c *DummyCommandSet) makeCheckCorrelationIdCommand() ccomand.ICommand {
 		cvalid.NewObjectSchema(),
 		func(correlationId string, args *crun.Parameters) (result interface{}, err error) {
 			return c.controller.CheckCorrelationId(correlationId)
+		},
+	)
+}
+
+func (c *DummyCommandSet) makeCheckErrorPropagationCommand() ccomand.ICommand {
+	return ccomand.NewCommand(
+		"check_error_propagation",
+		cvalid.NewObjectSchema(),
+		func(correlationId string, args *crun.Parameters) (result interface{}, err error) {
+			return nil, c.controller.CheckErrorPropagation(correlationId)
 		},
 	)
 }

@@ -95,3 +95,9 @@ func (c *DummyCommandableHttpClient) CheckCorrelationId(correlationId string) (r
 	val, _ := calValue.(*(map[string]string))
 	return *val, err
 }
+
+func (c *DummyCommandableHttpClient) CheckErrorPropagation(correlationId string) error {
+	params := cdata.NewEmptyAnyValueMap()
+	_, calErr := c.CallCommand(nil, "check_error_propagation", correlationId, params)
+	return calErr
+}

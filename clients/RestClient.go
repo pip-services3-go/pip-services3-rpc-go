@@ -15,8 +15,8 @@ import (
 	cerr "github.com/pip-services3-go/pip-services3-commons-go/errors"
 	crefer "github.com/pip-services3-go/pip-services3-commons-go/refer"
 	ccount "github.com/pip-services3-go/pip-services3-components-go/count"
-	ctrace "github.com/pip-services3-go/pip-services3-components-go/trace"
 	clog "github.com/pip-services3-go/pip-services3-components-go/log"
+	ctrace "github.com/pip-services3-go/pip-services3-components-go/trace"
 	rpccon "github.com/pip-services3-go/pip-services3-rpc-go/connect"
 	service "github.com/pip-services3-go/pip-services3-rpc-go/services"
 )
@@ -88,7 +88,7 @@ type RestClient struct {
 	//The performance counters.
 	Counters *ccount.CompositeCounters
 	// The tracer.
-    Tracer *ctrace.CompositeTracer
+	Tracer *ctrace.CompositeTracer
 	//The configuration options.
 	Options cconf.ConfigParams
 	//The base route.
@@ -169,9 +169,9 @@ func (c *RestClient) Instrument(correlationId string, name string) *service.Inst
 	c.Logger.Trace(correlationId, "Calling %s method", name)
 	c.Counters.IncrementOne(name + ".call_count")
 	counterTiming := c.Counters.BeginTiming(name + ".call_time")
-    traceTiming := c.Tracer.BeginTrace(correlationId, name, "")
-    return service.NewInstrumentTiming(correlationId, name, "call",
-            c.Logger, c.Counters, counterTiming, traceTiming)
+	traceTiming := c.Tracer.BeginTrace(correlationId, name, "")
+	return service.NewInstrumentTiming(correlationId, name, "call",
+		c.Logger, c.Counters, counterTiming, traceTiming)
 }
 
 // InstrumentError method are dds instrumentation to error handling.
@@ -417,6 +417,15 @@ func (c *RestClient) Call(prototype reflect.Type, method string, route string, c
 	if resp.StatusCode >= 400 {
 		appErr := cerr.ApplicationError{}
 		json.Unmarshal(r, &appErr)
+		if appErr.Status == 0 && len(r) > 0 { // not standart Pip.Services error
+			values := make(map[string]interface{})
+			decodeErr := json.Unmarshal(r, &values)
+			if decodeErr != nil { // not json response
+				appErr.Message = (string)(r)
+			}
+			appErr.Details = values
+		}
+		appErr.Status = resp.StatusCode
 		return nil, &appErr
 	}
 

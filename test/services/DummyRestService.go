@@ -163,6 +163,11 @@ func (c *DummyRestService) checkCorrelationId(res http.ResponseWriter, req *http
 	c.SendResult(res, req, result, err)
 }
 
+func (c *DummyRestService) checkErrorPropagation(res http.ResponseWriter, req *http.Request) {
+	err := c.controller.CheckErrorPropagation(c.GetCorrelationId(req))
+	c.SendError(res, req, err)
+}
+
 func (c *DummyRestService) Register() {
 	c.RegisterInterceptor("/dummies", c.incrementNumberOfCalls)
 
@@ -179,6 +184,12 @@ func (c *DummyRestService) Register() {
 		"get", "/dummies/check/correlation_id",
 		&cvalid.NewObjectSchema().Schema,
 		c.checkCorrelationId,
+	)
+
+	c.RegisterRoute(
+		"get", "/dummies/check/error_propagation",
+		&cvalid.NewObjectSchema().Schema,
+		c.checkErrorPropagation,
 	)
 
 	c.RegisterRoute(

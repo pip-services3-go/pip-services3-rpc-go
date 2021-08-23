@@ -3,6 +3,7 @@ package test_logic
 import (
 	ccomand "github.com/pip-services3-go/pip-services3-commons-go/commands"
 	cdata "github.com/pip-services3-go/pip-services3-commons-go/data"
+	cerr "github.com/pip-services3-go/pip-services3-commons-go/errors"
 	tdata "github.com/pip-services3-go/pip-services3-rpc-go/test/data"
 )
 
@@ -113,4 +114,8 @@ func (c *DummyController) DeleteById(correlationId string, id string) (result *t
 func (c *DummyController) CheckCorrelationId(correlationId string) (result map[string]string, err error) {
 	result = map[string]string{"correlationId": correlationId}
 	return result, nil
+}
+
+func (c *DummyController) CheckErrorPropagation(correlationId string) error {
+	return cerr.NewNotFoundError(correlationId, "NOT_FOUND_TEST", "Not found error")
 }

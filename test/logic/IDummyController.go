@@ -13,4 +13,6 @@ type IDummyController interface {
 	DeleteById(correlationId string, id string) (result *tdata.Dummy, err error)
 
 	CheckCorrelationId(correlationId string) (result map[string]string, err error)
+
+	CheckErrorPropagation(correlationId string) error
 }

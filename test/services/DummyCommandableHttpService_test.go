@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	cerr "github.com/pip-services3-go/pip-services3-commons-go/errors"
 	tdata "github.com/pip-services3-go/pip-services3-rpc-go/test/data"
 	"github.com/stretchr/testify/assert"
 )
@@ -152,6 +153,24 @@ func TestDummyCommandableHttpService(t *testing.T) {
 	assert.Nil(t, jsonErr)
 	assert.NotNil(t, values)
 	assert.Equal(t, values["correlationId"], "test_cor_id")
+
+	// Testing error propagation
+	getResponse, getErr = http.Post(url+"/dummies/check_error_propagation?correlation_id=test_error_propagation", "application/json", nil)
+	assert.Nil(t, getErr)
+	assert.NotNil(t, getResponse)
+
+	resBody, bodyErr = ioutil.ReadAll(getResponse.Body)
+	assert.Nil(t, bodyErr)
+	getResponse.Body.Close()
+
+	appErr := cerr.ApplicationError{}
+	jsonErr = json.Unmarshal(resBody, &appErr)
+	assert.Nil(t, jsonErr)
+
+	assert.Equal(t, appErr.CorrelationId, "test_error_propagation")
+	assert.Equal(t, appErr.Status, 404)
+	assert.Equal(t, appErr.Code, "NOT_FOUND_TEST")
+	assert.Equal(t, appErr.Message, "Not found error")
 
 	// Get OpenApi Spec From String
 	// -----------------------------------------------------------------
