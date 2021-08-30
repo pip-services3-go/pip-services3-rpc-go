@@ -339,7 +339,6 @@ func (c *RestClient) Call(prototype reflect.Type, method string, route string, c
 	if params.Len() > 0 {
 		route += "?"
 		for k, v := range params.Value() {
-			//route += neturl.QueryEscape(k) + "=" + neturl.QueryEscape(v) + "&"
 			route += neturl.QueryEscape(k) + "=" + neturl.QueryEscape(v) + "&"
 		}
 		if strings.HasSuffix(route, "&") {
@@ -356,22 +355,7 @@ func (c *RestClient) Call(prototype reflect.Type, method string, route string, c
 	if data != nil {
 		jsonStr, _ = json.Marshal(data)
 	} else {
-		jsonStr = make([]byte, 0, 0)
-	}
-	req, reqErr := http.NewRequest(method, url, bytes.NewBuffer(jsonStr))
-
-	if reqErr != nil {
-		err = cerr.NewUnknownError(correlationId, "UNSUPPORTED_METHOD", "Method is not supported by REST client").WithDetails("verb", method).WithCause(reqErr)
-		return nil, err
-	}
-	// Set headers
-	req.Header.Set("Content-Type", "application/json")
-	if c.passCorrelationId == "headers" || c.passCorrelationId == "both" {
-		req.Header.Set("correlation_id", correlationId)
-	}
-	//req.Header.Set("User-Agent", c.UserAgent)
-	for k, v := range c.Headers.Value() {
-		req.Header.Set(k, v)
+		jsonStr = make([]byte, 0)
 	}
 
 	retries := c.Retries
@@ -379,6 +363,21 @@ func (c *RestClient) Call(prototype reflect.Type, method string, route string, c
 	var respErr error
 
 	for retries > 0 {
+		req, reqErr := http.NewRequest(method, url, bytes.NewBuffer(jsonStr))
+
+		if reqErr != nil {
+			err = cerr.NewUnknownError(correlationId, "UNSUPPORTED_METHOD", "Method is not supported by REST client").WithDetails("verb", method).WithCause(reqErr)
+			return nil, err
+		}
+		// Set headers
+		req.Header.Set("Content-Type", "application/json")
+		if c.passCorrelationId == "headers" || c.passCorrelationId == "both" {
+			req.Header.Set("correlation_id", correlationId)
+		}
+		//req.Header.Set("User-Agent", c.UserAgent)
+		for k, v := range c.Headers.Value() {
+			req.Header.Set(k, v)
+		}
 		// Try send request
 		resp, respErr = c.Client.Do(req)
 		if respErr != nil {
