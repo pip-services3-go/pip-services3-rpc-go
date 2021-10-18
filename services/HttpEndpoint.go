@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -416,8 +417,8 @@ func (c *HttpEndpoint) RegisterInterceptor(route string, action func(w http.Resp
 	route = c.fixRoute(route)
 	interceptorFunc := func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
-			if route != "" && r.URL.Path != route {
+			matched, _ := regexp.MatchString(route, r.URL.Path)
+			if route != "" && !matched {
 				next.ServeHTTP(w, r)
 			} else {
 				action(w, r, next.ServeHTTP)

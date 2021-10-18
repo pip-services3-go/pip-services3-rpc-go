@@ -169,7 +169,7 @@ func (c *DummyRestService) checkErrorPropagation(res http.ResponseWriter, req *h
 }
 
 func (c *DummyRestService) Register() {
-	c.RegisterInterceptor("/dummies", c.incrementNumberOfCalls)
+	c.RegisterInterceptor("/dummies$", c.incrementNumberOfCalls)
 
 	c.RegisterRoute(
 		"get", "/dummies",
