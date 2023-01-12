@@ -2,3 +2,4 @@
 /dist
 go.sum
 *.tmp
+docker/id_rsa*

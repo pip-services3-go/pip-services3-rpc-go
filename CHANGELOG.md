@@ -1,6 +1,10 @@
 # <img src="https://uploads-ssl.webflow.com/5ea5d3315186cf5ec60c3ee4/5edf1c94ce4c859f2b188094_logo.svg" alt="Pip.Services Logo" width="200"> <br/> Remote Procedure Calls for Pip.Services in Go Changelog
 
-## <a name="1.4.5"></a> 1.5.0 (2021-10-18)
+## <a name="1.5.1"></a> 1.5.1 (2023-01-12)
+### Features
+- Update dependencies
+
+## <a name="1.5.0"></a> 1.5.0 (2021-10-18)
 ### Features
 * Added regexp supporting to interceptor
    Examples:

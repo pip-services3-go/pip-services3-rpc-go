@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#375EAB">
+
+  <title>clients - Go Documentation Server</title>
+
+<link type="text/css" rel="stylesheet" href="/lib/godoc/style.css">
+
+<script>window.initFuncs = [];</script>
+<script src="/lib/godoc/jquery.js" defer></script>
+
+
+
+<script>var goVersion = "go1.16.15";</script>
+<script src="/lib/godoc/godocs.js" defer></script>
+</head>
+<body>
+
+<div id='lowframe' style="position: fixed; bottom: 0; left: 0; height: 0; width: 100%; border-top: thin solid grey; background-color: white; overflow: auto;">
+...
+</div><!-- #lowframe -->
+
+<div id="topbar" class="wide"><div class="container">
+<div class="top-heading" id="heading-wide"><a href="/pkg/">Go Documentation Server</a></div>
+<div class="top-heading" id="heading-narrow"><a href="/pkg/">GoDoc</a></div>
+<a href="#" id="menu-button"><span id="menu-button-arrow">&#9661;</span></a>
+<form method="GET" action="/search">
+<div id="menu">
+
+<span class="search-box"><input type="search" id="search" name="q" placeholder="Search" aria-label="Search" required><button type="submit"><span><!-- magnifying glass: --><svg width="24" height="24" viewBox="0 0 24 24"><title>submit search</title><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/><path d="M0 0h24v24H0z" fill="none"/></svg></span></button></span>
+</div>
+</form>
+
+</div></div>
+
+
+
+<div id="page" class="wide">
+<div class="container">
+
+
+  <h1>
+    Package clients
+    <span class="text-muted"></span>
+  </h1>
+
+
+
+
+
+
+
+<div id="nav"></div>
+
+
+<!--
+	Copyright 2009 The Go Authors. All rights reserved.
+	Use of this source code is governed by a BSD-style
+	license that can be found in the LICENSE file.
+-->
+<!--
+	Note: Static (i.e., not template-generated) href and id
+	attributes start with "pkg-" to make it impossible for
+	them to conflict with generated attributes (some of which
+	correspond to Go identifiers).
+-->
+
+	<script>
+	document.ANALYSIS_DATA = null;
+	document.CALLGRAPH = null;
+	</script>
+
+	
+		
+		<div id="short-nav">
+			<dl>
+			<dd><code>import "clients"</code></dd>
+			</dl>
+			<dl>
+			<dd><a href="#pkg-overview" class="overviewLink">Overview</a></dd>
+			<dd><a href="#pkg-index" class="indexLink">Index</a></dd>
+			
+			
+			</dl>
+		</div>
+		<!-- The package's Name is printed as title by the top-level template -->
+		<div id="pkg-overview" class="toggleVisible">
+			<div class="collapsed">
+				<h2 class="toggleButton" title="Click to show Overview section">Overview ▹</h2>
+			</div>
+			<div class="expanded">
+				<h2 class="toggleButton" title="Click to hide Overview section">Overview ▾</h2>
+				
+				
+			</div>
+		</div>
+
+		<div id="pkg-index" class="toggleVisible">
+		<div class="collapsed">
+			<h2 class="toggleButton" title="Click to show Index section">Index ▹</h2>
+		</div>
+		<div class="expanded">
+			<h2 class="toggleButton" title="Click to hide Index section">Index ▾</h2>
+
+		<!-- Table of contents for API; must be named manual-nav to turn off auto nav. -->
+			<div id="manual-nav">
+			<dl>
+			
+			
+			
+				
+				<dd><a href="#ConvertComandResult">func ConvertComandResult(comRes interface{}, prototype reflect.Type) (convRes interface{}, err error)</a></dd>
+			
+			
+				
+				<dd><a href="#CommandableHttpClient">type CommandableHttpClient</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#NewCommandableHttpClient">func NewCommandableHttpClient(baseRoute string) *CommandableHttpClient</a></dd>
+				
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#CommandableHttpClient.CallCommand">func (c *CommandableHttpClient) CallCommand(prototype reflect.Type, name string, correlationId string, params *cdata.AnyValueMap) (result interface{}, err error)</a></dd>
+				
+			
+				
+				<dd><a href="#DirectClient">type DirectClient</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#NewDirectClient">func NewDirectClient() *DirectClient</a></dd>
+				
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#DirectClient.Close">func (c *DirectClient) Close(correlationId string) error</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#DirectClient.Configure">func (c *DirectClient) Configure(config *cconf.ConfigParams)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#DirectClient.Instrument">func (c *DirectClient) Instrument(correlationId string, name string) *service.InstrumentTiming</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#DirectClient.IsOpen">func (c *DirectClient) IsOpen() bool</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#DirectClient.Open">func (c *DirectClient) Open(correlationId string) error</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#DirectClient.SetReferences">func (c *DirectClient) SetReferences(references crefer.IReferences)</a></dd>
+				
+			
+				
+				<dd><a href="#RestClient">type RestClient</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#NewRestClient">func NewRestClient() *RestClient</a></dd>
+				
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#RestClient.AddCorrelationId">func (c *RestClient) AddCorrelationId(params *cdata.StringValueMap, correlationId string) *cdata.StringValueMap</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#RestClient.AddFilterParams">func (c *RestClient) AddFilterParams(params *cdata.StringValueMap, filter *cdata.FilterParams) *cdata.StringValueMap</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#RestClient.AddPagingParams">func (c *RestClient) AddPagingParams(params *cdata.StringValueMap, paging *cdata.PagingParams) *cdata.StringValueMap</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#RestClient.Call">func (c *RestClient) Call(prototype reflect.Type, method string, route string, correlationId string, params *cdata.StringValueMap, data interface{}) (result interface{}, err error)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#RestClient.Close">func (c *RestClient) Close(correlationId string) error</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#RestClient.Configure">func (c *RestClient) Configure(config *cconf.ConfigParams)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#RestClient.Instrument">func (c *RestClient) Instrument(correlationId string, name string) *service.InstrumentTiming</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#RestClient.InstrumentError">func (c *RestClient) InstrumentError(correlationId string, name string, inErr error, inRes interface{}) (result interface{}, err error)</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#RestClient.IsOpen">func (c *RestClient) IsOpen() bool</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#RestClient.Open">func (c *RestClient) Open(correlationId string) error</a></dd>
+				
+					
+					<dd>&nbsp; &nbsp; <a href="#RestClient.SetReferences">func (c *RestClient) SetReferences(references crefer.IReferences)</a></dd>
+				
+			
+			
+			</dl>
+			</div><!-- #manual-nav -->
+
+		
+
+		
+			<h3>Package files</h3>
+			<p>
+			<span style="font-size:90%">
+			
+				<a href="/src/clients/CommandableHttpClient.go">CommandableHttpClient.go</a>
+			
+				<a href="/src/clients/Convert.go">Convert.go</a>
+			
+				<a href="/src/clients/DirectClient.go">DirectClient.go</a>
+			
+				<a href="/src/clients/RestClient.go">RestClient.go</a>
+			
+			</span>
+			</p>
+		
+		</div><!-- .expanded -->
+		</div><!-- #pkg-index -->
+
+		
+
+		
+		
+		
+			
+			
+			<h2 id="ConvertComandResult">func <a href="/src/clients/Convert.go?s=290:391#L3">ConvertComandResult</a>
+				<a class="permalink" href="#ConvertComandResult">&#xb6;</a>
+				
+				
+			</h2>
+			<pre>func ConvertComandResult(comRes interface{}, prototype <a href="/pkg/reflect/">reflect</a>.<a href="/pkg/reflect/#Type">Type</a>) (convRes interface{}, err <a href="/pkg/builtin/#error">error</a>)</pre>
+			<p>
+ConvertComandResult method helps get correct result from JSON by prototype
+Parameters:
+</p>
+<pre>- comRes interface{}  input JSON string
+- prototype reflect.Type output object prototype
+</pre>
+<p>
+Returns: convRes interface{}, err error
+</p>
+
+			
+			
+
+		
+		
+			
+			
+			<h2 id="CommandableHttpClient">type <a href="/src/clients/CommandableHttpClient.go?s=2298:2350#L59">CommandableHttpClient</a>
+				<a class="permalink" href="#CommandableHttpClient">&#xb6;</a>
+				
+				
+			</h2>
+			<p>
+CommandableHttpClient is abstract client that calls commandable HTTP service.
+</p>
+<p>
+Commandable services are generated automatically for ICommandable objects.
+Each command is exposed as POST operation that receives all parameters
+in body object.
+</p>
+<p>
+Configuration parameters:
+</p>
+<pre>base_route:              base route for remote URI
+- connection(s):
+  - discovery_key:         (optional) a key to retrieve the connection from connect.idiscovery.html IDiscovery]]
+  - protocol:              connection protocol: http or https
+  - host:                  host name or IP address
+  - port:                  port number
+  - uri:                   resource URI or connection string with all parameters in it
+- options:
+  - retries:               number of retries (default: 3)
+  - connect_timeout:       connection timeout in milliseconds (default: 10 sec)
+  - timeout:               invocation timeout in milliseconds (default: 10 sec)
+</pre>
+<p>
+References:
+</p>
+<p>
+- *:logger:*:*:1.0         (optional) ILogger components to pass log messages
+- *:counters:*:*:1.0         (optional) ICounters components to pass collected measurements
+- *:discovery:*:*:1.0        (optional) IDiscovery services to resolve connection
+</p>
+<p>
+Example:
+</p>
+<pre>type MyCommandableHttpClient struct{
+    *CommandableHttpClient
+    prototype reflect.Type // type of operation data
+   ...
+}
+   result, err := func (c * MyCommandableHttpClient) GetData(correlationId string, id string)(result MyData, err error){
+
+       params:= cdata.NewEmptyStringValueMap()
+       params.Set(&#34;id&#34;,id)
+        res, err := c.CallCommand(
+            prototype
+           &#34;get_data&#34;,
+           correlationId,
+           params)
+           ...
+           // convert response to MyData
+           ...
+           return result, err
+    }
+
+client = NewMyCommandableHttpClient();
+client.Configure(cconf.NewConfigParamsFromTuples(
+    &#34;connection.protocol&#34;, &#34;http&#34;,
+    &#34;connection.host&#34;, &#34;localhost&#34;,
+    &#34;connection.port&#34;, 8080
+));
+
+result, err := client.GetData(&#34;123&#34;, &#34;1&#34;)
+...
+</pre>
+
+			<pre>type CommandableHttpClient struct {
+    *<a href="#RestClient">RestClient</a>
+}
+</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+				
+				<h3 id="NewCommandableHttpClient">func <a href="/src/clients/CommandableHttpClient.go?s=2562:2632#L68">NewCommandableHttpClient</a>
+					<a class="permalink" href="#NewCommandableHttpClient">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func NewCommandableHttpClient(baseRoute <a href="/pkg/builtin/#string">string</a>) *<a href="#CommandableHttpClient">CommandableHttpClient</a></pre>
+				<p>
+NewCommandableHttpClient is creates a new instance of the client.
+Parameters:
+</p>
+<pre>- baseRoute string a base route for remote service.
+</pre>
+<p>
+Returns: *CommandableHttpClient
+pointer on new instance
+</p>
+
+				
+				
+			
+
+			
+				
+				<h3 id="CommandableHttpClient.CallCommand">func (*CommandableHttpClient) <a href="/src/clients/CommandableHttpClient.go?s=3335:3496#L85">CallCommand</a>
+					<a class="permalink" href="#CommandableHttpClient.CallCommand">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (c *<a href="#CommandableHttpClient">CommandableHttpClient</a>) CallCommand(prototype <a href="/pkg/reflect/">reflect</a>.<a href="/pkg/reflect/#Type">Type</a>, name <a href="/pkg/builtin/#string">string</a>, correlationId <a href="/pkg/builtin/#string">string</a>, params *<a href="/pkg/github.com/pip-services3-go/pip-services3-commons-go/data/">cdata</a>.<a href="/pkg/github.com/pip-services3-go/pip-services3-commons-go/data/#AnyValueMap">AnyValueMap</a>) (result interface{}, err <a href="/pkg/builtin/#error">error</a>)</pre>
+				<p>
+CallCommand is calls a remote method via HTTP commadable protocol.
+The call is made via POST operation and all parameters are sent in body object.
+The complete route to remote method is defined as baseRoute + &#34;/&#34; + name.
+Parameters:
+</p>
+<pre>- prototype reflect.Type type of returned data
+- name        string      a name of the command to call.
+- correlationId  string   (optional) transaction id to trace execution through call chain.
+- params     cdata.StringValueMap       command parameters.
+</pre>
+<p>
+Returns: result interface{}, err error
+result or error.
+</p>
+
+				
+				
+				
+			
+		
+			
+			
+			<h2 id="DirectClient">type <a href="/src/clients/DirectClient.go?s=2477:2865#L58">DirectClient</a>
+				<a class="permalink" href="#DirectClient">&#xb6;</a>
+				
+				
+			</h2>
+			<p>
+DirectClient is bstract client that calls controller directly in the same memory space.
+</p>
+<p>
+It is used when multiple microservices are deployed in a single container (monolyth)
+and communication between them can be done by direct calls rather then through
+the network.
+</p>
+<p>
+Configuration parameters:
+</p>
+<p>
+- dependencies:
+</p>
+<pre>- controller:            override controller descriptor
+</pre>
+<p>
+References:
+</p>
+<p>
+- *:logger:*:*:1.0         (optional) ILogger components to pass log messages
+- *:counters:*:*:1.0       (optional) ICounters components to pass collected measurements
+- *:controller:*:*:1.0     controller to call business methods
+</p>
+<p>
+Example:
+</p>
+<pre>	type MyDirectClient struct {
+	*DirectClient
+	}
+        func MyDirectClient()* MyDirectClient {
+		  c:= MyDirectClient{}
+		  c.DirectClient = NewDirectClient()
+          c.DependencyResolver.Put(&#34;controller&#34;, cref.NewDescriptor(
+              &#34;mygroup&#34;, &#34;controller&#34;, &#34;*&#34;, &#34;*&#34;, &#34;*&#34;));
+		}
+
+		func (c *MyDirectClient) SetReferences(references cref.IReferences) {
+			c.DirectClient.SetReferences(references)
+			specificController, ok := c.Controller.(tdata.IMyDataController)
+			if !ok {
+				panic(&#34;MyDirectClient: Cant&#39;t resolv dependency &#39;controller&#39; to IMyDataController&#34;)
+			}
+			c.specificController = specificController
+		}
+        ...
+
+        func (c * MyDirectClient) GetData(correlationId string, id string)(result MyData, err error) {
+           timing := c.Instrument(correlationId, &#34;myclient.get_data&#34;)
+           cmRes, cmdErr := c.specificController.GetData(correlationId, id)
+           timing.EndTiming();
+           return  c.InstrumentError(correlationId, &#34;myclient.get_data&#34;, cmdRes, cmdErr)
+        }
+        ...
+
+    client = NewMyDirectClient();
+    client.SetReferences(cref.NewReferencesFromTuples(
+        cref.NewDescriptor(&#34;mygroup&#34;,&#34;controller&#34;,&#34;default&#34;,&#34;default&#34;,&#34;1.0&#34;), controller,
+    ));
+
+    res, err := client.GetData(&#34;123&#34;, &#34;1&#34;)
+</pre>
+
+			<pre>type DirectClient struct {
+    <span class="comment">//The controller reference.</span>
+<span id="DirectClient.Controller"></span>    Controller interface{}
+    <span class="comment">//The open flag.</span>
+<span id="DirectClient.Opened"></span>    Opened <a href="/pkg/builtin/#bool">bool</a>
+    <span class="comment">//The logger.</span>
+<span id="DirectClient.Logger"></span>    Logger *<a href="/pkg/github.com/pip-services3-go/pip-services3-components-go/log/">clog</a>.<a href="/pkg/github.com/pip-services3-go/pip-services3-components-go/log/#CompositeLogger">CompositeLogger</a>
+    <span class="comment">//The performance counters</span>
+<span id="DirectClient.Counters"></span>    Counters *<a href="/pkg/github.com/pip-services3-go/pip-services3-components-go/count/">ccount</a>.<a href="/pkg/github.com/pip-services3-go/pip-services3-components-go/count/#CompositeCounters">CompositeCounters</a>
+    <span class="comment">//The dependency resolver to get controller reference.</span>
+<span id="DirectClient.DependencyResolver"></span>    DependencyResolver <a href="/pkg/github.com/pip-services3-go/pip-services3-commons-go/refer/">crefer</a>.<a href="/pkg/github.com/pip-services3-go/pip-services3-commons-go/refer/#DependencyResolver">DependencyResolver</a>
+    <span class="comment">// The tracer.</span>
+<span id="DirectClient.Tracer"></span>    Tracer *<a href="/pkg/github.com/pip-services3-go/pip-services3-components-go/trace/">ctrace</a>.<a href="/pkg/github.com/pip-services3-go/pip-services3-components-go/trace/#CompositeTracer">CompositeTracer</a>
+}
+</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+				
+				<h3 id="NewDirectClient">func <a href="/src/clients/DirectClient.go?s=2930:2966#L74">NewDirectClient</a>
+					<a class="permalink" href="#NewDirectClient">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func NewDirectClient() *<a href="#DirectClient">DirectClient</a></pre>
+				<p>
+NewDirectClient is creates a new instance of the client.
+</p>
+
+				
+				
+			
+
+			
+				
+				<h3 id="DirectClient.Close">func (*DirectClient) <a href="/src/clients/DirectClient.go?s=6681:6737#L170">Close</a>
+					<a class="permalink" href="#DirectClient.Close">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (c *<a href="#DirectClient">DirectClient</a>) Close(correlationId <a href="/pkg/builtin/#string">string</a>) <a href="/pkg/builtin/#error">error</a></pre>
+				<p>
+Close method are closes component and frees used resources.
+</p>
+<pre>- correlationId string	(optional) transaction id to trace execution through call chain.
+</pre>
+<p>
+Returns: error
+error or nil no errors occured.
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="DirectClient.Configure">func (*DirectClient) <a href="/src/clients/DirectClient.go?s=3467:3527#L89">Configure</a>
+					<a class="permalink" href="#DirectClient.Configure">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (c *<a href="#DirectClient">DirectClient</a>) Configure(config *<a href="/pkg/github.com/pip-services3-go/pip-services3-commons-go/config/">cconf</a>.<a href="/pkg/github.com/pip-services3-go/pip-services3-commons-go/config/#ConfigParams">ConfigParams</a>)</pre>
+				<p>
+Configure method are configures component by passing configuration parameters.
+Parameters:
+</p>
+<pre>- config  *cconf.ConfigParams  configuration parameters to be set.
+</pre>
+
+				
+				
+				
+			
+				
+				<h3 id="DirectClient.Instrument">func (*DirectClient) <a href="/src/clients/DirectClient.go?s=4534:4628#L114">Instrument</a>
+					<a class="permalink" href="#DirectClient.Instrument">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (c *<a href="#DirectClient">DirectClient</a>) Instrument(correlationId <a href="/pkg/builtin/#string">string</a>, name <a href="/pkg/builtin/#string">string</a>) *<a href="/pkg/github.com/pip-services3-go/pip-services3-rpc-go/services/">service</a>.<a href="/pkg/github.com/pip-services3-go/pip-services3-rpc-go/services/#InstrumentTiming">InstrumentTiming</a></pre>
+				<p>
+Instrument method are adds instrumentation to log calls and measure call time.
+It returns a Timing object that is used to end the time measurement.
+Parameters:
+</p>
+<pre>- correlationId  string    (optional) transaction id to trace execution through call chain.
+- name   string           a method name.
+</pre>
+<p>
+Returns Timing object to end the time measurement.
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="DirectClient.IsOpen">func (*DirectClient) <a href="/src/clients/DirectClient.go?s=5881:5917#L142">IsOpen</a>
+					<a class="permalink" href="#DirectClient.IsOpen">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (c *<a href="#DirectClient">DirectClient</a>) IsOpen() <a href="/pkg/builtin/#bool">bool</a></pre>
+				<p>
+IsOpen method are checks if the component is opened.
+Returns true if the component has been opened and false otherwise.
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="DirectClient.Open">func (*DirectClient) <a href="/src/clients/DirectClient.go?s=6133:6188#L150">Open</a>
+					<a class="permalink" href="#DirectClient.Open">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (c *<a href="#DirectClient">DirectClient</a>) Open(correlationId <a href="/pkg/builtin/#string">string</a>) <a href="/pkg/builtin/#error">error</a></pre>
+				<p>
+Open method are opens the component.
+</p>
+<pre>- correlationId string	(optional) transaction id to trace execution through call chain.
+</pre>
+<p>
+Returns: error
+error or nil no errors occured.
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="DirectClient.SetReferences">func (*DirectClient) <a href="/src/clients/DirectClient.go?s=3749:3816#L96">SetReferences</a>
+					<a class="permalink" href="#DirectClient.SetReferences">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (c *<a href="#DirectClient">DirectClient</a>) SetReferences(references <a href="/pkg/github.com/pip-services3-go/pip-services3-commons-go/refer/">crefer</a>.<a href="/pkg/github.com/pip-services3-go/pip-services3-commons-go/refer/#IReferences">IReferences</a>)</pre>
+				<p>
+SetReferences method are sets references to dependent components.
+Parameters:
+- references  crefer.IReferences	references to locate the component dependencies.
+</p>
+
+				
+				
+				
+			
+		
+			
+			
+			<h2 id="RestClient">type <a href="/src/clients/RestClient.go?s=2816:3644#L70">RestClient</a>
+				<a class="permalink" href="#RestClient">&#xb6;</a>
+				
+				
+			</h2>
+			<p>
+RestClient is abstract client that calls remove endpoints using HTTP/REST protocol.
+</p>
+<p>
+Configuration parameters:
+</p>
+<pre>  - base_route:              base route for remote URI
+  - connection(s):
+    - discovery_key:         (optional) a key to retrieve the connection from IDiscovery
+    - protocol:              connection protocol: http or https
+    - host:                  host name or IP address
+    - port:                  port number
+    - uri:                   resource URI or connection string with all parameters in it
+  - options:
+    - retries:               number of retries (default: 3)
+    - connectTimeout:        connection timeout in milliseconds (default: 10 sec)
+	- timeout:               invocation timeout in milliseconds (default: 10 sec)
+	- correlation_id_place 	 place for adding correalationId, query - in query string, headers - in headers, both - in query and headers (default: query)
+</pre>
+<p>
+References:
+- *:logger:*:*:1.0         (optional) ILogger components to pass log messages
+- *:counters:*:*:1.0         (optional) ICounters components to pass collected measurements
+- *:discovery:*:*:1.0        (optional)  IDiscovery services to resolve connection
+</p>
+<p>
+See RestService
+See CommandableHttpService
+</p>
+<pre> Example:
+    type MyRestClient struct {
+		*RestClient
+	}
+    ...
+    func (c *MyRestClient) GetData(correlationId string, id string) (result *tdata.MyDataPage, err error) {
+
+		params := cdata.NewEmptyStringValueMap()
+		params.Set(&#34;id&#34;, id)
+
+		calValue, calErr := c.Call(MyDataPageType, &#34;get&#34;, &#34;/data&#34;, correlationId, params, nil)
+		if calErr != nil {
+			return nil, calErr
+		}
+
+		result, _ = calValue.(*tdata.MyDataPage)
+		c.Instrument(correlationId, &#34;myData.get_page_by_filter&#34;)
+		return result, nil
+	}
+
+    client := NewMyRestClient();
+    client.Configure(cconf.NewConfigParamsFromTuples(
+        &#34;connection.protocol&#34;, &#34;http&#34;,
+        &#34;connection.host&#34;, &#34;localhost&#34;,
+        &#34;connection.port&#34;, 8080,
+    ));
+
+	result, err := client.GetData(&#34;123&#34;, &#34;1&#34;)
+	 ...
+</pre>
+
+			<pre>type RestClient struct {
+
+    <span class="comment">//The HTTP client.</span>
+<span id="RestClient.Client"></span>    Client *<a href="/pkg/net/http/">http</a>.<a href="/pkg/net/http/#Client">Client</a>
+    <span class="comment">//The connection resolver.</span>
+<span id="RestClient.ConnectionResolver"></span>    ConnectionResolver <a href="/pkg/github.com/pip-services3-go/pip-services3-rpc-go/connect/">rpccon</a>.<a href="/pkg/github.com/pip-services3-go/pip-services3-rpc-go/connect/#HttpConnectionResolver">HttpConnectionResolver</a>
+    <span class="comment">//The logger.</span>
+<span id="RestClient.Logger"></span>    Logger *<a href="/pkg/github.com/pip-services3-go/pip-services3-components-go/log/">clog</a>.<a href="/pkg/github.com/pip-services3-go/pip-services3-components-go/log/#CompositeLogger">CompositeLogger</a>
+    <span class="comment">//The performance counters.</span>
+<span id="RestClient.Counters"></span>    Counters *<a href="/pkg/github.com/pip-services3-go/pip-services3-components-go/count/">ccount</a>.<a href="/pkg/github.com/pip-services3-go/pip-services3-components-go/count/#CompositeCounters">CompositeCounters</a>
+    <span class="comment">// The tracer.</span>
+<span id="RestClient.Tracer"></span>    Tracer *<a href="/pkg/github.com/pip-services3-go/pip-services3-components-go/trace/">ctrace</a>.<a href="/pkg/github.com/pip-services3-go/pip-services3-components-go/trace/#CompositeTracer">CompositeTracer</a>
+    <span class="comment">//The configuration options.</span>
+<span id="RestClient.Options"></span>    Options <a href="/pkg/github.com/pip-services3-go/pip-services3-commons-go/config/">cconf</a>.<a href="/pkg/github.com/pip-services3-go/pip-services3-commons-go/config/#ConfigParams">ConfigParams</a>
+    <span class="comment">//The base route.</span>
+<span id="RestClient.BaseRoute"></span>    BaseRoute <a href="/pkg/builtin/#string">string</a>
+    <span class="comment">//The number of retries.</span>
+<span id="RestClient.Retries"></span>    Retries <a href="/pkg/builtin/#int">int</a>
+    <span class="comment">//The default headers to be added to every request.</span>
+<span id="RestClient.Headers"></span>    Headers <a href="/pkg/github.com/pip-services3-go/pip-services3-commons-go/data/">cdata</a>.<a href="/pkg/github.com/pip-services3-go/pip-services3-commons-go/data/#StringValueMap">StringValueMap</a>
+    <span class="comment">//The connection timeout in milliseconds.</span>
+<span id="RestClient.ConnectTimeout"></span>    ConnectTimeout <a href="/pkg/builtin/#int">int</a>
+    <span class="comment">//The invocation timeout in milliseconds.</span>
+<span id="RestClient.Timeout"></span>    Timeout <a href="/pkg/builtin/#int">int</a>
+    <span class="comment">//The remote service uri which is calculated on open.</span>
+<span id="RestClient.Uri"></span>    Uri <a href="/pkg/builtin/#string">string</a>
+    <span class="comment">// contains filtered or unexported fields</span>
+}
+</pre>
+
+			
+
+			
+
+			
+			
+			
+
+			
+				
+				<h3 id="NewRestClient">func <a href="/src/clients/RestClient.go?s=3738:3770#L102">NewRestClient</a>
+					<a class="permalink" href="#NewRestClient">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func NewRestClient() *<a href="#RestClient">RestClient</a></pre>
+				<p>
+NewRestClient creates new instance of RestClient
+Retruns pointer on NewRestClient
+</p>
+
+				
+				
+			
+
+			
+				
+				<h3 id="RestClient.AddCorrelationId">func (*RestClient) <a href="/src/clients/RestClient.go?s=8930:9041#L234">AddCorrelationId</a>
+					<a class="permalink" href="#RestClient.AddCorrelationId">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (c *<a href="#RestClient">RestClient</a>) AddCorrelationId(params *<a href="/pkg/github.com/pip-services3-go/pip-services3-commons-go/data/">cdata</a>.<a href="/pkg/github.com/pip-services3-go/pip-services3-commons-go/data/#StringValueMap">StringValueMap</a>, correlationId <a href="/pkg/builtin/#string">string</a>) *<a href="/pkg/github.com/pip-services3-go/pip-services3-commons-go/data/">cdata</a>.<a href="/pkg/github.com/pip-services3-go/pip-services3-commons-go/data/#StringValueMap">StringValueMap</a></pre>
+				<p>
+AddCorrelationId method are adds a correlation id (correlation_id) to invocation parameter map.
+Parameters:
+</p>
+<pre>  - params    *cdata.StringValueMap        invocation parameters.
+  - correlationId  string  (optional) a correlation id to be added.
+Return invocation parameters with added correlation id.
+</pre>
+
+				
+				
+				
+			
+				
+				<h3 id="RestClient.AddFilterParams">func (*RestClient) <a href="/src/clients/RestClient.go?s=9661:9777#L254">AddFilterParams</a>
+					<a class="permalink" href="#RestClient.AddFilterParams">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (c *<a href="#RestClient">RestClient</a>) AddFilterParams(params *<a href="/pkg/github.com/pip-services3-go/pip-services3-commons-go/data/">cdata</a>.<a href="/pkg/github.com/pip-services3-go/pip-services3-commons-go/data/#StringValueMap">StringValueMap</a>, filter *<a href="/pkg/github.com/pip-services3-go/pip-services3-commons-go/data/">cdata</a>.<a href="/pkg/github.com/pip-services3-go/pip-services3-commons-go/data/#FilterParams">FilterParams</a>) *<a href="/pkg/github.com/pip-services3-go/pip-services3-commons-go/data/">cdata</a>.<a href="/pkg/github.com/pip-services3-go/pip-services3-commons-go/data/#StringValueMap">StringValueMap</a></pre>
+				<p>
+AddFilterParams method are adds filter parameters (with the same name as they defined)
+to invocation parameter map.
+Parameters:
+</p>
+<pre>- params  *cdata.StringValueMap      invocation parameters.
+- filter  *cdata.FilterParams     (optional) filter parameters
+</pre>
+<p>
+Return invocation parameters with added filter parameters.
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="RestClient.AddPagingParams">func (*RestClient) <a href="/src/clients/RestClient.go?s=10241:10357#L272">AddPagingParams</a>
+					<a class="permalink" href="#RestClient.AddPagingParams">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (c *<a href="#RestClient">RestClient</a>) AddPagingParams(params *<a href="/pkg/github.com/pip-services3-go/pip-services3-commons-go/data/">cdata</a>.<a href="/pkg/github.com/pip-services3-go/pip-services3-commons-go/data/#StringValueMap">StringValueMap</a>, paging *<a href="/pkg/github.com/pip-services3-go/pip-services3-commons-go/data/">cdata</a>.<a href="/pkg/github.com/pip-services3-go/pip-services3-commons-go/data/#PagingParams">PagingParams</a>) *<a href="/pkg/github.com/pip-services3-go/pip-services3-commons-go/data/">cdata</a>.<a href="/pkg/github.com/pip-services3-go/pip-services3-commons-go/data/#StringValueMap">StringValueMap</a></pre>
+				<p>
+AddPagingParams method are adds paging parameters (skip, take, total) to invocation parameter map.
+Parameters:
+</p>
+<pre>- params        invocation parameters.
+- paging        (optional) paging parameters
+</pre>
+<p>
+Return invocation parameters with added paging parameters.
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="RestClient.Call">func (*RestClient) <a href="/src/clients/RestClient.go?s=11631:11813#L318">Call</a>
+					<a class="permalink" href="#RestClient.Call">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (c *<a href="#RestClient">RestClient</a>) Call(prototype <a href="/pkg/reflect/">reflect</a>.<a href="/pkg/reflect/#Type">Type</a>, method <a href="/pkg/builtin/#string">string</a>, route <a href="/pkg/builtin/#string">string</a>, correlationId <a href="/pkg/builtin/#string">string</a>, params *<a href="/pkg/github.com/pip-services3-go/pip-services3-commons-go/data/">cdata</a>.<a href="/pkg/github.com/pip-services3-go/pip-services3-commons-go/data/#StringValueMap">StringValueMap</a>,
+    data interface{}) (result interface{}, err <a href="/pkg/builtin/#error">error</a>)</pre>
+				<p>
+Call method are calls a remote method via HTTP/REST protocol.
+Parameters:
+</p>
+<pre>	- prototype reflect.Type type for convert JSON result. Set nil for return raw JSON string
+ - method 	string           HTTP method: &#34;get&#34;, &#34;head&#34;, &#34;post&#34;, &#34;put&#34;, &#34;delete&#34;
+ - route   string          a command route. Base route will be added to this route
+ - correlationId  string    (optional) transaction id to trace execution through call chain.
+ - params  cdata.StringValueMap          (optional) query parameters.
+ - data   interface{}           (optional) body object.
+</pre>
+<p>
+Returns:  result interface{}, err error
+result object or error.
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="RestClient.Close">func (*RestClient) <a href="/src/clients/RestClient.go?s=8405:8459#L220">Close</a>
+					<a class="permalink" href="#RestClient.Close">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (c *<a href="#RestClient">RestClient</a>) Close(correlationId <a href="/pkg/builtin/#string">string</a>) <a href="/pkg/builtin/#error">error</a></pre>
+				<p>
+Close method are closes component and frees used resources.
+Parameters:
+</p>
+<pre>- correlationId  string	(optional) transaction id to trace execution through call chain.
+</pre>
+<p>
+Retruns: error
+error or nil no errors occured.
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="RestClient.Configure">func (*RestClient) <a href="/src/clients/RestClient.go?s=4677:4735#L131">Configure</a>
+					<a class="permalink" href="#RestClient.Configure">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (c *<a href="#RestClient">RestClient</a>) Configure(config *<a href="/pkg/github.com/pip-services3-go/pip-services3-commons-go/config/">cconf</a>.<a href="/pkg/github.com/pip-services3-go/pip-services3-commons-go/config/#ConfigParams">ConfigParams</a>)</pre>
+				<p>
+Configures component by passing configuration parameters.
+Parameters:
+- config *cconf.ConfigParams   configuration parameters to be set.
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="RestClient.Instrument">func (*RestClient) <a href="/src/clients/RestClient.go?s=6066:6158#L158">Instrument</a>
+					<a class="permalink" href="#RestClient.Instrument">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (c *<a href="#RestClient">RestClient</a>) Instrument(correlationId <a href="/pkg/builtin/#string">string</a>, name <a href="/pkg/builtin/#string">string</a>) *<a href="/pkg/github.com/pip-services3-go/pip-services3-rpc-go/services/">service</a>.<a href="/pkg/github.com/pip-services3-go/pip-services3-rpc-go/services/#InstrumentTiming">InstrumentTiming</a></pre>
+				<p>
+Instrument method are adds instrumentation to log calls and measure call time.
+It returns a Timing object that is used to end the time measurement.
+Parameters:
+- correlationId  string   (optional) transaction id to trace execution through call chain.
+- name    string          a method name.
+Return Timing object to end the time measurement.
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="RestClient.InstrumentError">func (*RestClient) <a href="/src/clients/RestClient.go?s=6930:7065#L174">InstrumentError</a>
+					<a class="permalink" href="#RestClient.InstrumentError">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (c *<a href="#RestClient">RestClient</a>) InstrumentError(correlationId <a href="/pkg/builtin/#string">string</a>, name <a href="/pkg/builtin/#string">string</a>, inErr <a href="/pkg/builtin/#error">error</a>, inRes interface{}) (result interface{}, err <a href="/pkg/builtin/#error">error</a>)</pre>
+				<p>
+InstrumentError method are dds instrumentation to error handling.
+</p>
+<pre>- correlationId   string  (optional) transaction id to trace execution through call chain.
+- name   string           a method name.
+- err    error           an occured error
+- result  interface{}           (optional) an execution result
+</pre>
+<p>
+Returns: result interface{}, err error
+an execution result and error
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="RestClient.IsOpen">func (*RestClient) <a href="/src/clients/RestClient.go?s=7366:7400#L185">IsOpen</a>
+					<a class="permalink" href="#RestClient.IsOpen">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (c *<a href="#RestClient">RestClient</a>) IsOpen() <a href="/pkg/builtin/#bool">bool</a></pre>
+				<p>
+IsOpen are checks if the component is opened.
+Return true if the component has been opened and false otherwise.
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="RestClient.Open">func (*RestClient) <a href="/src/clients/RestClient.go?s=7623:7676#L193">Open</a>
+					<a class="permalink" href="#RestClient.Open">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (c *<a href="#RestClient">RestClient</a>) Open(correlationId <a href="/pkg/builtin/#string">string</a>) <a href="/pkg/builtin/#error">error</a></pre>
+				<p>
+Open method are opens the component.
+</p>
+<pre>- correlationId string	(optional) transaction id to trace execution through call chain.
+</pre>
+<p>
+Returns: error
+error or nil no errors occured.
+</p>
+
+				
+				
+				
+			
+				
+				<h3 id="RestClient.SetReferences">func (*RestClient) <a href="/src/clients/RestClient.go?s=5464:5529#L145">SetReferences</a>
+					<a class="permalink" href="#RestClient.SetReferences">&#xb6;</a>
+					
+					
+				</h3>
+				<pre>func (c *<a href="#RestClient">RestClient</a>) SetReferences(references <a href="/pkg/github.com/pip-services3-go/pip-services3-commons-go/refer/">crefer</a>.<a href="/pkg/github.com/pip-services3-go/pip-services3-commons-go/refer/#IReferences">IReferences</a>)</pre>
+				<p>
+Sets references to dependent components.
+Parameters:
+- references  crefer.IReferences	references to locate the component dependencies.
+</p>
+
+				
+				
+				
+			
+		
+	
+
+	
+
+
+
+
+
+
+
+<div id="footer">
+Build version go1.16.15.<br>
+Except as <a href="https://developers.google.com/site-policies#restrictions">noted</a>,
+the content of this page is licensed under the
+Creative Commons Attribution 3.0 License,
+and code is licensed under a <a href="/LICENSE">BSD license</a>.<br>
+<a href="https://golang.org/doc/tos.html">Terms of Service</a> |
+<a href="https://www.google.com/intl/en/policies/privacy/">Privacy Policy</a>
+</div>
+
+</div><!-- .container -->
+</div><!-- #page -->
+</body>
+</html>

@@ -34,8 +34,8 @@ func NewDummyRestService() *DummyRestService {
 }
 
 func (c *DummyRestService) Configure(config *cconf.ConfigParams) {
-	c.openApiContent = *config.GetAsNullableString("openapi_content")
-	c.openApiFile = *config.GetAsNullableString("openapi_file")
+	c.openApiContent = config.GetAsString("openapi_content")
+	c.openApiFile = config.GetAsString("openapi_file")
 	c.RestService.Configure(config)
 }
 
