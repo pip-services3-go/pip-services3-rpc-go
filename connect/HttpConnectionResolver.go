@@ -22,7 +22,7 @@ Configuration parameters:
   - connection:
     - discovery_key:               (optional) a key to retrieve the connection from IDiscovery
     - ...                          other connection parameters
-  
+
   - connections:                   alternative to connection
     - [connection params 1]:       first connection parameters
     -  ...
@@ -102,16 +102,21 @@ func (c *HttpConnectionResolver) validateConnection(correlationId string, connec
 	}
 	// Check HTTPS credentials
 	if protocol == "https" {
-		// Check for credential
-		if credential == nil {
-			return cerr.NewConfigError(correlationId, "NO_CREDENTIAL", "SSL certificates are not configured for HTTPS protocol")
-		} else {
-			if credential.GetAsNullableString("ssl_key_file") == nil {
-				return cerr.NewConfigError(
-					correlationId, "NO_SSL_KEY_FILE", "SSL key file is not configured in credentials")
-			} else if credential.GetAsNullableString("ssl_crt_file") == nil {
-				return cerr.NewConfigError(
-					correlationId, "NO_SSL_CRT_FILE", "SSL crt file is not configured in credentials")
+		// Sometimes when we use https we are on an internal network and do not want to have to deal with security.
+		// When we need a https connection and we don't want to pass credentials, flag is 'credential.internal_network',
+		// this flag just has to be present and non null for this functionality to work.
+		if val := credential.GetAsNullableString("internal_network"); val == nil || *val == "" {
+			// Check for credential
+			if credential == nil {
+				return cerr.NewConfigError(correlationId, "NO_CREDENTIAL", "SSL certificates are not configured for HTTPS protocol")
+			} else {
+				if credential.GetAsNullableString("ssl_key_file") == nil {
+					return cerr.NewConfigError(
+						correlationId, "NO_SSL_KEY_FILE", "SSL key file is not configured in credentials")
+				} else if credential.GetAsNullableString("ssl_crt_file") == nil {
+					return cerr.NewConfigError(
+						correlationId, "NO_SSL_CRT_FILE", "SSL crt file is not configured in credentials")
+				}
 			}
 		}
 	}
