@@ -209,14 +209,21 @@ func (c *HttpEndpoint) Open(correlationId string) error {
 
 	c.performRegistrations()
 
+	chErr := make(chan error, 1)
+	defer close(chErr)
+
 	if connection.Protocol() == "https" {
 		sslKeyFile := credential.GetAsString("ssl_key_file")
 		sslCrtFile := credential.GetAsString("ssl_crt_file")
 
 		go func() {
-			servErr := c.server.ListenAndServeTLS(sslKeyFile, sslCrtFile)
+			servErr := c.server.ListenAndServeTLS(sslCrtFile, sslKeyFile)
 			if servErr != nil {
-				//fmt.Println("Server stoped:", servErr.Error())
+				select {
+				default:
+					chErr <- err
+				case <-chErr:
+				}
 			}
 		}()
 
@@ -224,9 +231,21 @@ func (c *HttpEndpoint) Open(correlationId string) error {
 		go func() {
 			servErr := c.server.ListenAndServe()
 			if servErr != nil {
-				//fmt.Println("Server stoped:", servErr.Error())
+				select {
+				default:
+					chErr <- err
+				case <-chErr:
+				}
 			}
 		}()
+	}
+
+	// waiting 1 second for start up services
+	select {
+	case <-time.After(time.Second):
+	case err := <-chErr:
+		c.logger.Error(correlationId, err, "ERROR_STARTUP_SERVICE", "Can't start REST service at %s", c.uri)
+		return err
 	}
 
 	regErr := c.connectionResolver.Register(correlationId)
