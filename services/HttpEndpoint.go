@@ -3,9 +3,12 @@ package services
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -22,7 +25,7 @@ import (
 )
 
 /*
- HttpEndpoint used for creating HTTP endpoints. An endpoint is a URL, at which a given service can be accessed by a client.
+	HttpEndpoint used for creating HTTP endpoints. An endpoint is a URL, at which a given service can be accessed by a client.
 
 Configuration parameters:
 
@@ -31,17 +34,20 @@ Parameters to pass to the configure method for component configuration:
   - cors_headers - a comma-separated list of allowed CORS headers
   - cors_origins - a comma-separated list of allowed CORS origins
   - connection(s) - the connection resolver"s connections:
-    - "connection.discovery_key" - the key to use for connection resolving in a discovery service;
-    - "connection.protocol" - the connection"s protocol;
-    - "connection.host" - the target host;
-    - "connection.port" - the target port;
-    - "connection.uri" - the target URI.
+  - "connection.discovery_key" - the key to use for connection resolving in a discovery service;
+  - "connection.protocol" - the connection"s protocol;
+  - "connection.host" - the target host;
+  - "connection.port" - the target port;
+  - "connection.uri" - the target URI.
   - credential - the HTTPS credentials:
-    - "credential.ssl_key_file" - the SSL func (c *HttpEndpoint )key in PEM
-    - "credential.ssl_crt_file" - the SSL certificate in PEM
-    - "credential.ssl_ca_file" - the certificate authorities (root cerfiticates) in PEM
-
-References:
+  - "credential.ssl_key_file" - the SSL func (c *HttpEndpoint )key in PEM
+  - "credential.ssl_crt_file" - the SSL certificate in PEM
+  - "credential.ssl_ca_file" - the certificate authorities (root cerfiticates) in PEM
+  - options - the http endpoint options
+  - "options.enable_extend_tls" - enable extended tls options for custom root certificates
+  - "options.client_auth_type" - authentification type (request_client_cert, require_any_client_cert, verify_client_cert_if_given, require_and_verify_client_cert, default: no_client_auth)
+  - "options.certificate_server_name" - certificates server (default: letsencrypt.org)
+    References:
 
 A logger, counters, and a connection resolver can be referenced by passing the
 following references to the object"s setReferences method:
@@ -52,13 +58,15 @@ following references to the object"s setReferences method:
 
 Examples:
 
-    endpoint := NewHttpEndpoint();
-    endpoint.Configure(config);
-    endpoint.SetReferences(references);
-    ...
-	endpoint.Open(correlationId)
+	    endpoint := NewHttpEndpoint();
+	    endpoint.Configure(config);
+	    endpoint.SetReferences(references);
+	    ...
+		endpoint.Open(correlationId)
 */
 type HttpEndpoint struct {
+	ITlsConfigurator
+
 	defaultConfig          *cconf.ConfigParams
 	server                 *http.Server
 	router                 *mux.Router
@@ -72,6 +80,10 @@ type HttpEndpoint struct {
 	registrations          []IRegisterable
 	allowedHeaders         []string
 	allowedOrigins         []string
+
+	enableExtendTls       bool
+	clientAuthType        string
+	certificateServerName string
 }
 
 // NewHttpEndpoint creates new HttpEndpoint
@@ -85,6 +97,10 @@ func NewHttpEndpoint() *HttpEndpoint {
 		"credential.ssl_key_file", nil,
 		"credential.ssl_crt_file", nil,
 		"credential.ssl_ca_file", nil,
+
+		"options.certificate_server_name", "letsencrypt.org",
+		"options.client_auth_type", "no_client_cert",
+		"options.enable_extend_tls", false,
 
 		"options.maintenance_enabled", false,
 		"options.request_max_size", 1024*1024,
@@ -113,18 +129,25 @@ func NewHttpEndpoint() *HttpEndpoint {
 	return &c
 }
 
+// NewHttpEndpoint inherit configurator
+func InheritTlsHttpEndpoint(configurator ITlsConfigurator) *HttpEndpoint {
+	c := NewHttpEndpoint()
+	c.ITlsConfigurator = configurator
+	return c
+}
+
 // Configure method are configures this HttpEndpoint using the given configuration parameters.
 // Configuration parameters:
-//    - connection(s) - the connection resolver"s connections;
-//        - "connection.discovery_key" - the key to use for connection resolving in a discovery service;
-//        - "connection.protocol" - the connection"s protocol;
-//        - "connection.host" - the target host;
-//        - "connection.port" - the target port;
-//        - "connection.uri" - the target URI.
-//        - "credential.ssl_key_file" - SSL func (c *HttpEndpoint )key in PEM
-//        - "credential.ssl_crt_file" - SSL certificate in PEM
-//        - "credential.ssl_ca_file" - Certificate authority (root certificate) in PEM
-//  - config    configuration parameters, containing a "connection(s)" section.
+//   - connection(s) - the connection resolver"s connections;
+//   - "connection.discovery_key" - the key to use for connection resolving in a discovery service;
+//   - "connection.protocol" - the connection"s protocol;
+//   - "connection.host" - the target host;
+//   - "connection.port" - the target port;
+//   - "connection.uri" - the target URI.
+//   - "credential.ssl_key_file" - SSL func (c *HttpEndpoint )key in PEM
+//   - "credential.ssl_crt_file" - SSL certificate in PEM
+//   - "credential.ssl_ca_file" - Certificate authority (root certificate) in PEM
+//   - config    configuration parameters, containing a "connection(s)" section.
 func (c *HttpEndpoint) Configure(config *cconf.ConfigParams) {
 	config = config.SetDefaults(c.defaultConfig)
 	c.connectionResolver.Configure(config)
@@ -132,6 +155,9 @@ func (c *HttpEndpoint) Configure(config *cconf.ConfigParams) {
 	c.maintenanceEnabled = config.GetAsBooleanWithDefault("options.maintenance_enabled", c.maintenanceEnabled)
 	c.fileMaxSize = config.GetAsLongWithDefault("options.file_max_size", c.fileMaxSize)
 	c.protocolUpgradeEnabled = config.GetAsBooleanWithDefault("options.protocol_upgrade_enabled", c.protocolUpgradeEnabled)
+	c.enableExtendTls = config.GetAsBooleanWithDefault("options.enable_extend_tls", c.enableExtendTls)
+	c.clientAuthType = config.GetAsStringWithDefault("options.client_auth_type", c.clientAuthType)
+	c.certificateServerName = config.GetAsStringWithDefault("options.certificate_server_name", c.certificateServerName)
 
 	headers := strings.Split(config.GetAsStringWithDefault("cors_headers", ""), ",")
 	if headers != nil && len(headers) > 0 {
@@ -149,12 +175,14 @@ func (c *HttpEndpoint) Configure(config *cconf.ConfigParams) {
 }
 
 // SetReferences method are sets references to this endpoint"s logger, counters, and connection resolver.
-//    References:
-//    - logger: "*:logger:*:*:1.0"
-//    - counters: "*:counters:*:*:1.0"
-//    - discovery: "*:discovery:*:*:1.0" (for the connection resolver)
+//
+//	References:
+//	- logger: "*:logger:*:*:1.0"
+//	- counters: "*:counters:*:*:1.0"
+//	- discovery: "*:discovery:*:*:1.0" (for the connection resolver)
+//
 // Parameters:
-//    - references    an IReferences object, containing references to a logger, counters,
+//   - references    an IReferences object, containing references to a logger, counters,
 //     and a connection resolver.
 func (c *HttpEndpoint) SetReferences(references crefer.IReferences) {
 	c.logger.SetReferences(references)
@@ -171,6 +199,7 @@ func (c *HttpEndpoint) IsOpen() bool {
 // resolver and creates a REST server (service) using the set options and parameters.
 // Parameters:
 //   - correlationId   string  (optional) transaction id to trace execution through call chain.
+//
 // Returns : error
 // an error if one is raised.
 func (c *HttpEndpoint) Open(correlationId string) error {
@@ -216,6 +245,26 @@ func (c *HttpEndpoint) Open(correlationId string) error {
 		sslKeyFile := credential.GetAsString("ssl_key_file")
 		sslCrtFile := credential.GetAsString("ssl_crt_file")
 
+		if c.enableExtendTls {
+			clientAuthType := c.GetClientAuthType()
+			caCertPool, err := c.GetCaCert()
+			if err != nil {
+				return err
+			}
+			certificates, err := c.GetCertificates()
+			if err != nil {
+				return err
+			}
+			c.server.TLSConfig = &tls.Config{
+				// TLS versions below 1.2 are considered insecure
+				// see https://www.rfc-editor.org/rfc/rfc7525.txt for details
+				MinVersion:   tls.VersionTLS12,
+				Certificates: certificates,
+				ClientCAs:    caCertPool,
+				ServerName:   c.certificateServerName,
+				ClientAuth:   clientAuthType,
+			}
+		}
 		go func() {
 			servErr := c.server.ListenAndServeTLS(sslCrtFile, sslKeyFile)
 			if servErr != nil {
@@ -284,6 +333,7 @@ func (c *HttpEndpoint) doMaintenance(next http.Handler) http.Handler {
 // Close method are closes this endpoint and the REST server (service) that was opened earlier.
 // Parameters:
 //   - correlationId  string   (optional) transaction id to trace execution through call chain.
+//
 // Returns: error
 // an error if one is raised.
 func (c *HttpEndpoint) Close(correlationId string) error {
@@ -306,6 +356,7 @@ func (c *HttpEndpoint) Close(correlationId string) error {
 // Registers a registerable object for dynamic endpoint discovery.
 // Parameters:
 //   - registration  IRegisterable   implements of IRegisterable interface.
+//
 // See IRegisterable
 func (c *HttpEndpoint) Register(registration IRegisterable) {
 	c.registrations = append(c.registrations, registration)
@@ -315,6 +366,7 @@ func (c *HttpEndpoint) Register(registration IRegisterable) {
 // endpoint discovery.
 // Parameters:
 //   - registration  IRegisterable  the registration to remove.
+//
 // See IRegisterable
 func (c *HttpEndpoint) Unregister(registration IRegisterable) {
 	for i := 0; i < len(c.registrations); {
@@ -345,7 +397,9 @@ func (c *HttpEndpoint) fixRoute(route string) string {
 
 // GetCorrelationId method returns CorrelationId from request
 // Parameters:
-//   req *http.Request  request
+//
+//	req *http.Request  request
+//
 // Returns: string
 // retrun correlation_id or empty string
 func (c *HttpEndpoint) GetCorrelationId(req *http.Request) string {
@@ -475,4 +529,64 @@ func (c *HttpEndpoint) AddCorsHeader(header string, origin string) {
 			c.allowedOrigins = append(c.allowedOrigins, origin)
 		}
 	}
+}
+
+func (c *HttpEndpoint) GetClientAuthType() tls.ClientAuthType {
+	switch strings.ToLower(c.clientAuthType) {
+	default:
+		return tls.NoClientCert
+	case "request_client_cert":
+		return tls.RequestClientCert
+	case "require_any_client_cert":
+		return tls.RequireAnyClientCert
+	case "verify_client_cert_if_given":
+		return tls.VerifyClientCertIfGiven
+	case "require_and_verify_client_cert":
+		return tls.RequireAndVerifyClientCert
+	}
+}
+
+func (c *HttpEndpoint) GetCertificates() ([]tls.Certificate, error) {
+	var certificates []tls.Certificate
+	_, credential, err := c.connectionResolver.Resolve("")
+	if err != nil {
+		return nil, err
+	}
+	sslKeyFile := credential.GetAsString("ssl_key_file")
+	sslCrtFile := credential.GetAsString("ssl_crt_file")
+
+	if sslCrtFile != "" && sslKeyFile != "" {
+		bytesCert, err := os.ReadFile(sslCrtFile)
+		if err != nil {
+			return nil, err
+		}
+		bytesKey, err := os.ReadFile(sslKeyFile)
+		if err != nil {
+			return nil, err
+		}
+		certificate, err := tls.X509KeyPair(bytesCert, bytesKey)
+		if err != nil {
+			return nil, err
+		}
+		certificates = append(certificates, certificate)
+	}
+	return certificates, nil
+}
+
+func (c *HttpEndpoint) GetCaCert() (*x509.CertPool, error) {
+	_, credential, err := c.connectionResolver.Resolve("")
+	if err != nil {
+		return nil, err
+	}
+	sslCaFile := credential.GetAsString("ssl_ca_file")
+
+	caCertPool := x509.NewCertPool()
+	if sslCaFile != "" {
+		bytes, err := os.ReadFile(sslCaFile)
+		if err != nil {
+			return nil, err
+		}
+		caCertPool.AppendCertsFromPEM(bytes)
+	}
+	return caCertPool, nil
 }

@@ -2,10 +2,13 @@ package clients
 
 import (
 	"bytes"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
 	neturl "net/url"
+	"os"
 	"reflect"
 	"strings"
 	"time"
@@ -25,20 +28,50 @@ import (
 RestClient is abstract client that calls remove endpoints using HTTP/REST protocol.
 
 Configuration parameters:
-  - base_route:              base route for remote URI
-  - connection(s):
-    - discovery_key:         (optional) a key to retrieve the connection from IDiscovery
-    - protocol:              connection protocol: http or https
-    - host:                  host name or IP address
-    - port:                  port number
-    - uri:                   resource URI or connection string with all parameters in it
-  - options:
-    - retries:               number of retries (default: 3)
-    - connectTimeout:        connection timeout in milliseconds (default: 10 sec)
-	- timeout:               invocation timeout in milliseconds (default: 10 sec)
-	- correlation_id_place 	 place for adding correalationId, query - in query string, headers - in headers, both - in query and headers (default: query)
+- credential - the HTTPS credentials:
 
-References:
+  - ssl_key_file - the SSL func (c *HttpEndpoint )key in PEM
+
+  - ssl_crt_file - the SSL certificate in PEM
+
+  - ssl_ca_file - the certificate authorities (root cerfiticates) in PEM
+
+- connection:
+
+  - protocol:              connection protocol: http or https
+
+  - host:                  host name or IP address
+
+  - port:                  port number
+
+  - uri:                   resource URI or connection string with all parameters in it
+
+- options:
+
+  - base_route:              base route for remote URI
+
+  - connection(s):
+
+  - discovery_key:         (optional) a key to retrieve the connection from IDiscovery
+
+  - options:
+
+  - retries:               number of retries (default: 3)
+
+  - connectTimeout:        connection timeout in milliseconds (default: 10 sec)
+
+  - timeout:               invocation timeout in milliseconds (default: 10 sec)
+
+  - correlation_id_place 	 place for adding correalationId, query - in query string, headers - in headers, both - in query and headers (default: query)
+
+  - enable_extend_tls - enable extended tls options for custom root certificates
+
+  - client_auth_type - authentification type (request_client_cert, require_any_client_cert, verify_client_cert_if_given, require_and_verify_client_cert, default: no_client_auth)
+
+  - certificate_server_name - certificates server (default: letsencrypt.org)
+
+    References:
+
 - *:logger:*:*:1.0         (optional) ILogger components to pass log messages
 - *:counters:*:*:1.0         (optional) ICounters components to pass collected measurements
 - *:discovery:*:*:1.0        (optional)  IDiscovery services to resolve connection
@@ -46,38 +79,39 @@ References:
 See RestService
 See CommandableHttpService
 
- Example:
-    type MyRestClient struct {
-		*RestClient
-	}
-    ...
-    func (c *MyRestClient) GetData(correlationId string, id string) (result *tdata.MyDataPage, err error) {
+	 Example:
+	    type MyRestClient struct {
+			*RestClient
+		}
+	    ...
+	    func (c *MyRestClient) GetData(correlationId string, id string) (result *tdata.MyDataPage, err error) {
 
-		params := cdata.NewEmptyStringValueMap()
-		params.Set("id", id)
+			params := cdata.NewEmptyStringValueMap()
+			params.Set("id", id)
 
-		calValue, calErr := c.Call(MyDataPageType, "get", "/data", correlationId, params, nil)
-		if calErr != nil {
-			return nil, calErr
+			calValue, calErr := c.Call(MyDataPageType, "get", "/data", correlationId, params, nil)
+			if calErr != nil {
+				return nil, calErr
+			}
+
+			result, _ = calValue.(*tdata.MyDataPage)
+			c.Instrument(correlationId, "myData.get_page_by_filter")
+			return result, nil
 		}
 
-		result, _ = calValue.(*tdata.MyDataPage)
-		c.Instrument(correlationId, "myData.get_page_by_filter")
-		return result, nil
-	}
+	    client := NewMyRestClient();
+	    client.Configure(cconf.NewConfigParamsFromTuples(
+	        "connection.protocol", "http",
+	        "connection.host", "localhost",
+	        "connection.port", 8080,
+	    ));
 
-    client := NewMyRestClient();
-    client.Configure(cconf.NewConfigParamsFromTuples(
-        "connection.protocol", "http",
-        "connection.host", "localhost",
-        "connection.port", 8080,
-    ));
-
-	result, err := client.GetData("123", "1")
-	 ...
-
+		result, err := client.GetData("123", "1")
+		 ...
 */
 type RestClient struct {
+	service.ITlsConfigurator
+
 	defaultConfig cconf.ConfigParams
 	//The HTTP client.
 	Client *http.Client
@@ -105,6 +139,10 @@ type RestClient struct {
 	Uri string
 	// add correlation id to headers
 	passCorrelationId string
+
+	enableExtendTls       bool
+	clientAuthType        string
+	certificateServerName string
 }
 
 // NewRestClient creates new instance of RestClient
@@ -116,12 +154,20 @@ func NewRestClient() *RestClient {
 		"connection.host", "0.0.0.0",
 		"connection.port", 3000,
 
+		"credential.ssl_key_file", nil,
+		"credential.ssl_crt_file", nil,
+		"credential.ssl_ca_file", nil,
+
 		"options.request_max_size", 1024*1024,
 		"options.connectTimeout", 10000,
 		"options.timeout", 10000,
 		"options.retries", 3,
 		"options.debug", true,
 		"options.correlation_id", "query",
+
+		"options.certificate_server_name", "letsencrypt.org",
+		"options.client_auth_type", "no_client_cert",
+		"options.enable_extend_tls", false,
 	)
 	rc.ConnectionResolver = *rpccon.NewHttpConnectionResolver()
 	rc.Logger = clog.NewCompositeLogger()
@@ -147,6 +193,10 @@ func (c *RestClient) Configure(config *cconf.ConfigParams) {
 	c.Timeout = config.GetAsIntegerWithDefault("options.timeout", c.Timeout)
 	c.BaseRoute = config.GetAsStringWithDefault("base_route", c.BaseRoute)
 	c.passCorrelationId = config.GetAsStringWithDefault("options.correlation_id", c.passCorrelationId)
+
+	c.enableExtendTls = config.GetAsBooleanWithDefault("options.enable_extend_tls", c.enableExtendTls)
+	c.clientAuthType = config.GetAsStringWithDefault("options.client_auth_type", c.clientAuthType)
+	c.certificateServerName = config.GetAsStringWithDefault("options.certificate_server_name", c.certificateServerName)
 }
 
 // Sets references to dependent components.
@@ -175,10 +225,11 @@ func (c *RestClient) Instrument(correlationId string, name string) *service.Inst
 }
 
 // InstrumentError method are dds instrumentation to error handling.
-//    - correlationId   string  (optional) transaction id to trace execution through call chain.
-//    - name   string           a method name.
-//    - err    error           an occured error
-//    - result  interface{}           (optional) an execution result
+//   - correlationId   string  (optional) transaction id to trace execution through call chain.
+//   - name   string           a method name.
+//   - err    error           an occured error
+//   - result  interface{}           (optional) an execution result
+//
 // Returns: result interface{}, err error
 // an execution result and error
 func (c *RestClient) InstrumentError(correlationId string, name string, inErr error, inRes interface{}) (result interface{}, err error) {
@@ -197,7 +248,8 @@ func (c *RestClient) IsOpen() bool {
 }
 
 // Open method are opens the component.
-// 	- correlationId string	(optional) transaction id to trace execution through call chain.
+//   - correlationId string	(optional) transaction id to trace execution through call chain.
+//
 // Returns: error
 // error or nil no errors occured.
 func (c *RestClient) Open(correlationId string) error {
@@ -214,6 +266,29 @@ func (c *RestClient) Open(correlationId string) error {
 	localClient := http.Client{}
 	localClient.Timeout = (time.Duration)(c.Timeout) * time.Millisecond
 	c.Client = &localClient
+
+	if connection.Protocol() == "https" {
+		clientAuthType := c.GetClientAuthType()
+		caCertPool, err := c.GetCaCert()
+		if err != nil {
+			return err
+		}
+		certificates, err := c.GetCertificates()
+		if err != nil {
+			return err
+		}
+		c.Client.Transport = &http.Transport{
+			TLSClientConfig: &tls.Config{
+				// TLS versions below 1.2 are considered insecure
+				// see https://www.rfc-editor.org/rfc/rfc7525.txt for details
+				MinVersion:   tls.VersionTLS12,
+				Certificates: certificates,
+				ClientCAs:    caCertPool,
+				ServerName:   c.certificateServerName,
+				ClientAuth:   clientAuthType,
+			},
+		}
+	}
 	if c.Client == nil {
 		ex := cerr.NewConnectionError(correlationId, "CANNOT_CONNECT", "Connection to REST service failed").WithDetails("url", c.Uri)
 		return ex
@@ -224,7 +299,8 @@ func (c *RestClient) Open(correlationId string) error {
 
 // Close method are closes component and frees used resources.
 // Parameters:
-// 	- correlationId  string	(optional) transaction id to trace execution through call chain.
+//   - correlationId  string	(optional) transaction id to trace execution through call chain.
+//
 // Retruns: error
 // error or nil no errors occured.
 func (c *RestClient) Close(correlationId string) error {
@@ -238,9 +314,9 @@ func (c *RestClient) Close(correlationId string) error {
 
 // AddCorrelationId method are adds a correlation id (correlation_id) to invocation parameter map.
 // Parameters:
-//    - params    *cdata.StringValueMap        invocation parameters.
-//    - correlationId  string  (optional) a correlation id to be added.
-//  Return invocation parameters with added correlation id.
+//   - params    *cdata.StringValueMap        invocation parameters.
+//   - correlationId  string  (optional) a correlation id to be added.
+//     Return invocation parameters with added correlation id.
 func (c *RestClient) AddCorrelationId(params *cdata.StringValueMap, correlationId string) *cdata.StringValueMap {
 	// Automatically generate short ids for now
 	if correlationId == "" {
@@ -258,8 +334,9 @@ func (c *RestClient) AddCorrelationId(params *cdata.StringValueMap, correlationI
 // AddFilterParams method are adds filter parameters (with the same name as they defined)
 // to invocation parameter map.
 // Parameters:
-//    - params  *cdata.StringValueMap      invocation parameters.
-//    - filter  *cdata.FilterParams     (optional) filter parameters
+//   - params  *cdata.StringValueMap      invocation parameters.
+//   - filter  *cdata.FilterParams     (optional) filter parameters
+//
 // Return invocation parameters with added filter parameters.
 func (c *RestClient) AddFilterParams(params *cdata.StringValueMap, filter *cdata.FilterParams) *cdata.StringValueMap {
 
@@ -276,8 +353,9 @@ func (c *RestClient) AddFilterParams(params *cdata.StringValueMap, filter *cdata
 
 // AddPagingParams method are adds paging parameters (skip, take, total) to invocation parameter map.
 // Parameters:
-//    - params        invocation parameters.
-//    - paging        (optional) paging parameters
+//   - params        invocation parameters.
+//   - paging        (optional) paging parameters
+//
 // Return invocation parameters with added paging parameters.
 func (c *RestClient) AddPagingParams(params *cdata.StringValueMap, paging *cdata.PagingParams) *cdata.StringValueMap {
 	if params == nil {
@@ -317,12 +395,13 @@ func (c *RestClient) createRequestRoute(route string) string {
 
 // Call method are calls a remote method via HTTP/REST protocol.
 // Parameters:
-// 	- prototype reflect.Type type for convert JSON result. Set nil for return raw JSON string
-//  - method 	string           HTTP method: "get", "head", "post", "put", "delete"
-//  - route   string          a command route. Base route will be added to this route
-//  - correlationId  string    (optional) transaction id to trace execution through call chain.
-//  - params  cdata.StringValueMap          (optional) query parameters.
-//  - data   interface{}           (optional) body object.
+//   - prototype reflect.Type type for convert JSON result. Set nil for return raw JSON string
+//   - method 	string           HTTP method: "get", "head", "post", "put", "delete"
+//   - route   string          a command route. Base route will be added to this route
+//   - correlationId  string    (optional) transaction id to trace execution through call chain.
+//   - params  cdata.StringValueMap          (optional) query parameters.
+//   - data   interface{}           (optional) body object.
+//
 // Returns:  result interface{}, err error
 // result object or error.
 func (c *RestClient) Call(prototype reflect.Type, method string, route string, correlationId string, params *cdata.StringValueMap,
@@ -434,4 +513,64 @@ func (c *RestClient) Call(prototype reflect.Type, method string, route string, c
 
 	return r, rErr
 
+}
+
+func (c *RestClient) GetClientAuthType() tls.ClientAuthType {
+	switch strings.ToLower(c.clientAuthType) {
+	default:
+		return tls.NoClientCert
+	case "request_client_cert":
+		return tls.RequestClientCert
+	case "require_any_client_cert":
+		return tls.RequireAnyClientCert
+	case "verify_client_cert_if_given":
+		return tls.VerifyClientCertIfGiven
+	case "require_and_verify_client_cert":
+		return tls.RequireAndVerifyClientCert
+	}
+}
+
+func (c *RestClient) GetCertificates() ([]tls.Certificate, error) {
+	var certificates []tls.Certificate
+	_, credential, err := c.ConnectionResolver.Resolve("")
+	if err != nil {
+		return nil, err
+	}
+	sslKeyFile := credential.GetAsString("ssl_key_file")
+	sslCrtFile := credential.GetAsString("ssl_crt_file")
+
+	if sslCrtFile != "" && sslKeyFile != "" {
+		bytesCert, err := os.ReadFile(sslCrtFile)
+		if err != nil {
+			return nil, err
+		}
+		bytesKey, err := os.ReadFile(sslKeyFile)
+		if err != nil {
+			return nil, err
+		}
+		certificate, err := tls.X509KeyPair(bytesCert, bytesKey)
+		if err != nil {
+			return nil, err
+		}
+		certificates = append(certificates, certificate)
+	}
+	return certificates, nil
+}
+
+func (c *RestClient) GetCaCert() (*x509.CertPool, error) {
+	_, credential, err := c.ConnectionResolver.Resolve("")
+	if err != nil {
+		return nil, err
+	}
+	sslCaFile := credential.GetAsString("ssl_ca_file")
+
+	caCertPool := x509.NewCertPool()
+	if sslCaFile != "" {
+		bytes, err := os.ReadFile(sslCaFile)
+		if err != nil {
+			return nil, err
+		}
+		caCertPool.AppendCertsFromPEM(bytes)
+	}
+	return caCertPool, nil
 }
