@@ -11,7 +11,6 @@ import (
 	eservices "github.com/pip-services3-go/pip-services3-rpc-go/example/services"
 )
 
-// Important! Before running add CA certificate into your system
 func main() {
 	service := BuildRestService()
 	client := BuildRestClient()
@@ -51,7 +50,6 @@ func BuildRestService() *eservices.DummyRestService {
 		"openapi_content", "swagger yaml or json content",
 		"swagger.enable", "true",
 
-		"options.enable_extend_tls", true,
 		"options.client_auth_type", "require_and_verify_client_cert",
 		"options.certificate_server_name", "localhost",
 
@@ -82,8 +80,6 @@ func BuildRestClient() *eclients.DummyRestClient {
 		"connection.port", Port,
 
 		"options.correlation_id_place", "headers",
-		"options.enable_extend_tls", true,
-		"options.client_auth_type", "require_and_verify_client_cert",
 		"options.certificate_server_name", "localhost",
 
 		"credential.ssl_key_file", "../certs/client.key",

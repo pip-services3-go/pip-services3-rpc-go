@@ -44,7 +44,6 @@ Parameters to pass to the configure method for component configuration:
   - "credential.ssl_crt_file" - the SSL certificate in PEM
   - "credential.ssl_ca_file" - the certificate authorities (root cerfiticates) in PEM
   - options - the http endpoint options
-  - "options.enable_extend_tls" - enable extended tls options for custom root certificates
   - "options.client_auth_type" - authentification type (request_client_cert, require_any_client_cert, verify_client_cert_if_given, require_and_verify_client_cert, default: no_client_auth)
   - "options.certificate_server_name" - certificates server (default: letsencrypt.org)
     References:
@@ -81,7 +80,6 @@ type HttpEndpoint struct {
 	allowedHeaders         []string
 	allowedOrigins         []string
 
-	enableExtendTls       bool
 	clientAuthType        string
 	certificateServerName string
 }
@@ -155,7 +153,6 @@ func (c *HttpEndpoint) Configure(config *cconf.ConfigParams) {
 	c.maintenanceEnabled = config.GetAsBooleanWithDefault("options.maintenance_enabled", c.maintenanceEnabled)
 	c.fileMaxSize = config.GetAsLongWithDefault("options.file_max_size", c.fileMaxSize)
 	c.protocolUpgradeEnabled = config.GetAsBooleanWithDefault("options.protocol_upgrade_enabled", c.protocolUpgradeEnabled)
-	c.enableExtendTls = config.GetAsBooleanWithDefault("options.enable_extend_tls", c.enableExtendTls)
 	c.clientAuthType = config.GetAsStringWithDefault("options.client_auth_type", c.clientAuthType)
 	c.certificateServerName = config.GetAsStringWithDefault("options.certificate_server_name", c.certificateServerName)
 
@@ -244,8 +241,9 @@ func (c *HttpEndpoint) Open(correlationId string) error {
 	if connection.Protocol() == "https" {
 		sslKeyFile := credential.GetAsString("ssl_key_file")
 		sslCrtFile := credential.GetAsString("ssl_crt_file")
+		sslCaFile := credential.GetAsString("ssl_ca_file")
 
-		if c.enableExtendTls {
+		if sslCaFile != "" {
 			clientAuthType := c.GetClientAuthType()
 			caCertPool, err := c.GetCaCert()
 			if err != nil {
@@ -556,15 +554,7 @@ func (c *HttpEndpoint) GetCertificates() ([]tls.Certificate, error) {
 	sslCrtFile := credential.GetAsString("ssl_crt_file")
 
 	if sslCrtFile != "" && sslKeyFile != "" {
-		bytesCert, err := os.ReadFile(sslCrtFile)
-		if err != nil {
-			return nil, err
-		}
-		bytesKey, err := os.ReadFile(sslKeyFile)
-		if err != nil {
-			return nil, err
-		}
-		certificate, err := tls.X509KeyPair(bytesCert, bytesKey)
+		certificate, err := tls.LoadX509KeyPair(sslCrtFile, sslKeyFile)
 		if err != nil {
 			return nil, err
 		}

@@ -66,8 +66,6 @@ Configuration parameters:
 
   - enable_extend_tls - enable extended tls options for custom root certificates
 
-  - client_auth_type - authentification type (request_client_cert, require_any_client_cert, verify_client_cert_if_given, require_and_verify_client_cert, default: no_client_auth)
-
   - certificate_server_name - certificates server (default: letsencrypt.org)
 
     References:
@@ -141,7 +139,6 @@ type RestClient struct {
 	passCorrelationId string
 
 	enableExtendTls       bool
-	clientAuthType        string
 	certificateServerName string
 }
 
@@ -166,7 +163,6 @@ func NewRestClient() *RestClient {
 		"options.correlation_id", "query",
 
 		"options.certificate_server_name", "letsencrypt.org",
-		"options.client_auth_type", "no_client_cert",
 		"options.enable_extend_tls", false,
 	)
 	rc.ConnectionResolver = *rpccon.NewHttpConnectionResolver()
@@ -195,7 +191,6 @@ func (c *RestClient) Configure(config *cconf.ConfigParams) {
 	c.passCorrelationId = config.GetAsStringWithDefault("options.correlation_id", c.passCorrelationId)
 
 	c.enableExtendTls = config.GetAsBooleanWithDefault("options.enable_extend_tls", c.enableExtendTls)
-	c.clientAuthType = config.GetAsStringWithDefault("options.client_auth_type", c.clientAuthType)
 	c.certificateServerName = config.GetAsStringWithDefault("options.certificate_server_name", c.certificateServerName)
 }
 
@@ -268,26 +263,38 @@ func (c *RestClient) Open(correlationId string) error {
 	c.Client = &localClient
 
 	if connection.Protocol() == "https" {
-		clientAuthType := c.GetClientAuthType()
-		caCertPool, err := c.GetCaCert()
-		if err != nil {
-			return err
-		}
 		certificates, err := c.GetCertificates()
 		if err != nil {
 			return err
 		}
-		c.Client.Transport = &http.Transport{
+
+		transport := &http.Transport{
 			TLSClientConfig: &tls.Config{
 				// TLS versions below 1.2 are considered insecure
 				// see https://www.rfc-editor.org/rfc/rfc7525.txt for details
 				MinVersion:   tls.VersionTLS12,
 				Certificates: certificates,
-				ClientCAs:    caCertPool,
 				ServerName:   c.certificateServerName,
-				ClientAuth:   clientAuthType,
 			},
 		}
+
+		_, credential, err := c.ConnectionResolver.Resolve("")
+		if err != nil {
+			return err
+		}
+		sslCaFile := credential.GetAsString("ssl_ca_file")
+
+		if sslCaFile != "" {
+			caCertPool, err := c.GetCaCert()
+			if err != nil {
+				return err
+			}
+
+			transport.TLSClientConfig.RootCAs = caCertPool
+		}
+
+		c.Client.Transport = transport
+
 	}
 	if c.Client == nil {
 		ex := cerr.NewConnectionError(correlationId, "CANNOT_CONNECT", "Connection to REST service failed").WithDetails("url", c.Uri)
@@ -515,21 +522,6 @@ func (c *RestClient) Call(prototype reflect.Type, method string, route string, c
 
 }
 
-func (c *RestClient) GetClientAuthType() tls.ClientAuthType {
-	switch strings.ToLower(c.clientAuthType) {
-	default:
-		return tls.NoClientCert
-	case "request_client_cert":
-		return tls.RequestClientCert
-	case "require_any_client_cert":
-		return tls.RequireAnyClientCert
-	case "verify_client_cert_if_given":
-		return tls.VerifyClientCertIfGiven
-	case "require_and_verify_client_cert":
-		return tls.RequireAndVerifyClientCert
-	}
-}
-
 func (c *RestClient) GetCertificates() ([]tls.Certificate, error) {
 	var certificates []tls.Certificate
 	_, credential, err := c.ConnectionResolver.Resolve("")
@@ -540,15 +532,7 @@ func (c *RestClient) GetCertificates() ([]tls.Certificate, error) {
 	sslCrtFile := credential.GetAsString("ssl_crt_file")
 
 	if sslCrtFile != "" && sslKeyFile != "" {
-		bytesCert, err := os.ReadFile(sslCrtFile)
-		if err != nil {
-			return nil, err
-		}
-		bytesKey, err := os.ReadFile(sslKeyFile)
-		if err != nil {
-			return nil, err
-		}
-		certificate, err := tls.X509KeyPair(bytesCert, bytesKey)
+		certificate, err := tls.LoadX509KeyPair(sslCrtFile, sslKeyFile)
 		if err != nil {
 			return nil, err
 		}
