@@ -177,6 +177,13 @@ func NewRestClient() *RestClient {
 	return &rc
 }
 
+// NewHttpEndpoint inherit configurator
+func InheritTlsRestClient(configurator service.ITlsConfigurator) *RestClient {
+	c := NewRestClient()
+	c.ITlsConfigurator = configurator
+	return c
+}
+
 // Configures component by passing configuration parameters.
 // Parameters:
 // - config *cconf.ConfigParams   configuration parameters to be set.
