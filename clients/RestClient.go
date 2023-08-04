@@ -285,18 +285,11 @@ func (c *RestClient) Open(correlationId string) error {
 			},
 		}
 
-		_, credential, err := c.ConnectionResolver.Resolve("")
+		caCertPool, err := c.GetCaCert()
 		if err != nil {
 			return err
 		}
-		sslCaFile := credential.GetAsString("ssl_ca_file")
-
-		if sslCaFile != "" {
-			caCertPool, err := c.GetCaCert()
-			if err != nil {
-				return err
-			}
-
+		if caCertPool != nil {
 			transport.TLSClientConfig.RootCAs = caCertPool
 		}
 
@@ -562,6 +555,9 @@ func (c *RestClient) GetCaCert() (*x509.CertPool, error) {
 			return nil, err
 		}
 		caCertPool.AppendCertsFromPEM(bytes)
+
+		return caCertPool, nil
+	} else {
+		return nil, nil
 	}
-	return caCertPool, nil
 }

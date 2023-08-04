@@ -241,14 +241,10 @@ func (c *HttpEndpoint) Open(correlationId string) error {
 	if connection.Protocol() == "https" {
 		sslKeyFile := credential.GetAsString("ssl_key_file")
 		sslCrtFile := credential.GetAsString("ssl_crt_file")
-		sslCaFile := credential.GetAsString("ssl_ca_file")
+		caCertPool, err := c.GetCaCert()
 
-		if sslCaFile != "" {
+		if caCertPool != nil {
 			clientAuthType := c.GetClientAuthType()
-			caCertPool, err := c.GetCaCert()
-			if err != nil {
-				return err
-			}
 			certificates, err := c.GetCertificates()
 			if err != nil {
 				return err
@@ -577,6 +573,9 @@ func (c *HttpEndpoint) GetCaCert() (*x509.CertPool, error) {
 			return nil, err
 		}
 		caCertPool.AppendCertsFromPEM(bytes)
+
+		return caCertPool, nil
+	} else {
+		return nil, nil
 	}
-	return caCertPool, nil
 }
