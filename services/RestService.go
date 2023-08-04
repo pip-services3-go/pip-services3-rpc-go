@@ -14,8 +14,8 @@ import (
 	crefer "github.com/pip-services3-go/pip-services3-commons-go/refer"
 	cvalid "github.com/pip-services3-go/pip-services3-commons-go/validate"
 	ccount "github.com/pip-services3-go/pip-services3-components-go/count"
-	ctrace "github.com/pip-services3-go/pip-services3-components-go/trace"
 	clog "github.com/pip-services3-go/pip-services3-components-go/log"
+	ctrace "github.com/pip-services3-go/pip-services3-components-go/trace"
 )
 
 type IRestServiceOverrides interface {
@@ -29,18 +29,18 @@ Configuration parameters:
 
   - base_route:              base route for remote URI
   - dependencies:
-    - endpoint:              override for HTTP Endpoint dependency
-    - controller:            override for Controller dependency
+  - endpoint:              override for HTTP Endpoint dependency
+  - controller:            override for Controller dependency
   - connection(s):
-    - discovery_key:         (optional) a key to retrieve the connection from IDiscovery
-    - protocol:              connection protocol: http or https
-    - host:                  host name or IP address
-    - port:                  port number
-    - uri:                   resource URI or connection string with all parameters in it
+  - discovery_key:         (optional) a key to retrieve the connection from IDiscovery
+  - protocol:              connection protocol: http or https
+  - host:                  host name or IP address
+  - port:                  port number
+  - uri:                   resource URI or connection string with all parameters in it
   - credential - the HTTPS credentials:
-    - ssl_key_file:         the SSL private key in PEM
-    - ssl_crt_file:         the SSL certificate in PEM
-    - ssl_ca_file:          the certificate authorities (root cerfiticates) in PEM
+  - ssl_key_file:         the SSL private key in PEM
+  - ssl_crt_file:         the SSL certificate in PEM
+  - ssl_ca_file:          the certificate authorities (root cerfiticates) in PEM
 
 References:
 
@@ -49,73 +49,72 @@ References:
 - *:discovery:*:*:1.0            (optional) IDiscovery services to resolve connection
 - *:endpoint:http:*:1.0          (optional) HttpEndpoint reference
 
-See RestClient
+# See RestClient
 
 Example:
 
-    type MyRestService struct {
-		*RestService
-		controller IMyController
-	}
-
-	   ...
-	func NewMyRestService() *MyRestService {
-		c := MyRestService{}
-		c.RestService = services.NewRestService()
-		c.RestService.IRegisterable = &c
-		c.numberOfCalls = 0
-		c.DependencyResolver.Put("controller", crefer.NewDescriptor("mygroup", "controller", "*", "*", "1.0"))
-		return &c
-	}
-
-    func (c * MyRestService) SetReferences(references IReferences) {
-        c.RestService.SetReferences(references);
-		resolv := c.DependencyResolver.GetRequired("controller");
-		if resolv != nil {
-			c.controller, _ = resolv.(IMyController)
+	    type MyRestService struct {
+			*RestService
+			controller IMyController
 		}
-    }
 
-	func (c *MyRestService) getOneById(res http.ResponseWriter, req *http.Request) {
-		params := req.URL.Query()
-		vars := mux.Vars(req)
-
-		mydataId := params.Get("mydata_id")
-		if mydataId == "" {
-			mydataId = vars["mydatay_id"]
+		   ...
+		func NewMyRestService() *MyRestService {
+			c := MyRestService{}
+			c.RestService = services.NewRestService()
+			c.RestService.IRegisterable = &c
+			c.numberOfCalls = 0
+			c.DependencyResolver.Put("controller", crefer.NewDescriptor("mygroup", "controller", "*", "*", "1.0"))
+			return &c
 		}
-		result, err := c.controller.GetOneById(
-			params.Get("correlation_id"),
-			mydataId)
-		c.SendResult(res, req, result, err)
 
-	}
-    func (c * MyRestService) Register() {
+	    func (c * MyRestService) SetReferences(references IReferences) {
+	        c.RestService.SetReferences(references);
+			resolv := c.DependencyResolver.GetRequired("controller");
+			if resolv != nil {
+				c.controller, _ = resolv.(IMyController)
+			}
+	    }
 
-		c.RegisterRoute(
-		"get", "get_mydata/{mydata_id}",
-		 &cvalid.NewObjectSchema().
-			WithRequiredProperty("mydata_id", cconv.String).Schema,
-		c.getOneById)
-           ...
-    }
+		func (c *MyRestService) getOneById(res http.ResponseWriter, req *http.Request) {
+			params := req.URL.Query()
+			vars := mux.Vars(req)
+
+			mydataId := params.Get("mydata_id")
+			if mydataId == "" {
+				mydataId = vars["mydatay_id"]
+			}
+			result, err := c.controller.GetOneById(
+				params.Get("correlation_id"),
+				mydataId)
+			c.SendResult(res, req, result, err)
+
+		}
+	    func (c * MyRestService) Register() {
+
+			c.RegisterRoute(
+			"get", "get_mydata/{mydata_id}",
+			 &cvalid.NewObjectSchema().
+				WithRequiredProperty("mydata_id", cconv.String).Schema,
+			c.getOneById)
+	           ...
+	    }
 
 
-    service := NewMyRestService();
-    service.Configure(cconf.NewConfigParamsFromTuples(
-        "connection.protocol", "http",
-        "connection.host", "localhost",
-        "connection.port", 8080,
-    ));
-    service.SetReferences(cref.NewReferencesFromTuples(
-       cref.NewDescriptor("mygroup","controller","default","default","1.0"), controller
-    ));
+	    service := NewMyRestService();
+	    service.Configure(cconf.NewConfigParamsFromTuples(
+	        "connection.protocol", "http",
+	        "connection.host", "localhost",
+	        "connection.port", 8080,
+	    ));
+	    service.SetReferences(cref.NewReferencesFromTuples(
+	       cref.NewDescriptor("mygroup","controller","default","default","1.0"), controller
+	    ));
 
-	opnRes := service.Open("123")
-	if opnErr == nil {
-	   fmt.Println("The REST service is running on port 8080");
-	}
-
+		opnRes := service.Open("123")
+		if opnErr == nil {
+		   fmt.Println("The REST service is running on port 8080");
+		}
 */
 type RestService struct {
 	Overrides IRestServiceOverrides
@@ -128,7 +127,7 @@ type RestService struct {
 	//The base route.
 	BaseRoute string
 	//The HTTP endpoint that exposes this service.
-	Endpoint *HttpEndpoint
+	Endpoint IHttpEndpoint
 	//The dependency resolver.
 	DependencyResolver *crefer.DependencyResolver
 	//The logger.
@@ -136,7 +135,7 @@ type RestService struct {
 	//The performance counters.
 	Counters *ccount.CompositeCounters
 	// The tracer.
-    Tracer *ctrace.CompositeTracer
+	Tracer *ctrace.CompositeTracer
 
 	SwaggerService ISwaggerService
 	SwaggerEnabled bool
@@ -190,7 +189,7 @@ func (c *RestService) SetReferences(references crefer.IReferences) {
 	// Get endpoint
 	depRes := c.DependencyResolver.GetOneOptional("endpoint")
 	if depRes != nil {
-		c.Endpoint = depRes.(*HttpEndpoint)
+		c.Endpoint, _ = depRes.(IHttpEndpoint)
 	}
 
 	// Or create a local one
@@ -237,14 +236,15 @@ func (c *RestService) createEndpoint() *HttpEndpoint {
 // Parameters:
 //   - correlationId     (optional) transaction id to trace execution through call chain.
 //   - name              a method name.
+//
 // Returns Timing object to end the time measurement.
 func (c *RestService) Instrument(correlationId string, name string) *InstrumentTiming {
 	c.Logger.Trace(correlationId, "Executing %s method", name)
 	c.Counters.IncrementOne(name + ".exec_count")
 	counterTiming := c.Counters.BeginTiming(name + ".exec_time")
 	traceTiming := c.Tracer.BeginTrace(correlationId, name, "")
-    return NewInstrumentTiming(correlationId, name, "exec",
-            c.Logger, c.Counters, counterTiming, traceTiming)
+	return NewInstrumentTiming(correlationId, name, "exec",
+		c.Logger, c.Counters, counterTiming, traceTiming)
 }
 
 // InstrumentError method are adds instrumentation to error handling.
@@ -253,8 +253,10 @@ func (c *RestService) Instrument(correlationId string, name string) *InstrumentT
 //   - name    string          a method name.
 //   - err     error          an occured error
 //   - result  interface{}    (optional) an execution result
+//
 // Returns:  result interface{}, err error
-//        (optional) an execution callback
+//
+//	(optional) an execution callback
 func (c *RestService) InstrumentError(correlationId string, name string, errIn error,
 	resIn interface{}) (result interface{}, err error) {
 	if errIn != nil {
@@ -272,8 +274,9 @@ func (c *RestService) IsOpen() bool {
 
 // Open method are opens the component.
 // Parameters:
-// 	 - correlationId  string:	(optional) transaction id to trace execution through call chain.
-//  Returns: error
+//   - correlationId  string:	(optional) transaction id to trace execution through call chain.
+//     Returns: error
+//
 // error or nil no errors occured.
 func (c *RestService) Open(correlationId string) error {
 	if c.opened {
@@ -299,7 +302,8 @@ func (c *RestService) Open(correlationId string) error {
 
 // Close method are closes component and frees used resources.
 // Parameters:
-//  - correlationId 	(optional) transaction id to trace execution through call chain.
+//   - correlationId 	(optional) transaction id to trace execution through call chain.
+//
 // Returns: error
 // error or nil no errors occured.
 func (c *RestService) Close(correlationId string) error {
@@ -344,10 +348,10 @@ func (c *RestService) SendResult(res http.ResponseWriter, req *http.Request, res
 // For nil results it returns 204 status code.
 // If error occur it sends ErrorDescription with approproate status code.
 // Parameters:
-//  - req       a HTTP request object.
-//  - res       a HTTP response object.
-//  - result    (optional) result object to send
-//  - err error (optional) error objrct to send
+//   - req       a HTTP request object.
+//   - res       a HTTP response object.
+//   - result    (optional) result object to send
+//   - err error (optional) error objrct to send
 func (c *RestService) SendCreatedResult(res http.ResponseWriter, req *http.Request, result interface{}, err error) {
 	HttpResponseSender.SendCreatedResult(res, req, result, err)
 }
@@ -361,8 +365,8 @@ func (c *RestService) SendCreatedResult(res http.ResponseWriter, req *http.Reque
 // Parameters:
 //   - req       a HTTP request object.
 //   - res       a HTTP response object.
-// 	 - result    (optional) result object to send
-// 	 - err error (optional) error objrct to send
+//   - result    (optional) result object to send
+//   - err error (optional) error objrct to send
 func (c *RestService) SendDeletedResult(res http.ResponseWriter, req *http.Request, result interface{}, err error) {
 	HttpResponseSender.SendDeletedResult(res, req, result, err)
 }
@@ -460,6 +464,7 @@ func (c *RestService) RegisterInterceptor(route string,
 // GetParam methods helps get all params from query
 //   - req   - incoming request
 //   - name  - parameter name
+//
 // Returns value or empty string if param not exists
 func (c *RestService) GetParam(req *http.Request, name string) string {
 	param := req.URL.Query().Get(name)
@@ -472,6 +477,7 @@ func (c *RestService) GetParam(req *http.Request, name string) string {
 // DecodeBody methods helps decode body
 //   - req   	- incoming request
 //   - target  	- pointer on target variable for decode
+//
 // Returns error
 func (c *RestService) DecodeBody(req *http.Request, target interface{}) error {
 
@@ -489,6 +495,7 @@ func (c *RestService) DecodeBody(req *http.Request, target interface{}) error {
 
 // GetPagingParams methods helps decode paging params
 //   - req   	- incoming request
+//
 // Returns paging params
 func (c *RestService) GetPagingParams(req *http.Request) *cdata.PagingParams {
 
@@ -502,6 +509,7 @@ func (c *RestService) GetPagingParams(req *http.Request) *cdata.PagingParams {
 
 // GetFilterParams methods helps decode filter params
 //   - req   	- incoming request
+//
 // Returns filter params
 func (c *RestService) GetFilterParams(req *http.Request) *cdata.FilterParams {
 
@@ -517,7 +525,9 @@ func (c *RestService) GetFilterParams(req *http.Request) *cdata.FilterParams {
 
 // GetCorrelationId method returns CorrelationId from request
 // Parameters:
-//   req *http.Request  request
+//
+//	req *http.Request  request
+//
 // Returns: string
 // retrun correlation_id or empty string
 func (c *RestService) GetCorrelationId(req *http.Request) string {

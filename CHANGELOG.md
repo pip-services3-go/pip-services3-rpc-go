@@ -1,16 +1,21 @@
 # <img src="https://uploads-ssl.webflow.com/5ea5d3315186cf5ec60c3ee4/5edf1c94ce4c859f2b188094_logo.svg" alt="Pip.Services Logo" width="200"> <br/> Remote Procedure Calls for Pip.Services in Go Changelog
 
-## <a name="1.6.2"></a> 1.6.2 (2023-04-09)
+## <a name="1.6.3"></a> 1.6.3 (2023-08-4)
+
+### Features
+- Added IHttpEndpoint interface for custom endpoint implementation
+
+## <a name="1.6.2"></a> 1.6.2 (2023-08-04)
 
 ### Bug fixing
 - Fixed configuring custom SSL
 
-## <a name="1.6.1"></a> 1.6.1 (2023-04-07)
+## <a name="1.6.1"></a> 1.6.1 (2023-08-04)
 
 ### Features
 - Added inheritance constructor for TLS in RestClient
 
-## <a name="1.6.0"></a> 1.6.0 (2023-04-07)
+## <a name="1.6.0"></a> 1.6.0 (2023-08-03)
 ### Features
 - Added supports custom CA certificates for server and client
 
