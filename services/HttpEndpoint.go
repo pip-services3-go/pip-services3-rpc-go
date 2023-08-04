@@ -45,7 +45,7 @@ Parameters to pass to the configure method for component configuration:
   - "credential.ssl_ca_file" - the certificate authorities (root cerfiticates) in PEM
   - options - the http endpoint options
   - "options.client_auth_type" - authentification type (request_client_cert, require_any_client_cert, verify_client_cert_if_given, require_and_verify_client_cert, default: no_client_auth)
-  - "options.certificate_server_name" - certificates server (default: letsencrypt.org)
+  - "options.certificate_server_name" - certificates server (default: localhost)
     References:
 
 A logger, counters, and a connection resolver can be referenced by passing the
@@ -96,7 +96,7 @@ func NewHttpEndpoint() *HttpEndpoint {
 		"credential.ssl_crt_file", nil,
 		"credential.ssl_ca_file", nil,
 
-		"options.certificate_server_name", "letsencrypt.org",
+		"options.certificate_server_name", "localhost",
 		"options.client_auth_type", "no_client_cert",
 		"options.enable_extend_tls", false,
 
@@ -124,6 +124,8 @@ func NewHttpEndpoint() *HttpEndpoint {
 		//"access_token",
 	}
 	c.allowedOrigins = make([]string, 0)
+
+	c.ITlsConfigurator = &c
 	return &c
 }
 
@@ -203,7 +205,7 @@ func (c *HttpEndpoint) Open(correlationId string) error {
 	if c.IsOpen() {
 		return nil
 	}
-	connection, credential, err := c.connectionResolver.Resolve(correlationId)
+	connection, _, err := c.connectionResolver.Resolve(correlationId)
 	if err != nil {
 		return err
 	}
@@ -239,28 +241,33 @@ func (c *HttpEndpoint) Open(correlationId string) error {
 	defer close(chErr)
 
 	if connection.Protocol() == "https" {
-		sslKeyFile := credential.GetAsString("ssl_key_file")
-		sslCrtFile := credential.GetAsString("ssl_crt_file")
-		caCertPool, err := c.GetCaCert()
+		clientAuthType := c.ITlsConfigurator.GetClientAuthType()
+
+		certificates, err := c.ITlsConfigurator.GetCertificates()
+		if err != nil {
+			return err
+		}
+
+		c.server.TLSConfig = &tls.Config{
+			// TLS versions below 1.2 are considered insecure
+			// see https://www.rfc-editor.org/rfc/rfc7525.txt for details
+			MinVersion:   tls.VersionTLS12,
+			Certificates: certificates,
+			ServerName:   c.certificateServerName,
+			ClientAuth:   clientAuthType,
+		}
+
+		caCertPool, err := c.ITlsConfigurator.GetCaCert()
+		if err != nil {
+			return err
+		}
 
 		if caCertPool != nil {
-			clientAuthType := c.GetClientAuthType()
-			certificates, err := c.GetCertificates()
-			if err != nil {
-				return err
-			}
-			c.server.TLSConfig = &tls.Config{
-				// TLS versions below 1.2 are considered insecure
-				// see https://www.rfc-editor.org/rfc/rfc7525.txt for details
-				MinVersion:   tls.VersionTLS12,
-				Certificates: certificates,
-				ClientCAs:    caCertPool,
-				ServerName:   c.certificateServerName,
-				ClientAuth:   clientAuthType,
-			}
+			c.server.TLSConfig.ClientCAs = caCertPool
 		}
+
 		go func() {
-			servErr := c.server.ListenAndServeTLS(sslCrtFile, sslKeyFile)
+			servErr := c.server.ListenAndServeTLS("", "")
 			if servErr != nil {
 				select {
 				default:

@@ -66,7 +66,7 @@ Configuration parameters:
 
   - enable_extend_tls - enable extended tls options for custom root certificates
 
-  - certificate_server_name - certificates server (default: letsencrypt.org)
+  - certificate_server_name - certificates server (default: localhost)
 
     References:
 
@@ -114,7 +114,7 @@ type RestClient struct {
 	//The HTTP client.
 	Client *http.Client
 	//The connection resolver.
-	ConnectionResolver rpccon.HttpConnectionResolver
+	ConnectionResolver *rpccon.HttpConnectionResolver
 	//The logger.
 	Logger *clog.CompositeLogger
 	//The performance counters.
@@ -162,10 +162,10 @@ func NewRestClient() *RestClient {
 		"options.debug", true,
 		"options.correlation_id", "query",
 
-		"options.certificate_server_name", "letsencrypt.org",
+		"options.certificate_server_name", "localhost",
 		"options.enable_extend_tls", false,
 	)
-	rc.ConnectionResolver = *rpccon.NewHttpConnectionResolver()
+	rc.ConnectionResolver = rpccon.NewHttpConnectionResolver()
 	rc.Logger = clog.NewCompositeLogger()
 	rc.Counters = ccount.NewCompositeCounters()
 	rc.Tracer = ctrace.NewCompositeTracer(nil)
@@ -174,6 +174,8 @@ func NewRestClient() *RestClient {
 	rc.Headers = *cdata.NewEmptyStringValueMap()
 	rc.ConnectTimeout = 10000
 	rc.passCorrelationId = "query"
+
+	rc.ITlsConfigurator = &rc
 	return &rc
 }
 
@@ -270,7 +272,7 @@ func (c *RestClient) Open(correlationId string) error {
 	c.Client = &localClient
 
 	if connection.Protocol() == "https" {
-		certificates, err := c.GetCertificates()
+		certificates, err := c.ITlsConfigurator.GetCertificates()
 		if err != nil {
 			return err
 		}
@@ -285,7 +287,7 @@ func (c *RestClient) Open(correlationId string) error {
 			},
 		}
 
-		caCertPool, err := c.GetCaCert()
+		caCertPool, err := c.ITlsConfigurator.GetCaCert()
 		if err != nil {
 			return err
 		}
@@ -560,4 +562,8 @@ func (c *RestClient) GetCaCert() (*x509.CertPool, error) {
 	} else {
 		return nil, nil
 	}
+}
+
+func (c *RestClient) GetClientAuthType() tls.ClientAuthType {
+	return tls.NoClientCert
 }

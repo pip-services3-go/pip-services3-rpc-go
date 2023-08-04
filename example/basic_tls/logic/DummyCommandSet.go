@@ -8,7 +8,7 @@ import (
 	cdata "github.com/pip-services3-go/pip-services3-commons-go/data"
 	crun "github.com/pip-services3-go/pip-services3-commons-go/run"
 	cvalid "github.com/pip-services3-go/pip-services3-commons-go/validate"
-	edata "github.com/pip-services3-go/pip-services3-rpc-go/example/data"
+	edata "github.com/pip-services3-go/pip-services3-rpc-go/example/basic_tls/data"
 )
 
 type DummyCommandSet struct {

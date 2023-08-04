@@ -3,7 +3,7 @@ package example_logic
 import (
 	cdata "github.com/pip-services3-go/pip-services3-commons-go/data"
 	cerr "github.com/pip-services3-go/pip-services3-commons-go/errors"
-	edata "github.com/pip-services3-go/pip-services3-rpc-go/example/data"
+	edata "github.com/pip-services3-go/pip-services3-rpc-go/example/basic_tls/data"
 )
 
 type DummyController struct {

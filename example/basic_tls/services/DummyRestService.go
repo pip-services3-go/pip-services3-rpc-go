@@ -12,8 +12,8 @@ import (
 	cerr "github.com/pip-services3-go/pip-services3-commons-go/errors"
 	crefer "github.com/pip-services3-go/pip-services3-commons-go/refer"
 	cvalid "github.com/pip-services3-go/pip-services3-commons-go/validate"
-	edata "github.com/pip-services3-go/pip-services3-rpc-go/example/data"
-	elogic "github.com/pip-services3-go/pip-services3-rpc-go/example/logic"
+	edata "github.com/pip-services3-go/pip-services3-rpc-go/example/basic_tls/data"
+	elogic "github.com/pip-services3-go/pip-services3-rpc-go/example/basic_tls/logic"
 	"github.com/pip-services3-go/pip-services3-rpc-go/services"
 )
 

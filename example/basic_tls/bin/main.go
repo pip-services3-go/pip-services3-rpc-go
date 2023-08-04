@@ -5,10 +5,10 @@ import (
 
 	cconf "github.com/pip-services3-go/pip-services3-commons-go/config"
 	cref "github.com/pip-services3-go/pip-services3-commons-go/refer"
-	eclients "github.com/pip-services3-go/pip-services3-rpc-go/example/clients"
-	edata "github.com/pip-services3-go/pip-services3-rpc-go/example/data"
-	elogic "github.com/pip-services3-go/pip-services3-rpc-go/example/logic"
-	eservices "github.com/pip-services3-go/pip-services3-rpc-go/example/services"
+	eclients "github.com/pip-services3-go/pip-services3-rpc-go/example/basic_tls/clients"
+	edata "github.com/pip-services3-go/pip-services3-rpc-go/example/basic_tls/data"
+	elogic "github.com/pip-services3-go/pip-services3-rpc-go/example/basic_tls/logic"
+	eservices "github.com/pip-services3-go/pip-services3-rpc-go/example/basic_tls/services"
 )
 
 func main() {
